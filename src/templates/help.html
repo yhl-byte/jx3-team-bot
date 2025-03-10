@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>年崽机器人命令说明</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .command-group {
+            margin-bottom: 30px;
+        }
+        .command-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .command-table th, .command-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .command-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .command-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .command-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .admin {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: Monaco, Consolas, monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>年崽机器人命令说明</h1>
+
+        <div class="command-group">
+            <h2>基础命令</h2>
+            <table class="command-table">
+                <tr>
+                    <th>命令</th>
+                    <th>说明</th>
+                    <th>权限</th>
+                </tr>
+                <tr>
+                    <td><code>年崽 开</code></td>
+                    <td>开启机器人</td>
+                    <td class="admin">管理员</td>
+                </tr>
+                <tr>
+                    <td><code>年崽 关</code></td>
+                    <td>关闭机器人</td>
+                    <td class="admin">管理员</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="command-group">
+            <h2>团队管理命令</h2>
+            <table class="command-table">
+                <tr>
+                    <th>命令</th>
+                    <th>说明</th>
+                    <th>权限</th>
+                </tr>
+                <tr>
+                    <td><code>创建团队|开团</code></td>
+                    <td>创建默认名称团队</td>
+                    <td class="admin">管理员</td>
+                </tr>
+                <tr>
+                    <td><code>创建团队|开团 团队名</code></td>
+                    <td>创建指定名称团队</td>
+                    <td class="admin">管理员</td>
+                </tr>
+                <tr>
+                    <td><code>修改团名 原团队名 新团队名</code></td>
+                    <td>修改团队名称</td>
+                    <td class="admin">管理员</td>
+                </tr>
+                <tr>
+                    <td><code>默认团队 团队名/ID</code></td>
+                    <td>设置默认团队</td>
+                    <td class="admin">管理员</td>
+                </tr>
+                <tr>
+                    <td><code>结束团队</code></td>
+                    <td>结束默认团队</td>
+                    <td class="admin">管理员</td>
+                </tr>
+                <tr>
+                    <td><code>结束团队 团队名/ID</code></td>
+                    <td>结束指定团队</td>
+                    <td class="admin">管理员</td>
+                </tr>
+                <tr>
+                    <td><code>结束全部团队</code></td>
+                    <td>结束所有团队</td>
+                    <td class="admin">管理员</td>
+                </tr>
+                <tr>
+                    <td><code>团队列表</code></td>
+                    <td>显示所有团队</td>
+                    <td>所有人</td>
+                </tr>
+                <tr>
+                    <td><code>查看团队 [团队ID]</code></td>
+                    <td>查看团队详情</td>
+                    <td>所有人</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="command-group">
+            <h2>成员管理命令</h2>
+            <table class="command-table">
+                <tr>
+                    <th>命令</th>
+                    <th>说明</th>
+                    <th>权限</th>
+                </tr>
+                <tr>
+                    <td><code>报名 心法 角色名 [团队ID]</code></td>
+                    <td>报名加入团队</td>
+                    <td>所有人</td>
+                </tr>
+                <tr>
+                    <td><code>取消报名 [团队ID]</code></td>
+                    <td>取消报名</td>
+                    <td>所有人</td>
+                </tr>
+                <tr>
+                    <td><code>代报名 心法 角色名 [团队ID]</code></td>
+                    <td>代他人报名</td>
+                    <td>所有人</td>
+                </tr>
+                <tr>
+                    <td><code>取消代报名 [团队ID]</code></td>
+                    <td>取消最后一个代报名</td>
+                    <td>所有人</td>
+                </tr>
+                <tr>
+                    <td><code>取消代报名 编号 [团队ID]</code></td>
+                    <td>取消指定编号代报名</td>
+                    <td>所有人</td>
+                </tr>
+                <tr>
+                    <td><code>开除团员 角色名 [团队ID]</code></td>
+                    <td>开除团队成员</td>
+                    <td class="admin">管理员</td>
+                </tr>
+                <tr>
+                    <td><code>移动位置 原位置 新位置 [团队ID]</code></td>
+                    <td>移动成员位置</td>
+                    <td class="admin">管理员</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="command-group">
+            <h2>其他功能</h2>
+            <table class="command-table">
+                <tr>
+                    <th>命令</th>
+                    <th>说明</th>
+                    <th>权限</th>
+                </tr>
+                <tr>
+                    <td><code>随机黑本 [团队ID]</code></td>
+                    <td>随机选择团队成员</td>
+                    <td>所有人</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="note">
+            <h3>注意事项：</h3>
+            <ul>
+                <li>带 [团队ID] 的命令表示该参数可选，不填则默认操作默认团队</li>
+                <li>位置编号规则：
+                    <ul>
+                        <li>第一排：11-15</li>
+                        <li>第二排：21-25</li>
+                        <li>第三排：31-35</li>
+                        <li>第四排：41-45</li>
+                        <li>第五排：51-55</li>
+                    </ul>
+                </li>
+                <li>代报名编号从1开始自动递增</li>
+                <li>管理员命令需要群主或管理员权限</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!--
+ * @Date: 2025-02-18 13:34:35
+ * @LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
+ * @LastEditTime: 2025-03-06 14:49:16
+ * @FilePath: /bott/bot-dd/src/templates/team.html
+-->
+<!-- src/templates/message.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>团队信息</title>
+    <style>
+        *{
+            box-sizing: border-box;
+        }
+        html,body {
+            font-family: Arial, sans-serif;
+            height: 760px;
+            width: 1088px;
+            margin: 0;
+            padding: 0;
+            background: #f8f9fa;
+        }
+        body {
+            padding: 20px;
+            position: relative;
+        }
+        header {
+            width: 100%;
+            position: relative;
+            text-align: center;
+        }
+        .jx3-logo {
+            position: absolute;
+            left: 24px;
+        }
+        .title {
+            font-size: 32px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .desc {
+            font-size: 12px;
+            color: gray;
+            position: absolute;
+            right: 24px;
+            top: 12px;
+        }
+        section {
+            margin: 24px 0;
+            position: relative;
+            height: 64px;
+            line-height: 64px;
+            width: 100%;
+        }
+        section > span {
+            width: 24%;
+            display: inline-block;
+            text-align: center;
+            background: #ffffff;
+            border-radius: 20px;
+            letter-spacing: 20px;
+            margin-right: 7px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-weight: 500;
+        }
+        section > span:nth-child(1) {
+            color: #ff6b6b;
+        }
+        
+        section > span:nth-child(2) {
+            color: #4dabf7;
+        }
+        
+        section > span:nth-child(3) {
+            color: #51cf66;
+        }
+        
+        section > span:nth-child(4) {
+            color: #fab005;
+        }
+        .footer {
+            text-align: right;
+            padding: 0 24px;
+            width: 100%;
+            margin: 24px 0;
+            margin-top: 12px;
+            padding-bottom: 12px;
+        }
+        .createUser {
+            padding-right: 12px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        .createTime {
+            font-size: 14px;
+            color: #95a5a6;
+        }
+        #members {
+            width: 100%;
+            height: 600px;
+            overflow: hidden;
+            position: relative;
+            background: #ffffff;
+            padding: 10px;
+            padding-top: 24px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            text-align: center; 
+        }
+        .col {
+            width: 19.5%;
+            height: 100%;
+            display: inline-block;
+            text-align: center;
+            overflow: hidden;
+            vertical-align: top;
+            padding: 0 5px;
+        }
+        .member {
+            width: 100%;
+            max-width: 172px;
+            height: 100px;
+            border: 1px solid #e8e8e8;
+            margin: auto;
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            background: #ffffff;
+            transition: all 0.3s ease;
+        }
+        .num {
+            position: absolute;
+            left: 4px;
+            top: 4px;
+            color: #666;
+            font-size: 10px;
+        }
+        .front {
+            display: inline-block;
+            width: 60px;
+            height: 100%;
+            padding-top: 20px;
+            overflow: hidden;
+        }
+        .end {
+            display: inline-block;
+            width: 100px;
+            height: 100%;
+            overflow: hidden;
+            padding-top: 32px;
+        }
+        .agent-tag {
+            font-size: 12px;
+            background-color: #e8f5e9;
+            color: #66bb6a;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="{{ static_path }}/xf-icon/0.png" alt="jx3" class="jx3-logo" width="40">
+        <span class="title">{{ team_box.team_name }}</span>
+        <span class="desc">遇见即是缘</span>
+    </header>
+    <section>
+        <span>内功{{ team_box.internal }}位</span>
+        <span>外功{{ team_box.external }}位</span>
+        <span>治疗{{ team_box.pastor }}位</span>
+        <span>坦克{{ team_box.tank }}位</span>
+    </section>
+    <div id="members">
+        {% for col in range(5) %}
+        <div class="col">
+            {% for row in range(5) %}
+            {% set position = "{:d}{:d}".format(col + 1, row + 1)  %}
+            {% set member = namespace(value=None) %}
+            {% for m in team_box.members %}
+                {% if m.table_position == position %}
+                    {% set member.value = m %}
+                {% endif %}
+            {% endfor %}
+            <div class="member"  {% if member.value %}style="border-color: {{ member.value.color }}"{% endif %}>
+                <span class="num">位置：{{ position }}</span>
+                {% if member.value %}
+                <div class="front">
+                    <img src="{{ static_path }}/xf-icon/{{ member.value.xf_id }}.png" alt="xf" width="48">
+                    {% if member.value.agent %}
+                    <div class="agent-tag">代{{ member.value.agent }}</div>
+                    {% endif %}
+                </div>
+                <div class="end">
+                    <div>{{ member.value.role_name }}</div>
+                    <div style="margin-top: 16px;">{{ member.value.user_id }}</div>
+                </div>
+                {% else %}
+                <div style="color: #999; font-size: 16px;line-height: 100px;">虚位以待</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    <div class="footer">
+        <span class="createUser">创建人：{{ team_box.user_id }}</span>
+        <span class="createTime">创建时间：{{ team_box.timestamp  }}</span>
+    </div>
+</body>
+</html>
