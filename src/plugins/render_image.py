@@ -1,8 +1,8 @@
 '''
 Date: 2025-02-18 13:33:56
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-03-05 14:25:53
-FilePath: /bott/bot-dd/src/plugins/render_image.py
+LastEditTime: 2025-03-10 14:48:02
+FilePath: /team-bot/jx3-team-bot/src/plugins/render_image.py
 '''
 # src/plugins/chat_plugin/render_image.py
 import os
@@ -20,7 +20,8 @@ def html_to_image(html_content: str) -> str:
         "encoding": "UTF-8",
         "enable-local-file-access": None,  # 允许加载本地 CSS
         "no-stop-slow-scripts": "",
-        "javascript-delay": 1000
+        "javascript-delay": 1000,
+        "font-family": "PingFang SC,Microsoft YaHei, sans-serif",  # 添加中文字体支持
     }
     
     # 生成图片
