@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  jx3-team-bot:
+    build: .
+    network_mode: "host"  # 使用主机网络模式
+    volumes:
+      # 挂载wkhtmltox库文件
+      - /usr/local/lib/libwkhtmltox.so:/usr/local/lib/libwkhtmltox.so
+      - /usr/local/lib/libwkhtmltox.so.0:/usr/local/lib/libwkhtmltox.so.0
+      - /usr/local/include/wkhtmltox:/usr/local/include/wkhtmltox
+      # 挂载wkhtmltox可执行文件
+      - /usr/local/bin/wkhtmltopdf:/usr/local/bin/wkhtmltopdf
+      - /usr/local/bin/wkhtmltoimage:/usr/local/bin/wkhtmltoimage
+      # 其他挂载...
+      - /usr/share/fonts:/usr/share/fonts
+    restart: always
