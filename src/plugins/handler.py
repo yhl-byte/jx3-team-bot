@@ -1,8 +1,8 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-03-06 17:21:21
-FilePath: /bott/bot-dd/src/plugins/handler.py
+LastEditTime: 2025-03-10 17:22:31
+FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
 from nonebot import on_message,on_regex,on_command
@@ -17,6 +17,8 @@ from ..utils.index import find_default_team, find_earliest_team, find_id_by_team
 from ..utils.jx3_profession import JX3PROFESSION
 from ..utils.permission import require_admin_permission
 from src.config import STATIC_PATH
+# 导入谁是卧底游戏模块
+from .undercover import *
 import os
 
 # 用于存储每个群的状态
