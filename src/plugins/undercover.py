@@ -1,7 +1,7 @@
 '''
 Date: 2025-03-06 17:21:21
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-03-10 17:21:49
+LastEditTime: 2025-03-11 17:32:36
 FilePath: /team-bot/jx3-team-bot/src/plugins/undercover.py
 '''
 # src/plugins/undercover.py
@@ -18,7 +18,7 @@ import json
 from typing import Dict, List, Tuple, Set, Optional
 
 # 游戏状态
-class GameStatus:
+class UndercoverGameStatus:
     WAITING = 0    # 等待开始
     SIGNUP = 1     # 报名中
     PLAYING = 2    # 游戏中
@@ -29,7 +29,7 @@ class GameStatus:
 class UndercoverGame:
     def __init__(self, group_id: int):
         self.group_id = group_id
-        self.status = GameStatus.WAITING
+        self.status = UndercoverGameStatus.WAITING
         self.players = {}  # user_id -> {"nickname": str, "word": str, "is_undercover": bool, "eliminated": bool}
         self.current_round = 0
         self.max_rounds = 0
@@ -83,20 +83,20 @@ async def handle_start_game(bot: Bot, event: GroupMessageEvent, state: T_State):
     user_id = event.user_id
     
     # 检查是否已有游戏在进行
-    if group_id in games and games[group_id].status != GameStatus.WAITING and games[group_id].status != GameStatus.ENDED:
+    if group_id in games and games[group_id].status != UndercoverGameStatus.WAITING and games[group_id].status != UndercoverGameStatus.ENDED:
         await StartGame.finish(message="游戏已经在进行中，请等待当前游戏结束")
         return
     
     # 创建新游戏
     games[group_id] = UndercoverGame(group_id)
-    games[group_id].status = GameStatus.SIGNUP
+    games[group_id].status = UndercoverGameStatus.SIGNUP
     
-    await StartGame.finish(message="谁是卧底游戏开始报名！请想参加的玩家发送「报名卧底」。30秒后报名截止。")
+    await StartGame.finish(message="谁是卧底游戏开始报名！请想参加的玩家发送「报名卧底」。300秒后报名截止。")
     
-    # 30秒后自动结束报名
-    await asyncio.sleep(30)
+    # 300秒后自动结束报名
+    await asyncio.sleep(300)
     
-    if group_id in games and games[group_id].status == GameStatus.SIGNUP:
+    if group_id in games and games[group_id].status == UndercoverGameStatus.SIGNUP:
         if len(games[group_id].players) < 3:
             await bot.send_group_msg(group_id=group_id, message="报名人数不足3人，游戏取消")
             del games[group_id]
@@ -110,7 +110,7 @@ async def handle_signup(bot: Bot, event: GroupMessageEvent, state: T_State):
     group_id = event.group_id
     user_id = event.user_id
     
-    if group_id not in games or games[group_id].status != GameStatus.SIGNUP:
+    if group_id not in games or games[group_id].status != UndercoverGameStatus.SIGNUP:
         await SignupGame.finish(message="当前没有谁是卧底游戏正在报名")
         return
     
@@ -134,7 +134,7 @@ EndSignup = on_regex(pattern=r'^结束报名$', priority=1)
 async def handle_end_signup(bot: Bot, event: GroupMessageEvent, state: T_State):
     group_id = event.group_id
     
-    if group_id not in games or games[group_id].status != GameStatus.SIGNUP:
+    if group_id not in games or games[group_id].status != UndercoverGameStatus.SIGNUP:
         await EndSignup.finish(message="当前没有谁是卧底游戏正在报名")
         return
     
@@ -147,7 +147,7 @@ async def handle_end_signup(bot: Bot, event: GroupMessageEvent, state: T_State):
 # 开始游戏流程
 async def start_game_process(bot: Bot, group_id: int):
     game = games[group_id]
-    game.status = GameStatus.PLAYING
+    game.status = UndercoverGameStatus.PLAYING
     
     # 获取词库
     word_pairs = await fetch_word_pairs()
@@ -185,11 +185,46 @@ async def start_game_process(bot: Bot, group_id: int):
     await bot.send_group_msg(group_id=group_id, message=f"游戏开始！共有{num_players}名玩家，其中{num_undercovers}名卧底。我已经私聊告知大家各自的词语，请查看。")
     
     # 私聊发送词语
+    failed_users = []
     for player_id, player_info in game.players.items():
         try:
             await bot.send_private_msg(user_id=player_id, message=f"你的词语是：{player_info['word']}")
         except Exception as e:
             print(f"向玩家 {player_id} 发送私聊失败: {e}")
+            failed_users.append(player_id)
+            # 尝试添加好友
+            try:
+                # 在验证消息中提示这是谁是卧底游戏
+                await bot.send_friend_request(user_id=player_id, comment=f"你的词语是：{player_info['word']} --年崽")
+                print(f"已向玩家 {player_id} 发送好友申请")
+            except Exception as friend_e:
+                print(f"向玩家 {player_id} 发送好友申请失败: {friend_e}")
+    
+    # 如果有私聊发送失败的用户，提醒他们添加机器人为好友
+    if failed_users:
+        await bot.send_group_msg(group_id=group_id, message="部分玩家无法接收私聊消息，请先添加机器人为好友，或查看好友申请中的留言信息确认身份词汇。")
+        # 等待3秒，让玩家有时间看到提醒
+        await asyncio.sleep(10)
+        
+        # # 逐个发送提醒
+        # for player_id in failed_users:
+        #     player_info = game.players[player_id]
+        #     nickname = player_info['nickname']
+        #     await bot.send_group_msg(
+        #         group_id=group_id, 
+        #         message=f"请 {nickname}(QQ:{player_id}) 查看接下来的消息并记住自己的词语，将在5秒后撤回"
+        #     )
+        #     # 发送词语并设置延迟撤回
+        #     msg = await bot.send_group_msg(
+        #         group_id=group_id,
+        #         message=f"{nickname} 的词语是：{player_info['word']}"
+        #     )
+        #     # 等待5秒后撤回
+        #     await asyncio.sleep(5)
+        #     try:
+        #         await bot.delete_msg(message_id=msg['message_id'])
+        #     except Exception as e:
+        #         print(f"撤回消息失败: {e}")
     
     # 开始第一轮发言
     await start_speaking_round(bot, group_id)
@@ -216,7 +251,7 @@ async def next_player_speak(bot: Bot, group_id: int):
     if game.current_speaker_index >= len(game.speaking_order):
         # 一轮结束，开始投票
         game.current_speaker_index = 0
-        game.status = GameStatus.VOTING
+        game.status = UndercoverGameStatus.VOTING
         game.votes = {}
         
         await bot.send_group_msg(group_id=group_id, message="本轮发言结束，开始投票！请私聊我「投票 玩家昵称」进行投票。30秒后投票结束。")
@@ -246,9 +281,9 @@ async def next_player_speak(bot: Bot, group_id: int):
 
 # 发言计时器
 async def speaking_timer(bot: Bot, group_id: int):
-    await asyncio.sleep(30)
+    await asyncio.sleep(60)
     
-    if group_id in games and games[group_id].status == GameStatus.PLAYING:
+    if group_id in games and games[group_id].status == UndercoverGameStatus.PLAYING:
         game = games[group_id]
         current_speaker_id = game.speaking_order[game.current_speaker_index]
         current_speaker = game.players[current_speaker_id]
@@ -263,25 +298,23 @@ async def speaking_timer(bot: Bot, group_id: int):
 async def vote_timer(bot: Bot, group_id: int):
     await asyncio.sleep(30)
     
-    if group_id in games and games[group_id].status == GameStatus.VOTING:
+    if group_id in games and games[group_id].status == UndercoverGameStatus.VOTING:
         await end_voting(bot, group_id)
 
 # 处理投票
 VoteCommand = on_regex(pattern=r'^投票\s+(.+)$', priority=1)
 @VoteCommand.handle()
-async def handle_vote(bot: Bot, event: PrivateMessageEvent, state: T_State):
+async def handle_vote(bot: Bot, event: MessageEvent, state: T_State):
     user_id = event.user_id
     
     # 查找用户所在的游戏
     user_game = None
     user_group_id = None
-    
     for group_id, game in games.items():
-        if user_id in game.players and game.status == GameStatus.VOTING and not game.players[user_id]["eliminated"]:
+        if user_id in game.players and game.status == UndercoverGameStatus.VOTING and not game.players[user_id]["eliminated"]:
             user_game = game
             user_group_id = group_id
             break
-    
     if not user_game:
         await VoteCommand.finish(message="你没有参加任何正在投票的谁是卧底游戏")
         return
@@ -320,7 +353,7 @@ async def handle_vote(bot: Bot, event: PrivateMessageEvent, state: T_State):
 # 结束投票
 async def end_voting(bot: Bot, group_id: int):
     game = games[group_id]
-    game.status = GameStatus.PLAYING
+    game.status = UndercoverGameStatus.PLAYING
     
        # 统计投票结果
     vote_count = {}
@@ -376,7 +409,7 @@ async def final_vote(bot: Bot, group_id: int):
     
     await bot.send_group_msg(group_id=group_id, message="所有轮次已结束，进入最终投票！请私聊我「投票 玩家昵称」进行最终投票。30秒后投票结束。")
     
-    game.status = GameStatus.VOTING
+    game.status = UndercoverGameStatus.VOTING
     game.votes = {}
     
     # 设置投票计时器
@@ -410,7 +443,7 @@ def should_end_game(game: UndercoverGame) -> bool:
 # 结束游戏
 async def end_game(bot: Bot, group_id: int):
     game = games[group_id]
-    game.status = GameStatus.ENDED
+    game.status = UndercoverGameStatus.ENDED
     
     # 统计存活的卧底和平民数量
     alive_undercovers = 0
@@ -469,33 +502,33 @@ async def handle_force_end_game(bot: Bot, event: GroupMessageEvent, state: T_Sta
         await ForceEndGame.finish(message="只有管理员才能强制结束游戏")
         return
     
-    if games[group_id].status != GameStatus.ENDED:
+    if games[group_id].status != UndercoverGameStatus.ENDED:
         await end_game(bot, group_id)
     else:
         await ForceEndGame.finish(message="游戏已经结束")
 
 # 查看游戏状态命令
-GameStatus = on_regex(pattern=r'^谁是卧底状态$', priority=1)
-@GameStatus.handle()
+CheckGameStatus = on_regex(pattern=r'^谁是卧底状态$', priority=1)
+@CheckGameStatus.handle()
 async def handle_game_status(bot: Bot, event: GroupMessageEvent, state: T_State):
     group_id = event.group_id
     
     if group_id not in games:
-        await GameStatus.finish(message="当前没有进行中的谁是卧底游戏")
+        await CheckGameStatus.finish(message="当前没有进行中的谁是卧底游戏")
         return
     
     game = games[group_id]
     status_text = ""
     
-    if game.status == GameStatus.WAITING:
+    if game.status == UndercoverGameStatus.WAITING:
         status_text = "等待开始"
-    elif game.status == GameStatus.SIGNUP:
+    elif game.status == UndercoverGameStatus.SIGNUP:
         status_text = "报名中"
-    elif game.status == GameStatus.PLAYING:
+    elif game.status == UndercoverGameStatus.PLAYING:
         status_text = f"游戏进行中，第{game.current_round}轮"
-    elif game.status == GameStatus.VOTING:
+    elif game.status == UndercoverGameStatus.VOTING:
         status_text = "投票中"
-    elif game.status == GameStatus.ENDED:
+    elif game.status == UndercoverGameStatus.ENDED:
         status_text = "已结束"
     
     player_count = len(game.players)
@@ -504,13 +537,13 @@ async def handle_game_status(bot: Bot, event: GroupMessageEvent, state: T_State)
     msg = f"谁是卧底游戏状态：{status_text}\n"
     msg += f"玩家数量：{player_count}人，存活：{alive_count}人\n"
     
-    if game.status == GameStatus.PLAYING or game.status == GameStatus.VOTING:
+    if game.status == UndercoverGameStatus.PLAYING or game.status == UndercoverGameStatus.VOTING:
         msg += "存活玩家：\n"
         for player_id, player_info in game.players.items():
             if not player_info["eliminated"]:
                 msg += f"- {player_info['nickname']}\n"
     
-    await GameStatus.finish(message=msg)
+    await CheckGameStatus.finish(message=msg)
 
 # 谁是卧底游戏帮助命令
 UndercoverHelp = on_regex(pattern=r'^谁是卧底帮助$', priority=1)
@@ -542,7 +575,7 @@ async def handle_speak_message(bot: Bot, event: GroupMessageEvent, state: T_Stat
     
     # 检查是否有游戏在进行，且是否轮到该玩家发言
     if (group_id in games and 
-        games[group_id].status == GameStatus.PLAYING and 
+        games[group_id].status == UndercoverGameStatus.PLAYING and 
         games[group_id].current_speaker_index < len(games[group_id].speaking_order) and
         games[group_id].speaking_order[games[group_id].current_speaker_index] == user_id):
         
