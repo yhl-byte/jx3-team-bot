@@ -1,11 +1,11 @@
 '''
 Date: 2025-03-06 17:21:21
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-03-11 17:32:36
+LastEditTime: 2025-03-12 14:35:33
 FilePath: /team-bot/jx3-team-bot/src/plugins/undercover.py
 '''
 # src/plugins/undercover.py
-from nonebot import on_regex, on_command, on_message
+from nonebot import on_regex, on_command, on_message, require
 from nonebot.rule import to_me
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment, GroupMessageEvent, Bot, Message, PrivateMessageEvent
@@ -16,6 +16,10 @@ import asyncio
 import aiohttp
 import json
 from typing import Dict, List, Tuple, Set, Optional
+require('nonebot_plugin_saa')
+from nonebot_plugin_saa import enable_auto_select_bot
+enable_auto_select_bot()
+from nonebot_plugin_saa import PlatformTarget, TargetQQPrivate, TargetQQGroup, MessageFactory
 
 # 游戏状态
 class UndercoverGameStatus:
@@ -102,6 +106,23 @@ async def handle_start_game(bot: Bot, event: GroupMessageEvent, state: T_State):
             del games[group_id]
         else:
             await start_game_process(bot, group_id)
+
+# 测试临时会话命令
+TestTempMessage = on_regex(pattern=r'^测试临时会话$', priority=1)
+@TestTempMessage.handle()
+async def handle_test_temp_message(bot: Bot, event: GroupMessageEvent):
+    await MessageFactory("你好").send(reply=True, at_sender=True)
+    # await bot.call_api('send_private_msg', { 
+    #      'user_id':int(event.user_id),  
+    #      'message':'woshinianzai'
+    # })
+    try:
+        target = TargetQQPrivate(user_id=event.user_id)
+        await MessageFactory("早上好").send_to(target)
+        await TestTempMessage.finish("测试消息已发送，请查看是否收到")
+    except Exception as e:
+        # 尝试发送好友消息
+        await TestTempMessage.finish("发送临时会话失败，请检查你的隐私设置是否允许接收临时消息")
 
 # 报名命令
 SignupGame = on_regex(pattern=r'^报名卧底$', priority=1)
