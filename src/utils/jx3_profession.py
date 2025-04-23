@@ -1,8 +1,8 @@
 '''
 Date: 2025-02-21 10:56:53
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-03-06 14:07:17
-FilePath: /bott/bot-dd/src/utils/jx3_profession.py
+LastEditTime: 2025-04-23 09:07:43
+FilePath: /team-bot/jx3-team-bot/src/utils/jx3_profession.py
 '''
 from enum import Enum
 from typing import Optional
@@ -39,7 +39,7 @@ class JX3PROFESSION(Enum):
     花间游 = {"花间游", "花间"}
     离经易道 = {"离经易道", "离经", "奶花", "花奶",}
     孤锋诀 = {"孤锋诀", "刀宗","孤锋"}
-    周天功 = {"周天功", "周天"}
+    周天功 = {"周天功", "周天", "段氏"}
     山海心诀 = {"山海心诀", "山海", "万灵"}
 
     @classmethod

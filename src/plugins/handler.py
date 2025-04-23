@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-04-16 09:05:22
+LastEditTime: 2025-04-23 09:34:46
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -12,7 +12,7 @@ from nonebot.adapters.onebot.utils import highlight_rich_message
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment, GroupMessageEvent, Bot, Message,GroupMessageEvent
 from .html_generator import render_html,render_help
 from .render_image import html_to_image
-from .api import check_default_team_exists, check_enroll, check_member, clear_teams, close_team, del_member, enroll_member, team_info, team_list, create_team, update_team_default, update_team_name,move_member,team_info_by_id
+from .api import check_default_team_exists, check_enroll, check_member, clear_teams, close_team, del_member, enroll_member, team_info, team_list, create_team, update_team_default, update_team_name,move_member,team_info_by_id,del_member_by_name
 from ..utils.index import find_default_team, find_earliest_team, find_id_by_team_name, format_teams, get_code_by_name, get_info_by_id, path_to_base64, upload_image,render_team_template
 from ..utils.jx3_profession import JX3PROFESSION
 from ..utils.permission import require_admin_permission
@@ -25,7 +25,7 @@ import os
 COMMAND_ENABLED = {}
 
 # 添加开关命令处理器
-ToggleCommands = on_regex(pattern=r'^年崽\s*(开|关)?$', priority=1)
+ToggleCommands = on_regex(pattern=r'^年崽\s+(开|关)?$', priority=1)
 # 修改开关命令处理器
 @ToggleCommands.handle()
 async def handle_toggle_commands(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -314,11 +314,11 @@ async def handle_sign_up(bot: Bot, event: GroupMessageEvent, state: T_State):
         user = check_enroll(team.get("id"), event.user_id)
         if (len(user) != 0):
             msg = f"您已报名，【{user[0].get('role_name')}】已在团队【{team.get("team_name")}】中"
-            await CancelAgentSignUp.finish(message=Message(msg))
+            await SignUp.finish(message=Message(msg))
         checkSameUser = check_member(team.get("id"), role_name)
         if len(checkSameUser) != 0:
             msg = f"【{checkSameUser[0].get("role_name")}】已在团队中，请勿重复报名"
-            await AgentSignUp.finish(message=Message(msg))
+            await SignUp.finish(message=Message(msg))
         res = enroll_member({
             'user_id': event.user_id,
             'group_id': event.group_id,
@@ -414,11 +414,12 @@ async def handle_cancel(bot: Bot, event: GroupMessageEvent, state: T_State):
     if (len(agent_users) == 0):
         msg = "您未帮助队友进行代报名，请查看团队检查报名记录"
         await CancelAgentSignUp.finish(message=Message(msg))
+        return
     if team:
         res = del_member(team.get("id"), event.user_id , agent_users[0].get("agent"))
         if res == -1:
             return print(f"命令: 取消代报名, 删除成员数据失败")
-        msg = f"{event.sender.nickname} 您报名的 【{agent_users[0].get('role_name')}】已退出团队 【{team.get('team_name')}】, 祝其三次生活愉快！"
+        msg = f"{event.sender.nickname} 您代报名的 【{agent_users[0].get('role_name')}】已退出团队 【{team.get('team_name')}】, 祝其三次生活愉快！"
         await CancelAgentSignUp.finish(message=Message(msg))
     else:
         msg = "当前无团队，请先创建团队"
@@ -434,16 +435,30 @@ async def handle_cancel_by_id(bot: Bot, event: GroupMessageEvent, state: T_State
     matched = state["_matched"]
     team_id = matched.group(2)
     team = find_default_team(teamList) if not team_id else team_info_by_id(team_id)
-    agent_code = matched.group(1)
-    agent_users = check_enroll(team.get("id"), event.user_id, agent_code)
-    if (len(agent_users) == 0):
-        msg = f"为找到代号为{agent_code}的成员，请查看团队检查报名记录"
-        await CancelAgentSignUpById.finish(message=Message(msg))
+
+    param = matched.group(1)  # 可能是代号或角色名
+    
+    # 尝试转换为数字（代号）
+    try:
+        agent_code = int(param)
+        agent_users = check_enroll(team.get("id"), event.user_id, agent_code)
+        if (len(agent_users) == 0):
+            msg = f"未找到代号为{agent_code}的成员，请查看团队检查报名记录"
+            await CancelAgentSignUpById.finish(message=Message(msg))
+            return
+    except ValueError:
+        # 如果转换失败，则按角色名称处理
+        role_name = param
+        agent_users = check_member(team.get("id"), role_name)
+        if (len(agent_users) == 0):
+            msg = f"未找到角色名为【{role_name}】的成员，请查看团队检查报名记录"
+            await CancelAgentSignUpById.finish(message=Message(msg))
+            return
     if team:
         res = del_member(team.get("id"), event.user_id , agent_users[0].get("agent"))
         if res == -1:
             return print(f"命令: 取消代报名, 删除成员数据失败")
-        msg = f"{event.sender.nickname} 您报名的 【{agent_users[0].get('role_name')}】已退出团队 【{team.get('team_name')}】, 祝其三次生活愉快！"
+        msg = f"{event.sender.nickname} 您代报名的 【{agent_users[0].get('role_name')}】已退出团队 【{team.get('team_name')}】, 祝其三次生活愉快！"
         await CancelAgentSignUpById.finish(message=Message(msg))
     else:
         msg = "当前无团队，请先创建团队"
@@ -457,6 +472,8 @@ async def handle_kick_member(bot: Bot, event: GroupMessageEvent, state: T_State)
         return
     # 检查管理员权限
     if not await require_admin_permission(bot, event.group_id, event.user_id, CreatTeam):
+        msg = "仅管理员可以执行此操作"
+        await KickMember.finish(message=Message(msg))
         return
     role_name = state["_matched"][1]
     teamList = team_list(event.group_id)
@@ -468,7 +485,8 @@ async def handle_kick_member(bot: Bot, event: GroupMessageEvent, state: T_State)
         if len(user) == 0:
             msg = f"【{role_name}】不在团队中，请检查"
             await KickMember.finish(message=Message(msg))
-        res = del_member(team.get("id"), event.user_id, user[0].get("agent"))
+            return
+        res = del_member_by_name(team.get("id"), role_name)
         if res == -1:
             return print(f"命令: 开除团员, 删除成员数据失败")
         msg = f"{event.sender.nickname} 您已开除 【{role_name}】 成员，祝其三次生活愉快！"

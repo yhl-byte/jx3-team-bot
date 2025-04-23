@@ -1,8 +1,8 @@
 '''
 Date: 2025-02-19 15:31:53
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-03-06 17:13:54
-FilePath: /bott/bot-dd/src/plugins/api.py
+LastEditTime: 2025-04-23 09:27:09
+FilePath: /team-bot/jx3-team-bot/src/plugins/api.py
 '''
 from .database import TeamRecordDB
 from ..utils.table_position import init_table,find_empyt_positions,find_position_by_duty
@@ -136,6 +136,22 @@ def del_member(teamId, userId, agent: str = None):
     else:
         # 如果 agent 为 None，匹配 agent 为 NULL 的数据
         condition += " AND agent IS NULL"
+    affected_rows = db.delete("team_member", condition, params)
+    if affected_rows > 0:
+        print(f"删除成功，受影响的行数: {affected_rows}")
+    elif affected_rows == 0:
+        print("没有找到匹配的记录")
+        return -1
+    else:
+        print("删除失败")
+        return -1
+
+# # 取消报名-通过名字 删除成员
+def del_member_by_name(teamId, roleName):
+    # 构造查询条件
+    condition = "team_id = ? AND role_name = ?"
+    params = [teamId, roleName]
+
     affected_rows = db.delete("team_member", condition, params)
     if affected_rows > 0:
         print(f"删除成功，受影响的行数: {affected_rows}")
