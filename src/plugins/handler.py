@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-04-23 09:34:46
+LastEditTime: 2025-05-08 16:45:55
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -11,12 +11,13 @@ from nonebot.typing import T_State
 from nonebot.adapters.onebot.utils import highlight_rich_message
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment, GroupMessageEvent, Bot, Message,GroupMessageEvent
 from .html_generator import render_html,render_help
-from .render_image import html_to_image
+from .render_image import generate_html_screenshot, html_to_image
 from .api import check_default_team_exists, check_enroll, check_member, clear_teams, close_team, del_member, enroll_member, team_info, team_list, create_team, update_team_default, update_team_name,move_member,team_info_by_id,del_member_by_name
-from ..utils.index import find_default_team, find_earliest_team, find_id_by_team_name, format_teams, get_code_by_name, get_info_by_id, path_to_base64, upload_image,render_team_template
+from ..utils.index import find_default_team, find_earliest_team, find_id_by_team_name, format_teams, get_code_by_name, get_info_by_id, path_to_base64, upload_image,render_team_template,generate_team_stats
 from ..utils.jx3_profession import JX3PROFESSION
 from ..utils.permission import require_admin_permission
 from src.config import STATIC_PATH
+from .jx3_api import *
 # 导入谁是卧底游戏模块
 # from .undercover import *
 import os
@@ -330,7 +331,11 @@ async def handle_sign_up(bot: Bot, event: GroupMessageEvent, state: T_State):
         })
         if res == -1:
             return print(f"命令: 报名, 内容: {xf} - {role_name}- 数据插入失败")
-        msg = f"{event.sender.nickname} 你输入的 【{role_name}】 加入团队 【{team.get('team_name')}】 成功！"
+        memberslist = check_member(team.get("id"))
+        msg = (
+            MessageSegment.at(event.user_id) + 
+            Message(f" 「{role_name}」报名成功\n{generate_team_stats(memberslist, team)}")
+        )
         await SignUp.finish(message=Message(msg))
     else:
         msg = "当前无团队，请先创建团队"
@@ -354,7 +359,11 @@ async def handle_cancel(bot: Bot, event: GroupMessageEvent, state: T_State):
         res = del_member(team.get("id"), event.user_id)
         if res == -1:
             return print(f"命令: 取消报名, 删除成员数据失败")
-        msg = f"{event.sender.nickname} 您报名的 【{user[0].get('role_name')}】已退出团队 【{team.get('team_name')}】, 祝您三次生活愉快！"
+        memberslist = check_member(team.get("id"))
+        msg = (
+            MessageSegment.at(event.user_id) + 
+            Message(f" 「{user[0].get('role_name')}」已退出团队\n{generate_team_stats(memberslist, team)}")
+        )
         await CancelSignUp.finish(message=Message(msg))
     else:
         msg = "当前无团队，请先创建团队"
@@ -394,75 +403,100 @@ async def handle_sign_up(bot: Bot, event: GroupMessageEvent, state: T_State):
         })
         if res == -1:
             return print(f"命令: 代报名, 内容: {xf} - {role_name}- 数据插入失败")
-        msg = f"{event.sender.nickname} 你输入的 【{role_name}】 加入团队 【{team.get('team_name')}】 成功！"
+        memberslist = check_member(team.get("id"))
+        msg = (
+            MessageSegment.at(event.user_id) + 
+            Message(f" 「{role_name}」报名成功\n{generate_team_stats(memberslist, team)}")
+        )
         await AgentSignUp.finish(message=Message(msg))
     else:
         msg = "当前无团队，请先创建团队"
         await AgentSignUp.finish(message=Message(msg))
 
 # # 取消代报名 - 团队成员
-CancelAgentSignUp = on_regex(pattern=r'^取消代报名(?:\s+(\d+))?$',priority=1)
+CancelAgentSignUp = on_regex(pattern=r'^取消代报名(?:\s+(\d+|\S+))?(?:\s+(\d+|\S+))?$',priority=1)
 @CancelAgentSignUp.handle()
 async def handle_cancel(bot: Bot, event: GroupMessageEvent, state: T_State):
     if not await check_command_enabled(bot, event, "取消代报名"):
         return
     teamList = team_list(event.group_id)
     matched = state["_matched"]
-    team_id = matched.group(1)
-    team = find_default_team(teamList) if not team_id else team_info_by_id(team_id)
-    agent_users = check_enroll(team.get("id"), event.user_id, True)
-    if (len(agent_users) == 0):
-        msg = "您未帮助队友进行代报名，请查看团队检查报名记录"
-        await CancelAgentSignUp.finish(message=Message(msg))
-        return
-    if team:
-        res = del_member(team.get("id"), event.user_id , agent_users[0].get("agent"))
-        if res == -1:
-            return print(f"命令: 取消代报名, 删除成员数据失败")
-        msg = f"{event.sender.nickname} 您代报名的 【{agent_users[0].get('role_name')}】已退出团队 【{team.get('team_name')}】, 祝其三次生活愉快！"
-        await CancelAgentSignUp.finish(message=Message(msg))
-    else:
-        msg = "当前无团队，请先创建团队"
-        await CancelAgentSignUp.finish(message=Message(msg))
-
-# # 取消指定编号代报名 - 团队成员
-CancelAgentSignUpById = on_regex(pattern=r'^取消代报名\s+(\d+)(?:\s+(\d+))?$',priority=1)
-@CancelAgentSignUpById.handle()
-async def handle_cancel_by_id(bot: Bot, event: GroupMessageEvent, state: T_State):
-    if not await check_command_enabled(bot, event, "取消指定编号代报名"):
-        return
-    teamList = team_list(event.group_id)
-    matched = state["_matched"]
-    team_id = matched.group(2)
-    team = find_default_team(teamList) if not team_id else team_info_by_id(team_id)
-
-    param = matched.group(1)  # 可能是代号或角色名
+    param1 = matched.group(1)  # 第一个参数：可能是团队ID/名称、代号或角色名
+    param2 = matched.group(2)  # 第二个参数：可能是团队ID/名称
     
-    # 尝试转换为数字（代号）
-    try:
-        agent_code = int(param)
-        agent_users = check_enroll(team.get("id"), event.user_id, agent_code)
-        if (len(agent_users) == 0):
-            msg = f"未找到代号为{agent_code}的成员，请查看团队检查报名记录"
-            await CancelAgentSignUpById.finish(message=Message(msg))
-            return
-    except ValueError:
-        # 如果转换失败，则按角色名称处理
-        role_name = param
-        agent_users = check_member(team.get("id"), role_name)
-        if (len(agent_users) == 0):
-            msg = f"未找到角色名为【{role_name}】的成员，请查看团队检查报名记录"
-            await CancelAgentSignUpById.finish(message=Message(msg))
-            return
-    if team:
-        res = del_member(team.get("id"), event.user_id , agent_users[0].get("agent"))
-        if res == -1:
-            return print(f"命令: 取消代报名, 删除成员数据失败")
-        msg = f"{event.sender.nickname} 您代报名的 【{agent_users[0].get('role_name')}】已退出团队 【{team.get('team_name')}】, 祝其三次生活愉快！"
-        await CancelAgentSignUpById.finish(message=Message(msg))
+    # 确定团队
+    team = None
+    if not param1 and not param2:
+        # 情况1：取消代报名
+        team = find_default_team(teamList)
+    elif param1 and not param2:
+        # 情况2：取消代报名 团队名称
+        # 情况3：取消代报名 代号
+        # 情况4：取消代报名 角色名称
+        try:
+            team_id = int(param1)
+            team = find_default_team(teamList)
+        except ValueError:
+            # 如果不是数字，则尝试按团队名称查找
+            team = team_info(param1)
+            if not team:
+                # 如果找不到团队，则视为角色名或代号
+                team = find_default_team(teamList)
+                print(3 )
     else:
+        # 情况5：取消代报名 代号 团队名称
+        # 情况6：取消代报名 角色名称 团队名称
+        try:
+            team_id = int(param2)
+            team = team_info_by_id(team_id)
+        except ValueError:
+            team = team_info(param2)
+    
+    if not team:
         msg = "当前无团队，请先创建团队"
-        await CancelAgentSignUpById.finish(message=Message(msg))
+        await CancelAgentSignUp.finish(message=Message(msg))
+        return
+        
+    # 根据不同情况处理取消代报名
+    if param1 and param1.isdigit():
+        # 按代号取消
+        agent_code = int(param1)
+        agent_users = check_enroll(team.get("id"), event.user_id, param1)
+        if len(agent_users) == 0:
+            msg = f"未找到代号为{agent_code}的成员，请查看团队检查报名记录"
+            await CancelAgentSignUp.finish(message=Message(msg))
+            return
+        user_to_cancel = agent_users[0]
+    elif param1 and not param1.isdigit():
+        # 按角色名取消
+        role_name = param1
+        agent_users = check_member(team.get("id"), role_name)
+        if len(agent_users) == 0:
+            msg = f"未找到角色名为「{role_name}」的成员"
+            await CancelAgentSignUp.finish(message=Message(msg))
+            return
+        user_to_cancel = agent_users[0]
+    else:
+        # 默认取消最近一个代报名
+        agent_users = check_enroll(team.get("id"), event.user_id, True)
+        if len(agent_users) == 0:
+            msg = "您未帮助队友进行代报名，请查看团队检查报名记录"
+            await CancelAgentSignUp.finish(message=Message(msg))
+            return
+        user_to_cancel = agent_users[0]
+    
+    # 执行取消操作
+    res = del_member(team.get("id"), event.user_id, user_to_cancel.get("agent"))
+    if res == -1:
+        return print(f"命令: 取消代报名, 删除成员数据失败")
+    
+    memberslist = check_member(team.get("id"))
+    msg = (
+        MessageSegment.at(event.user_id) + 
+        Message(f" 「{user_to_cancel.get('role_name')}」已退出团队\n{generate_team_stats(memberslist, team)}")
+    )
+    await CancelAgentSignUp.finish(message=Message(msg))
+
 
 # # 开除团员
 KickMember = on_regex(pattern=r'^开除团员\s+(\S+)(?:\s+(\d+))?$',priority=1)
@@ -489,7 +523,11 @@ async def handle_kick_member(bot: Bot, event: GroupMessageEvent, state: T_State)
         res = del_member_by_name(team.get("id"), role_name)
         if res == -1:
             return print(f"命令: 开除团员, 删除成员数据失败")
-        msg = f"{event.sender.nickname} 您已开除 【{role_name}】 成员，祝其三次生活愉快！"
+        memberslist = check_member(team.get("id"))
+        msg = (
+            MessageSegment.at(event.user_id) + 
+            Message(f" 「{role_name}」已退出团队\n{generate_team_stats(memberslist, team)}")
+        )
         await KickMember.finish(message=Message(msg))
     else:
         msg = "当前无团队，请先创建团队"
@@ -567,12 +605,12 @@ async def handle_check_team(bot: Bot, event: GroupMessageEvent, state: T_State):
        "external": external,
        "pastor": pastor,
        "tank": tank,
-       "members": memberslist
+       "members": memberslist,
     }
     # 生成 HTML 内容
     html_content = render_html(team_box)
     # 转换为图片
-    image_path = html_to_image(html_content)
+    image_path = await generate_html_screenshot(html_content, 1088)
     # # 发送图片
     await CheckTeam.finish(MessageSegment.image(path_to_base64(image_path)))
     # 清理临时文件
@@ -620,6 +658,7 @@ async def handle_help(bot: Bot, event: GroupMessageEvent, state: T_State):
     
     # 转换为图片
     image_path = html_to_image(html_content)
+    # image_path = await generate_html_screenshot(html_content)
     
     # 发送图片
     await Help.finish(MessageSegment.image(path_to_base64(image_path)))

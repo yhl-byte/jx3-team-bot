@@ -1,8 +1,8 @@
 '''
 Date: 2025-02-21 10:56:53
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-03-06 10:38:08
-FilePath: /bott/bot-dd/src/utils/index.py
+LastEditTime: 2025-05-08 16:08:42
+FilePath: /team-bot/jx3-team-bot/src/utils/index.py
 '''
 import json
 import base64
@@ -131,3 +131,73 @@ def path_to_base64(image_path: str) -> str:
         base64_data = base64.b64encode(file.read()).decode("utf-8")
         image_segment = f"base64://{base64_data}"
         return image_segment
+
+
+def format_daily_data(data: dict) -> str:
+    """格式化日常数据"""
+    # 构建格式化字符串
+    formatted = f"{data['date']}星期{data['week']}\n"
+    formatted += f"大战：{data['war']}\n"
+    formatted += f"战场：{data['battle']}\n"
+    formatted += f"宗门：{data['school']}\n"
+    formatted += f"画像：{data['draw']}\n" 
+    formatted += f"福缘：{','.join(data['luck'])}\n"
+    formatted += f"驰援：{data['rescue']}\n"
+    
+    # 家园声望
+    formatted += "【家园声望·加倍道具】\n"
+    formatted += f"{','.join(data['card'])}\n"
+    
+    # 武林通鉴相关任务
+    team_tasks = data['team']
+    if len(team_tasks) >= 2:
+        formatted += "【武林通鉴·公共任务】\n"
+        formatted += f"{team_tasks[0]}\n"
+        
+        formatted += "【武林通鉴·秘境任务】\n"
+        formatted += f"{team_tasks[1]}\n"
+        
+        formatted += "【武林通鉴·团队秘境】\n"
+        formatted += f"{team_tasks[2]}"
+    
+    return formatted
+
+
+def format_role_data(data: dict) -> str:
+    """格式化角色详情数据"""
+    # 构建格式化字符串
+    formatted = f"【角色】{data['roleName']}\n"
+    formatted += f"【归属】{data['serverName']}·{data['campName']}\n"
+    formatted += f"【门派】{data['forceName']}·{data['bodyName']}\n" 
+    formatted += f"【帮会】{data['tongName']}\n"
+    formatted += f"【uid】{data['roleId']}\n"
+    formatted += f"【全服uid】{data['globalRoleId']}"
+    
+    return formatted
+
+def generate_team_stats(memberslist: List[Dict[str, Any]], team: dict) -> str:
+    """生成团队统计信息"""
+    members = memberslist
+    total = len(members)
+    remaining = 25 - total  # 假设总坑位为25
+    
+    role_counts = {
+        '外功': 0,
+        '内功': 0,
+        '治疗': 0, 
+        '坦克': 0,
+    }
+    
+    for member in members:
+        duty = member.get('xf_duty')
+        if duty in role_counts:
+            role_counts[duty] += 1
+            
+    return (
+        f"当前团队：[ {team['team_name']} ]\n"
+        f"剩余 {remaining} 个坑位\n"
+        f"外功已有：{role_counts['外功']} 人\n"
+        f"内功已有：{role_counts['内功']} 人\n"
+        f"奶妈已有：{role_counts['治疗']} 人\n"
+        f"坦克已有：{role_counts['坦克']} 人\n"
+    )

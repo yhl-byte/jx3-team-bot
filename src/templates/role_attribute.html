@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>角色属性</title>
+    <style>
+       * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+            color: #333;
+            font-size: 16px;
+            width: 1200px;
+            background: #fafafa;
+            height: fit-content;
+        }
+
+        header {
+            text-align: center;
+            padding: 24px;
+            background: linear-gradient(135deg, #6366f1, #3b82f6);
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            display: flex;
+            padding: 24px;
+            position: relative;
+            background: #ffffff;
+            border-radius: 8px;
+            margin: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+
+        aside {
+            width: 240px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        aside h3 {
+            color: #1e293b;
+            font-size: 20px;
+            margin: 40px 0 12px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        aside h3:first-child {
+            margin-top: 0;
+            color: #f59e0b;
+            font-size: 42px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            border-bottom: none;
+        }
+
+        .attribute-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+        }
+
+        .attribute-table td {
+            padding: 10px 0;
+            font-size: 16px;
+            color: #475569;
+        }
+
+        .attribute-table td:last-child {
+            text-align: right;
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .equipList {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .equip-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            min-height: 70px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .equip-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .front {
+            display: flex;
+            width: 60%;
+            align-items: center;  /* 添加垂直居中对齐 */
+        }
+        .equip-tag {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            padding: 2px 6px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .front-img-info {
+            position: relative;  /* 为绝对定位的标签提供参考 */
+            display: flex;
+            align-items: center;
+        }
+
+        .front-img-info img {
+            width: 60px;
+            height: 60px;
+            margin-right: 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            justify-content: center; /* 添加垂直居中对齐 */
+        }
+
+        .end {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            justify-content: center; /* 添加垂直居中对齐 */
+        }
+
+        .color-stone-imgs,
+        .enchant-imgs,
+        .five-stone-imgs {      /* 合并五行石样式 */
+            display: flex;
+            align-items: center;  /* 统一添加垂直居中对齐 */
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 4px 8px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 4px;
+        }
+
+        .equip-name {
+            color: #d946ef;
+            font-weight: bold;
+            font-size: 17px;
+        }
+
+        
+
+        .color-stone-name {
+            color: #d946ef;
+            font-weight: bold;
+        }
+
+        .enchant-name {
+            color: #6366f1;
+            font-weight: bold;
+        }
+
+
+        .five-stone-imgs img,
+        .color-stone-imgs img,
+        .enchant-imgs img {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+        }
+
+        .star-container {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .star-rating {
+            color: #f59e0b;
+            font-size: 16px;
+            text-shadow: 0 0 2px rgba(0,0,0,0.2);
+        }
+
+        .star-rating::before {
+            content: "★";
+        }
+
+        footer {
+            width: calc(100% - 32px);
+            margin: 0 16px 16px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 16px 0;
+        }
+
+        footer .qxitem {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        footer .qxitem:hover {
+            background: #f8fafc;
+        }
+
+        footer .qxitem img {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        footer .qxitem div {
+            color: #475569;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        属性 · {{ roleInfo.serverName }} · {{ roleInfo.roleName }} · {{ roleInfo.kungfuNam }} ({{ roleInfo.forceName }} ) 
+    </header>
+    <div class="container">
+        <aside>
+            <h3>{{roleInfo.score}}</h3>
+            <h3>主要属性</h3>
+            <table class="attribute-table">
+            {% for base in roleInfo.base_panels %}
+                <tr>
+                    <td>{{base.name}}</td>
+                    <td>{{base.value}}{% if base.percent %}%{% endif %}</td>
+                </tr>
+            {% endfor %}
+            </table>
+            <h3>其他属性</h3>
+            <table class="attribute-table">
+            {% for other in roleInfo.other_panels %}
+                <tr>
+                    <td>{{other.name}}</td>
+                    <td>{{other.value}}{% if other.percent %}%{% endif %}</td>
+                </tr>
+            {% endfor %}
+            </table>
+        </aside>
+        <section class="equipList">
+                {% for item in roleInfo.equipList %}
+                <div class="equip-item">
+                <div class="front">
+                        <span class="front-img-info">
+                            {% if item.source and '绝世' in item.source %}
+                                <span class="equip-tag" style="background: linear-gradient(135deg, #ff4d4d, #cc0000);">绝世</span>
+                            {% endif %}
+                            {% if item.modifyType and (item.EquipType.Desc is not defined or item.EquipType.Desc == '秘境挑战')  %}
+                                {% set rare_attrs = ['元气', '根骨', '身法', '力道', '体质'] %}
+                                {% set normal_mods = item.modifyType | selectattr('name', 'in', rare_attrs) | list %}
+                                {% if normal_mods|length == 0 %}
+                                    <span class="equip-tag" style="background: linear-gradient(135deg, #9333ea, #6366f1);">稀有</span>
+                                {% endif %}
+                            {% endif %}
+                            {% if item.source and ('芭德' in item.source or '薛琢玉' in item.source) and item.kind == '武器' and (item.subKind is not defined or '囊' not in item.subKind) %}
+                                <span class="equip-tag" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">特效</span>
+                            {% endif %}
+                            {% if item.source and ('芭德' in item.source or '薛琢玉' in item.source) and item.kind == '饰品' and item.subKind == '腰坠' %}
+                                <span class="equip-tag" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">特效</span>
+                            {% endif %}
+                            <img src="{{item.icon}}" alt="">
+                        </span>
+                        <span class="info">
+                            <span class="equip-name">{{item.name}} <span style="color:#000">({{item.quality}})</span></span>
+                            <span>{{item.modifyType | map(attribute='name') | join(' ')}}</span>
+                            <span class="star-container">
+                                {% for i in range(item.strengthLevel|int) %}
+                                    <span class="star-rating"></span>
+                                {% endfor %}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="end">
+                        {% if item.colorStone %}
+                        <span class="color-stone-imgs">
+                            <span class="color-stone-name">{{item.colorStone.name}}</span>
+                            <img src="{{item.colorStone.icon}}" alt="">
+                        </span>
+                        {% endif %}
+                        {% if item.fiveStone %}
+                        <span class="five-stone-imgs">
+                            {% for fs in item.fiveStone %}
+                            <img src="{{fs.icon}}" alt="">
+                            {% endfor %}
+                        </span>
+                        {% endif %}
+                        {% if item.permanentEnchant and item.permanentEnchant[0] %}
+                        <span class="enchant-imgs">
+                            <span class="enchant-name">{{item.permanentEnchant[0].name}}</span>
+                            <img src="{{item.permanentEnchant[0].icon}}" alt="">
+                        </span>
+                        {% endif %}
+                        {% if item.commonEnchant %}
+                        <span class="enchant-imgs">
+                            <span class="enchant-name">{{item.commonEnchant.name}}</span>
+                            <img src="{{item.commonEnchant.icon}}" alt="">
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+        </section>
+    </div>
+    {% if roleInfo.qixueList and roleInfo.qixueList|length > 0 %}
+    <footer>
+        {% for qx in roleInfo.qixueList %}
+        <div class="qxitem">
+            <img src="{{qx.icon}}" alt="">
+            <div>{{qx.name}}</div>
+        </div>
+        {% endfor %}
+    </footer>
+    {% endif %}
+</body>
+</html>

@@ -1,7 +1,7 @@
 <!--
  * @Date: 2025-02-18 13:34:35
  * @LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
- * @LastEditTime: 2025-04-16 08:59:40
+ * @LastEditTime: 2025-05-08 15:16:15
  * @FilePath: /team-bot/jx3-team-bot/src/templates/team.html
 -->
 <!-- src/templates/message.html -->
@@ -171,7 +171,7 @@
 </head>
 <body>
     <header>
-        <img src="{{ static_path }}/xf-icon/0.png" alt="jx3" class="jx3-logo" width="40">
+        <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/xf-icon/0.png') }}" alt="jx3" class="jx3-logo" width="40">
         <span class="title">{{ team_box.team_name }}</span>
         <span class="desc">遇见即是缘</span>
     </header>
@@ -196,7 +196,7 @@
                 <span class="num">位置：{{ position }}</span>
                 {% if member.value %}
                 <div class="front">
-                    <img src="{{ static_path }}/xf-icon/{{ member.value.xf_id }}.png" alt="xf" width="48">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/xf-icon/' + member.value.xf_id|string + '.png')  }}" alt="xf" width="48">
                     {% if member.value.agent %}
                     <div class="agent-tag">代{{ member.value.agent }}</div>
                     {% endif %}
