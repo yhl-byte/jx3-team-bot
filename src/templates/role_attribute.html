@@ -42,18 +42,30 @@
         }
 
         aside {
-            width: 240px;
+            width: 400px;
             padding: 16px;
             background: #f8fafc;
             border-radius: 8px;
+            position: relative;
         }
 
         aside h3 {
             color: #1e293b;
-            font-size: 20px;
+            font-size: 24px;
             margin: 40px 0 12px 0;
             padding-bottom: 8px;
             border-bottom: 2px solid #e2e8f0;
+        }
+
+        aside img {
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            position: absolute;
+            bottom: 16px;
+            left: 0;
+            object-fit: cover;
         }
 
         aside h3:first-child {
@@ -74,7 +86,7 @@
 
         .attribute-table td {
             padding: 10px 0;
-            font-size: 16px;
+            font-size: 20px;
             color: #475569;
         }
 
@@ -248,12 +260,15 @@
     </style>
 </head>
 <body>
-    <header>
+    <header {% if roleInfo %}style="position: relative; background: linear-gradient(135deg, {{  roleInfo.color| default('#6366f1') }}, #fff)"{% endif %}>
         属性 · {{ roleInfo.serverName }} · {{ roleInfo.roleName }} · {{ roleInfo.kungfuNam }} ({{ roleInfo.forceName }} ) 
+        {% if roleInfo.xfIcon %}
+        <img src="data:image/png;base64,{{ roleInfo.xfIcon }}" alt="xfIcon" style="position: absolute; right: 24px; top: 12px; width: 48px; height: 48px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+        {% endif %}
     </header>
     <div class="container">
         <aside>
-            <h3>{{roleInfo.score}}</h3>
+            <h3 style="text-align: center;width: 100%;">{{roleInfo.score}}</h3>
             <h3>主要属性</h3>
             <table class="attribute-table">
             {% for base in roleInfo.base_panels %}
@@ -272,6 +287,7 @@
                 </tr>
             {% endfor %}
             </table>
+            <img src="{{roleInfo.show}}" alt="show">
         </aside>
         <section class="equipList">
                 {% for item in roleInfo.equipList %}
