@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-21 10:56:53
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-08 16:08:42
+LastEditTime: 2025-05-09 16:02:53
 FilePath: /team-bot/jx3-team-bot/src/utils/index.py
 '''
 import json
@@ -201,3 +201,18 @@ def generate_team_stats(memberslist: List[Dict[str, Any]], team: dict) -> str:
         f"奶妈已有：{role_counts['治疗']} 人\n"
         f"坦克已有：{role_counts['坦克']} 人\n"
     )
+
+# 将十六进制颜色转换为RGB值
+def hex_to_rgb(hex_color):
+    hex_color = hex_color.lstrip('#')
+    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
+# 将RGB值转换回十六进制颜色
+def rgb_to_hex(rgb):
+    return '#{:02x}{:02x}{:02x}'.format(rgb[0], rgb[1], rgb[2])
+
+# 加深颜色
+def darken_color(hex_color, factor=0.7):
+    rgb = hex_to_rgb(hex_color)
+    darkened = tuple(int(c * factor) for c in rgb)
+    return rgb_to_hex(darkened)

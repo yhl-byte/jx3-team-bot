@@ -10,7 +10,7 @@ import aiohttp
 import json
 from typing import Dict, List, Optional
 from jx3api import JX3API,AsyncJX3API
-from ..utils.index import format_daily_data,format_role_data,path_to_base64,render_team_template,get_code_by_name
+from ..utils.index import format_daily_data,format_role_data,path_to_base64,render_team_template,darken_color
 from .html_generator import render_role_attribute,img_to_base64
 from .render_image import generate_html_screenshot
 from src.config import STATIC_PATH
@@ -86,9 +86,14 @@ async def handle_role_detail(bot: Bot, event: GroupMessageEvent, state: T_State)
     if not isinstance(panel_list, dict):
         panel_list = {}
     panels = panel_list.get("panel", []) or []  # 确保 panels 是一个列表
+     # 获取背景色并生成更深的字体颜色
+    bg_color = colors.get(xf_name, "#e8e8e8")
+    # 如果是默认的灰色，使用深灰色，否则加深原色
+    font_color = "#4a5568" if bg_color == "#e8e8e8" else darken_color(bg_color)
     roleInfo = {
-        "color": colors.get(xf_name, "#e8e8e8"),
+        "color": bg_color,
         "xfIcon": xf_icon,
+        "fontColor": font_color,
         "show": card.get('showAvatar', ''),
         "serverName": res.get('serverName', '未知服务器'),
         "roleName": res.get('roleName', '未知角色'),
