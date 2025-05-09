@@ -79,9 +79,13 @@ async def handle_role_detail(bot: Bot, event: GroupMessageEvent, state: T_State)
         icon_name = kungfu_name.replace('·', '')
     else:
         icon_name = kungfu_name
-    xf_icon = img_to_base64(STATIC_PATH.absolute() / f"xf-cn-icon/{icon_name.strip()}.png")
+    icon_name = icon_name.strip()
+    xf_icon = img_to_base64(STATIC_PATH.absolute() / f"xf-cn-icon/{icon_name}.png")
     card = await async_api.show_cache(server= server_name, name=role_name)
-    print(11,card)
+    panel_list = res.get('panelList') or {}
+    if not isinstance(panel_list, dict):
+        panel_list = {}
+    panels = panel_list.get("panel", []) or []  # 确保 panels 是一个列表
     roleInfo = {
         "color": colors.get(xf_name, "#e8e8e8"),
         "xfIcon": xf_icon,
@@ -94,14 +98,15 @@ async def handle_role_detail(bot: Bot, event: GroupMessageEvent, state: T_State)
         "equipList": res.get('equipList', []),
         "qixueList": res.get('qixueList', []),
         "base_panels": [
-            panel for panel in res.get('panelList', {}).get("panel", [])
+            panel for panel in panels
             if panel.get("name") in ["会心", "会心效果", "破防", "无双", "破招", "加速"]
         ],
         "other_panels": [
-            panel for panel in res.get('panelList', {}).get("panel", [])
+            panel for panel in panels
             if panel.get("name") not in ["会心", "会心效果", "破防", "无双", "破招", "加速"]
         ]
     }
+    print(res.get('equipList', []))
     # 生成 HTML 内容
     html_content = render_role_attribute(roleInfo)
     # # 转换为图片

@@ -271,21 +271,33 @@
             <h3 style="text-align: center;width: 100%;">{{roleInfo.score}}</h3>
             <h3>主要属性</h3>
             <table class="attribute-table">
-            {% for base in roleInfo.base_panels %}
+            {% if roleInfo.base_panels and roleInfo.base_panels|length > 0 %}
+                {% for base in roleInfo.base_panels %}
+                    <tr>
+                        <td>{{base.name}}</td>
+                        <td>{{base.value}}{% if base.percent %}%{% endif %}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
                 <tr>
-                    <td>{{base.name}}</td>
-                    <td>{{base.value}}{% if base.percent %}%{% endif %}</td>
+                    <td colspan="2" style="text-align: center;">暂无</td>
                 </tr>
-            {% endfor %}
+            {% endif %}
             </table>
             <h3>其他属性</h3>
             <table class="attribute-table">
-            {% for other in roleInfo.other_panels %}
+            {% if roleInfo.other_panels and roleInfo.other_panels|length > 0 %}
+                {% for other in roleInfo.other_panels %}
+                    <tr>
+                        <td>{{other.name}}</td>
+                        <td>{{other.value}}{% if other.percent %}%{% endif %}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
                 <tr>
-                    <td>{{other.name}}</td>
-                    <td>{{other.value}}{% if other.percent %}%{% endif %}</td>
+                    <td colspan="2" style="text-align: center;">暂无</td>
                 </tr>
-            {% endfor %}
+            {% endif %}
             </table>
             <img src="{{roleInfo.show}}" alt="show">
         </aside>
@@ -344,7 +356,11 @@
                         {% endif %}
                         {% if item.commonEnchant %}
                         <span class="enchant-imgs">
-                            <span class="enchant-name">{{item.commonEnchant.name}}</span>
+                            {% if item.commonEnchant.name %}
+                                <span class="enchant-name">{{item.commonEnchant.name}}</span>
+                            {% else %}
+                                <span class="enchant-name">于阗玉川</span>
+                            {% endif %}
                             <img src="{{item.commonEnchant.icon}}" alt="">
                         </span>
                         {% endif %}
