@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-08 16:45:55
+LastEditTime: 2025-05-09 11:39:43
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -610,7 +610,7 @@ async def handle_check_team(bot: Bot, event: GroupMessageEvent, state: T_State):
     # 生成 HTML 内容
     html_content = render_html(team_box)
     # 转换为图片
-    image_path = await generate_html_screenshot(html_content, 1088)
+    image_path = await generate_html_screenshot(html_content, 1160)
     # # 发送图片
     await CheckTeam.finish(MessageSegment.image(path_to_base64(image_path)))
     # 清理临时文件
