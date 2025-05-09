@@ -111,7 +111,7 @@ async def handle_role_detail(bot: Bot, event: GroupMessageEvent, state: T_State)
             if panel.get("name") not in ["会心", "会心效果", "破防", "无双", "破招", "加速"]
         ]
     }
-    print(res.get('equipList', []))
+    # print(res.get('equipList', []))
     # 生成 HTML 内容
     html_content = render_role_attribute(roleInfo)
     # # 转换为图片
