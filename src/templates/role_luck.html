@@ -1,0 +1,342 @@
+<!--
+ * @Date: 2025-05-13 09:56:51
+ * @LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
+ * @LastEditTime: 2025-05-13 15:57:20
+ * @FilePath: /team-bot/jx3-team-bot/src/templates/role_luck.html
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>奇遇记录</title>
+    <style>
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+            margin: 20px;
+            background-color: #e8f4f8;  /* 更柔和的背景色 */
+            color: #2a4a5c;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-around;
+            padding: 24px;
+            box-sizing: border-box;
+            gap: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 24px 0;
+            font-size: 32px;
+            color: #1e88e5;
+            border-bottom: 2px solid #e3f2fd;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        .timeline {
+            width: 300px;
+            padding: 20px;
+            border-right: 2px solid #e3f2fd;
+            background: rgba(227, 242, 253, 0.3);
+            position: relative;
+        }
+        .timeline-content {
+            font-size: 18px;
+        }
+        .timeline-year {
+            color: #1e88e5;
+            font-size: 20px;
+            margin: 24px 0 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e3f2fd;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+        }
+        /* 第一个年份标题去掉上边距 */
+        .timeline-year:first-child {
+            margin-top: 0;
+        }
+        .timeline-item {
+            margin-bottom: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            transform: translateX(4px);
+            background-color: #f5f9ff;
+        }
+         /* 绝世奇遇的样式 */
+        .timeline-item.epic {
+            background: linear-gradient(135deg, #ffd700, #ffedd4);
+            border: 1px solid #ffd700;
+            box-shadow: 0 2px 12px rgba(255, 215, 0, 0.2);
+        }
+        .timeline-item.epic .time {
+            color: #8b6914;
+        }
+        .timeline-item.epic .name {
+            color: #8b4513;
+            font-weight: 600;
+            text-shadow: 0 1px 1px rgba(255, 215, 0, 0.3);
+        }
+        .timeline-item .time {
+            color: #5c6bc0;
+            font-size: 18px;
+        }
+        .timeline-item .name {
+            color: #3949ab;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .statis {
+            margin-top: 24px;
+            padding: 16px;
+            background: linear-gradient(135deg, #fff, #f8f9fa);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            width: calc(100% - 32px);
+        }
+        .statis-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .statis-item:last-child {
+            margin-bottom: 0;
+        }
+        .statis-item.epic {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 237, 212, 0.2));
+            color: #8b6914;
+        }
+        .statis-item.normal {
+            background: linear-gradient(135deg, rgba(30, 136, 229, 0.1), rgba(187, 222, 251, 0.2));
+            color: #1976d2;
+        }
+        .statis-days {
+            font-weight: 600;
+            font-size: 32px;
+        }
+        .role-tags {
+            margin-top: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 30px;
+            width: 100%;
+        }
+        .tag {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 48px;
+            font-weight: 600;
+            width: 80%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        /* 宠物标签样式 */
+        .pet-tag {
+            background: linear-gradient(135deg, #e0c3fc, #8ec5fc);
+            color: #6a1b9a;
+            box-shadow: 0 2px 8px rgba(224, 195, 252, 0.3);
+        }
+        /* 奇遇标签样式 - 从非酋到欧皇的渐变 */
+        .tag.super-lucky {
+            background: linear-gradient(135deg, #ffd700, #ffa500);
+            color: #8b4513;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+        }
+        .tag.lucky {
+            background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+            color: #1e90ff;
+            box-shadow: 0 2px 8px rgba(161, 196, 253, 0.3);
+        }
+        .tag.unlucky {
+            background: linear-gradient(135deg, #e0c3fc, #8ec5fc);
+            color: #4b0082;
+            box-shadow: 0 2px 8px rgba(224, 195, 252, 0.3);
+        }
+        .tag.super-unlucky {
+            background: linear-gradient(135deg, #c2c2c2, #9e9e9e);
+            color: #4a4a4a;
+            box-shadow: 0 2px 8px rgba(158, 158, 158, 0.3);
+        }
+        .title {
+            text-align: center;
+            margin: 24px 0;
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e88e5;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(30,136,229,0.08);
+        }
+        .title:first-child {
+            margin-top: 0;
+        }
+        .luck-table {
+            width: 100%;
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-gap: 16px;
+            list-style: none;
+            padding: 0;
+        }
+        .luck-item {
+            background: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+            height: 48px;
+            border: 1px solid #e3f2fd;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(30,136,229,0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        .luck-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e3f2fd, #bbdefb);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30,136,229,0.12);
+            border-color: #90caf9;
+            opacity: 0.5;
+        }
+        .luck-item.completed {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border-color: #81c784;
+        }
+        .luck-item.completed::before {
+            background: linear-gradient(90deg, #66bb6a, #4caf50);
+            opacity: 1;
+        }
+        .luck-item.pet {
+            height: 24px!important;
+        }
+        .luck-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #1976d2;
+            font-size: 16px;
+            position: relative;
+            z-index: 1;
+        }
+        .luck-item.completed .luck-name {
+            color: #2e7d32;
+        }
+        .luck-time {
+            font-size: 14px;
+            color: #5c6bc0;
+            position: relative;
+            z-index: 1;
+        }
+        .luck-time.waiting {
+            font-size: 12px;
+            color: #9e9e9e;
+            font-style: italic;
+            position: relative;
+            z-index: 1;
+        }
+        .completed {
+            color: #2e7d32;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        奇遇记录·{{info.serverName}}·{{info.roleName}}
+    </header>
+    <div class="container">
+        <aside class="timeline">
+            <div class="timeline-content">
+                {% set current_year = None %}
+                {% set displayed_years = [] %}
+                {% for record in info.valid_records %}
+                    {% set year = format_date(record.time).split('.')[0] %}
+                    {% if year != current_year and year not in displayed_years %}
+                        {% set current_year = year %}
+                        {% set _ = displayed_years.append(year) %}
+                        <h3 class="timeline-year">{{year}}年</h3>
+                    {% endif %}
+                    <div class="timeline-item {% if record.level == 2 %}epic{% endif %}">
+                        <div class="time">{{format_date_month(record.time)}}</div>
+                        <div class="name">{{record.event}}</div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="statis">
+                <div class="statis-item epic">
+                    <span>距离上次绝世奇遇</span>
+                    <span class="statis-days">{{info.epic_days if info.epic_days is not none else '暂无'}} 天</span>
+                </div>
+                <div class="statis-item normal">
+                    <span>距离上次普通奇遇</span>
+                    <span class="statis-days">{{info.normal_days if info.normal_days is not none else '暂无'}} 天</span>
+                </div>
+            </div>
+            <div class="role-tags">
+                {% if info.pet_tag %}
+                <span class="tag pet-tag">{{info.pet_tag}}</span>
+                {% endif %}
+                
+                <span class="tag 
+                    {% if info.luck_tag == '超级幸运儿' %}
+                        super-lucky
+                    {% elif info.luck_tag == '欧皇' %}
+                        lucky
+                    {% elif info.luck_tag == '非酋' %}
+                        unlucky
+                    {% elif info.luck_tag == '非酋酋长' %}
+                        super-unlucky
+                    {% endif %}">
+                    {{info.luck_tag}}
+                </span>
+            </div>
+        </aside>
+        <section class="content">
+            {% for item in luck_data %}
+            <div class="title">{{item.type}}({% set count = namespace(value=0) %}{% for record in info.records %}{% if record.level == item.level %}{% set count.value = count.value + 1 %}{% endif %}{% endfor %}{{count.value}}/{{item.total}})</div>
+            <ul class="luck-table">
+                {% for luck_item in item.lucks.split(',') %}
+                <li class="luck-item {% if item.level == 3 %}pet{% endif %} {% for record in info.records %}{% if record.event == luck_item %}completed{% endif %}{% endfor %}">
+                    <div class="luck-name">
+                        <span>{{luck_item}}</span>
+                    </div>
+                    {% for record in info.records %}
+                        {% if record.event == luck_item and record.level != 3 %}
+                        <div class="luck-time completed">
+                            <span>{{format_time(record.time)}}</span>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% endfor %}
+        </section>
+    </div>
+</body>
+</html>

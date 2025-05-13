@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>副本进度记录</title>
+    <style>
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+            margin: 0;
+            padding: 16px;
+            background: #f8f9fa;
+            height: fit-content;
+            width: 1200px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 12px;
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .header-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-item img {
+            width: 24px;
+            height: 24px;
+        }
+        .content-table {
+            width: 100%;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .table-header {
+            background: #4a90e2;
+            color: white;
+            padding: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 2fr;
+            font-weight: 500;
+        }
+        .table-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 2fr;
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .table-row:last-child {
+            border-bottom: none;
+        }
+        .tag-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .tag {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: white;
+        }
+        .tag-completed {
+            background: #28a745;
+        }
+        .tag-incomplete {
+            background: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-item">
+            <span>{{info.serverName}}</span>
+        </div>
+        <div class="header-item">
+            <span>{{info.roleName}}</span>
+        </div>
+        <div class="header-item">
+            <span>副本进度</span>
+        </div>
+    </div>
+    <div class="content-table">
+        <div class="table-header">
+            <div>副本名称</div>
+            <div>副本类型</div>
+            <div>完成进度</div>
+        </div>
+        {% for item in info.data %}
+        <div class="table-row">
+            <div>{{item.mapName}}</div>
+            <div>{{item.mapType}}</div>
+            <div class="tag-container">
+                {% for v in item.bossProgress %}
+                <span class="tag {% if v.finished %}tag-completed{% else %}tag-incomplete{% endif %}">{{v.name}}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+       
+    </div>
+</body>
+</html>

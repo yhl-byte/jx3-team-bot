@@ -16,8 +16,10 @@
             color: #333;
             font-size: 16px;
             width: 1200px;
+            max-width: 1200px;
             background: #fafafa;
             height: fit-content;
+            margin: 0 auto
         }
 
         header {
@@ -39,6 +41,8 @@
             border-radius: 8px;
             margin: 16px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            width: calc(100% - 32px);  /* 添加这行 */
+            box-sizing: border-box;    /* 添加这行 */
         }
 
         aside {
@@ -78,6 +82,20 @@
             border-bottom: none;
         }
 
+        aside .empty {
+            width: 100%;
+            height: 300px;
+            display: flex; 
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            color: #6b7280; 
+            font-size: 20px; 
+            position: absolute;
+            bottom: 16px;
+            left: 0;
+        }
+
         .attribute-table {
             width: 100%;
             border-collapse: collapse;
@@ -110,9 +128,7 @@
             background: #f8fafc;
             border-radius: 8px;
             transition: all 0.3s ease;
-        }
-
-        .equip-item:hover {
+            height: 120px;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
@@ -142,8 +158,8 @@
         }
 
         .front-img-info img {
-            width: 60px;
-            height: 60px;
+            width: 80px;
+            height: 80px;
             margin-right: 12px;
             border-radius: 6px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
@@ -153,6 +169,7 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
+            font-size: 20px;
             justify-content: center; /* 添加垂直居中对齐 */
         }
 
@@ -162,6 +179,7 @@
             flex-direction: column;
             align-items: flex-end;
             gap: 6px;
+            font-size: 20px;
             justify-content: center; /* 添加垂直居中对齐 */
         }
 
@@ -180,10 +198,8 @@
         .equip-name {
             color: #d946ef;
             font-weight: bold;
-            font-size: 17px;
+            font-size: 20px;
         }
-
-        
 
         .color-stone-name {
             color: #d946ef;
@@ -212,7 +228,7 @@
 
         .star-rating {
             color: #f59e0b;
-            font-size: 16px;
+            font-size: 20px;
             text-shadow: 0 0 2px rgba(0,0,0,0.2);
         }
 
@@ -299,12 +315,19 @@
                 </tr>
             {% endif %}
             </table>
-            <img src="{{roleInfo.show}}" alt="show">
+            {% if roleInfo.show %}
+                <img src="{{roleInfo.show}}" alt="show">
+            {% else %}
+                <div class="empty">
+                    <div>待君揽镜</div>
+                    <div>现朱颜如画</div>
+                </div>
+            {% endif %}
         </aside>
         <section class="equipList">
                 {% for item in roleInfo.equipList %}
                 <div class="equip-item">
-                <div class="front">
+                    <div class="front">
                         <span class="front-img-info">
                             {% if item.source and '绝世' in item.source %}
                                 <span class="equip-tag" style="background: linear-gradient(135deg, #ff4d4d, #cc0000);">绝世</span>

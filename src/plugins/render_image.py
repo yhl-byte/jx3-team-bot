@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:33:56
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-08 16:37:45
+LastEditTime: 2025-05-12 15:32:24
 FilePath: /team-bot/jx3-team-bot/src/plugins/render_image.py
 '''
 from playwright.async_api import async_playwright
@@ -31,7 +31,7 @@ async def generate_html_screenshot(html_content: str, width: int = 800,) -> str:
         await page.wait_for_timeout(1000)
 
         # 等待所有图片加载完成
-        await page.wait_for_selector('img', state='attached')
+        # await page.wait_for_selector('img', state='attached')
 
         # 等待所有图片完全加载
         await page.evaluate('''() => {
@@ -48,8 +48,8 @@ async def generate_html_screenshot(html_content: str, width: int = 800,) -> str:
         }''')
 
         # 设置视口大小
-        await page.set_viewport_size({"width": width, "height": 800})
-
+        # await page.set_viewport_size({"width": width, "height": 800})
+        
         # 获取页面实际高度
         page_height = await page.evaluate('document.documentElement.scrollHeight')
 
