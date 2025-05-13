@@ -202,24 +202,25 @@ async def handle_role_luck_record(bot: Bot, event: GroupMessageEvent, state: T_S
     luck_count = 0  # 普通和绝世奇遇总数
     for record in records:
         time = record.get('time', '')
+        level = record.get('level', '')
         # 计算最近奇遇时间
-        if record.get('level') == 2:  # 绝世奇遇
+        if level == 2:  # 绝世奇遇
             luck_count += 1
-        elif record.get('level') == 1:  # 普通奇遇
+        elif level == 1:  # 普通奇遇
             luck_count += 1
-        elif record.get('level') == 3:  # 宠物奇遇
+        elif level == 3:  # 宠物奇遇
             pet_count += 1
-        if time and time != 0:
+        if time and time != 0 and level !=3:
             valid_records.append(record)
             # 将时间戳转换为datetime对象
             record_time = datetime.fromtimestamp(time)
             days = (now - record_time).days
             
             # 计算最近奇遇时间
-            if record.get('level') == 2:  # 绝世奇遇
+            if level == 2:  # 绝世奇遇
                 if epic_days is None or days < epic_days:
                     epic_days = days
-            elif record.get('level') == 1:  # 普通奇遇
+            elif level == 1:  # 普通奇遇
                 if normal_days is None or days < normal_days:
                     normal_days = days
     # 计算标签
