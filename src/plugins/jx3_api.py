@@ -200,7 +200,7 @@ async def handle_role_luck_record(bot: Bot, event: GroupMessageEvent, state: T_S
     # 计算各类奇遇数量
     pet_count = 0  # 宠物奇遇数量
     luck_count = 0  # 普通和绝世奇遇总数
-    print(records)
+    # print(records)
     for record in records:
         time = record.get('time', '')
         level = record.get('level', '')
@@ -212,6 +212,7 @@ async def handle_role_luck_record(bot: Bot, event: GroupMessageEvent, state: T_S
         elif level == 3:  # 宠物奇遇
             pet_count += 1
         if time and time != 0 and level !=3:
+            # print( record.get('event', ''))
             valid_records.append(record)
             # 将时间戳转换为datetime对象
             record_time = datetime.fromtimestamp(time)

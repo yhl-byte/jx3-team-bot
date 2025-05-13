@@ -325,7 +325,7 @@
                     <div class="luck-name">
                         <span>{{luck_item}}</span>
                     </div>
-                    {% for record in info.records %}
+                    {% for record in info.valid_records %}
                         {% if record.event == luck_item and record.level != 3 %}
                         <div class="luck-time completed">
                             <span>{{format_time(record.time)}}</span>
