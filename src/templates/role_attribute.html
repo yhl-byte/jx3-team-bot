@@ -332,12 +332,11 @@
                             {% if item.source and '绝世' in item.source %}
                                 <span class="equip-tag" style="background: linear-gradient(135deg, #ff4d4d, #cc0000);">绝世</span>
                             {% endif %}
-                            {% if item.modifyType and (item.EquipType.Desc is not defined or item.EquipType.Desc == '秘境挑战')  %}
-                                {% set rare_attrs = ['元气', '根骨', '身法', '力道', '体质'] %}
-                                {% set normal_mods = item.modifyType | selectattr('name', 'in', rare_attrs) | list %}
-                                {% if normal_mods|length == 0 %}
-                                    <span class="equip-tag" style="background: linear-gradient(135deg, #9333ea, #6366f1);">稀有</span>
-                                {% endif %}
+                            {% if item.name and item.name in equipment_data.min  %}
+                                <span class="equip-tag" style="background: linear-gradient(135deg, #9333ea, #6366f1);">精简</span>
+                            {% endif %}
+                            {% if item.name and item.name in equipment_data.min_eff or '无修' in item.name %}
+                                <span class="equip-tag" style="background: linear-gradient(135deg,  #b45309, #f59e0b);">稀有</span>
                             {% endif %}
                             {% if item.source and ('芭德' in item.source or '薛琢玉' in item.source) and item.kind == '武器' and (item.subKind is not defined or '囊' not in item.subKind) %}
                                 <span class="equip-tag" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">特效</span>

@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:33:31
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-13 15:12:31
+LastEditTime: 2025-05-15 18:09:51
 FilePath: /team-bot/jx3-team-bot/src/plugins/html_generator.py
 '''
 # src/plugins/chat_plugin/html_generator.py
@@ -133,6 +133,11 @@ def render_role_attribute(roleInfo) -> str:
     # 确保模板目录存在
     if not os.path.exists(template_dir):
         os.makedirs(template_dir)
+
+    # 读取equipment.json文件
+    equipment_path = os.path.join(STATIC_PATH, 'equipment.json')
+    with open(equipment_path, 'r', encoding='utf-8') as f:
+        equipment_data = json.load(f)
     
     # 加载模板
     env = Environment(loader=FileSystemLoader(template_dir))
@@ -141,6 +146,7 @@ def render_role_attribute(roleInfo) -> str:
     # 渲染数据
     html_content = template.render(
         roleInfo=roleInfo,
+        equipment_data=equipment_data,
         static_path=STATIC_PATH.absolute()
     )
     return html_content

@@ -21,7 +21,7 @@ from src.config import STATIC_PATH
 import os
 
 token ='v255c2a8b3e7c0098f'
-ticket = '46d16dd34f70408d88aad51273b75242:18231851515@163.com:kingsoft::00f0e071281d72a2'
+ticket = 'fa1ee09527674f2caae6eecfceaec64a:18231851515@163.com:kingsoft::VrhjwuryGxGN5+1Hk+CWww=='
 base_url = 'https://www.jx3api.com'
 async_api = AsyncJX3API(token = token, ticket=ticket, base_url = base_url)
 api = JX3API(token = token, ticket=ticket, base_url = base_url)
@@ -71,10 +71,12 @@ async def handle_role_detail(bot: Bot, event: GroupMessageEvent, state: T_State)
     # 发送处理提示
     processing_msg = await bot.send(event=event, message="正在生成属性信息，请稍候...")
     
+    import traceback
+
     try:
          res = await async_api.role_attribute(server=server_name, name=role_name)
     except:  # 不推荐，但可以捕获所有异常
-        await RoleAttribute.finish(message=f"角色属性接口调用失败: {str(e)}")
+        await RoleAttribute.finish(message=f"角色属性接口调用失败")
         return
 
     colors = render_team_template().get("colors_by_mount_name")
