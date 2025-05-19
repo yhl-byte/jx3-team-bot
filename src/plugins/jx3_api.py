@@ -92,6 +92,7 @@ async def handle_role_detail(bot: Bot, event: GroupMessageEvent, state: T_State)
         icon_name = kungfu_name
     icon_name = icon_name.strip()
     xf_icon = img_to_base64(STATIC_PATH.absolute() / f"xf-cn-icon/{icon_name}.png")
+    pvp_icon = img_to_base64(STATIC_PATH.absolute() / f"pvp.png")
     try:
         card = await async_api.show_card(server=server_name, name=role_name)
     except:  # 不推荐，但可以捕获所有异常
@@ -109,6 +110,7 @@ async def handle_role_detail(bot: Bot, event: GroupMessageEvent, state: T_State)
     roleInfo = {
         "color": bg_color,
         "xfIcon": xf_icon,
+        "pvpIcon": pvp_icon,
         "fontColor": font_color,
         "show": card.get('showAvatar', ''),
         "serverName": res.get('serverName', '未知服务器'),
@@ -266,3 +268,36 @@ async def handle_role_luck_record(bot: Bot, event: GroupMessageEvent, state: T_S
     # 清理临时文件
     os.unlink(image_path)
 
+
+# 角色名片
+RoleCard = on_regex(pattern=r'^(名片|QQ秀|qq秀)\s+(?:(\S+)\s+)?(\S+)$', priority=1)
+@RoleCard.handle()
+async def handle_role_status(bot: Bot, event: GroupMessageEvent, state: T_State):
+    matched = state['_matched']
+    # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
+    server_name = matched.group(2) if matched.group(2) else default_server
+    # 第二个捕获组一定是角色名 
+    role_name = matched.group(3)
+    try:
+        res = await async_api.show_card(server= server_name, name=role_name)
+    except:  # 不推荐，但可以捕获所有异常
+        await RoleCard.finish(message=f"名片接口调用失败")
+        return
+    print(res.get('showAvatar'))
+    # res = await async_api.request(endpoint="/data/role/online/status", server= server_name, name=role_name)
+    await RoleCard.finish(MessageSegment.image(res.get('showAvatar')))
+
+# # 沙盘
+# ServerSand = on_regex(pattern=r'^沙盘(?:\s+(\S+))?', priority=1)
+# @ServerSand.handle()
+# async def handle_role_status(bot: Bot, event: GroupMessageEvent, state: T_State):
+#     matched = state['_matched']
+#     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
+#     server_name = matched.group(1) if matched.group(1) else default_server
+#     try:
+#         res = await async_api.server_sand(server= server_name)
+#     except:  # 不推荐，但可以捕获所有异常
+#         await ServerSand.finish(message=f"沙盘接口调用失败")
+#         return
+#     print(res)
+#     await ServerSand.finish(MessageSegment.image(res))

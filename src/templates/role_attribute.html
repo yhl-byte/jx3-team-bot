@@ -335,6 +335,9 @@
                             {% if item.name and item.name in equipment_data.min  %}
                                 <span class="equip-tag" style="background: linear-gradient(135deg, #9333ea, #6366f1);">精简</span>
                             {% endif %}
+                            {% if item.name and item.name in equipment_data.top  %}
+                                <span class="equip-tag" style="background: linear-gradient(135deg, #ea580c, #f97316);">橙武</span>
+                            {% endif %}
                             {% if item.name and item.name in equipment_data.min_eff or '无修' in item.name %}
                                 <span class="equip-tag" style="background: linear-gradient(135deg,  #b45309, #f59e0b);">稀有</span>
                             {% endif %}
@@ -344,10 +347,13 @@
                             {% if item.source and ('芭德' in item.source or '薛琢玉' in item.source) and item.kind == '饰品' and item.subKind == '腰坠' %}
                                 <span class="equip-tag" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">特效</span>
                             {% endif %}
+                            {% if item.modifyType and (item.modifyType | selectattr("name", "equalto", "化劲") | list | length > 0) %}
+                                <img src="data:image/png;base64,{{ roleInfo.pvpIcon }}" alt="pvpIcon" style="position: absolute; left: 6px; top: 6px; width: 24px; height: 24px;">
+                            {% endif %}
                             <img src="{{item.icon}}" alt="">
                         </span>
                         <span class="info">
-                            <span class="equip-name">{{item.name}} <span style="color:#000">({{item.quality}})</span></span>
+                            <span class="equip-name" {% if item.name and item.name in equipment_data.top %}style="color: #fbbf24"{% endif %}>{{item.name}} <span style="color:#000">({{item.quality}})</span></span>
                             <span>{{item.modifyType | map(attribute='name') | join(' ')}}</span>
                             <span class="star-container">
                                 {% for i in range(item.strengthLevel|int) %}
