@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-09 11:39:43
+LastEditTime: 2025-05-19 16:31:59
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -19,7 +19,7 @@ from ..utils.permission import require_admin_permission
 from src.config import STATIC_PATH
 from .jx3_api import *
 # 导入谁是卧底游戏模块
-# from .undercover import *
+from .undercover import *
 import os
 
 # 用于存储每个群的状态
