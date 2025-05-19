@@ -1,7 +1,7 @@
 '''
 Date: 2025-03-06 17:21:21
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-19 19:38:54
+LastEditTime: 2025-05-19 19:43:38
 FilePath: /team-bot/jx3-team-bot/src/plugins/undercover.py
 '''
 # src/plugins/undercover.py
@@ -16,10 +16,10 @@ import asyncio
 import aiohttp
 import json
 from typing import Dict, List, Tuple, Set, Optional
-require('nonebot_plugin_saa')
-from nonebot_plugin_saa import enable_auto_select_bot
-enable_auto_select_bot()
-from nonebot_plugin_saa import PlatformTarget, TargetQQPrivate, TargetQQGroup, MessageFactory
+# require('nonebot_plugin_saa')
+# from nonebot_plugin_saa import enable_auto_select_bot
+# enable_auto_select_bot()
+# from nonebot_plugin_saa import PlatformTarget, TargetQQPrivate, TargetQQGroup, MessageFactory
 
 # 游戏状态
 class UndercoverGameStatus:
