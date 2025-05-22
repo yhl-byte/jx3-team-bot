@@ -1,7 +1,7 @@
 '''
 Date: 2025-03-06 17:21:21
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-22 11:15:07
+LastEditTime: 2025-05-22 17:53:06
 FilePath: /team-bot/jx3-team-bot/src/plugins/undercover.py
 '''
 # src/plugins/undercover.py
@@ -302,7 +302,7 @@ async def handle_start_game(bot: Bot, event: GroupMessageEvent, state: T_State):
     games[group_id] = UndercoverGame(group_id)
     games[group_id].status = UndercoverGameStatus.SIGNUP
     
-    await StartGame.finish(message="谁是卧底游戏开始报名！请想参加的玩家发送「报名卧底」。300秒后报名截止。")
+    await StartGame.finish(message="谁是卧底游戏开始报名！请想参加的玩家发送「报名卧底」。发送「结束报名」开始游戏。")
     
     # 300秒后自动结束报名
     await asyncio.sleep(300)
@@ -399,7 +399,7 @@ async def start_game_process(bot: Bot, group_id: int):
     random.shuffle(game.speaking_order)
     game.current_speaker_index = 0
     game.current_round = 1
-    game.max_rounds = min(3, num_players)  # 最多3轮，或者玩家数量
+    # game.max_rounds = min(3, num_players)  # 最多3轮，或者玩家数量
     
     # 发送游戏开始消息
     await bot.send_group_msg(group_id=group_id, message=f"游戏开始！共有{num_players}名玩家，其中{num_undercovers}名卧底。我已经私聊告知大家各自的词语，请查看。")
@@ -645,10 +645,25 @@ async def end_voting(bot: Bot, group_id: int):
         
         # 进入下一轮
         game.current_round += 1
-        if game.current_round > game.max_rounds:
+         # 统计存活的卧底和平民数量
+        alive_undercovers = 0
+        alive_civilians = 0
+        
+        for player_id, player_info in game.players.items():
+            if not player_info["eliminated"]:
+                if player_info["is_undercover"]:
+                    alive_undercovers += 1
+                else:
+                    alive_civilians += 1
+        # 如果只剩下2名平民和1名卧底，进入最终投票
+        if alive_civilians == 2 and alive_undercovers == 1:
             # 所有轮次结束，进入最终投票
             await final_vote(bot, group_id)
             return
+        # if game.current_round > game.max_rounds:
+        #     # 所有轮次结束，进入最终投票
+        #     await final_vote(bot, group_id)
+        #     return
         
         # 开始新一轮发言
         await start_speaking_round(bot, group_id)
@@ -690,7 +705,7 @@ def should_end_game(game: UndercoverGame) -> bool:
                 alive_undercovers += 1
             else:
                 alive_civilians += 1
-    
+
     # 如果卧底全部被淘汰，平民胜利
     if alive_undercovers == 0:
         return True
