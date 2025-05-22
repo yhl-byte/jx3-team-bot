@@ -573,7 +573,7 @@ async def handle_vote(bot: Bot, event: MessageEvent, state: T_State):
                 break
     
     if not target_id:
-        await VoteCommand.finish(message=f"找不到编号/昵称为 {vote_target} 的有效玩家")
+        await VoteCommand.finish(message=f"找不到玩家 {vote_target}，请确认玩家昵称或编号是否正确")
         return
     
     if target_id == user_id:
@@ -583,17 +583,18 @@ async def handle_vote(bot: Bot, event: MessageEvent, state: T_State):
     # 记录投票
     user_game.votes[user_id] = target_id
     
-    target_info = user_game.players[target_id]
+    # 获取被投票玩家的昵称
+    target_nickname = user_game.players[target_id]["nickname"]
+    target_code = user_game.players[target_id]["code"]
     
-    await VoteCommand.finish(message=f"你已投票给 {target_info['nickname']}(编号:{target_info['code']})")
+    await VoteCommand.finish(message=f"{user_game.players[user_id]['nickname']} 投票给了 {target_code}号玩家 {target_nickname}")
     
-    # 检查是否所有人都已投票
-    active_players = [pid for pid, pinfo in user_game.players.items() if not pinfo["eliminated"]]
-    if len(user_game.votes) >= len(active_players):
-        # 取消计时器
+    # 检查是否所有存活玩家都已投票
+    alive_players = [pid for pid, pinfo in user_game.players.items() if not pinfo["eliminated"]]
+    if all(pid in user_game.votes for pid in alive_players):
+        # 如果所有存活玩家都已投票，立即结束投票
         if user_game.vote_timer:
             user_game.vote_timer.cancel()
-        
         await end_voting(bot, user_group_id)
 
 # 结束投票
