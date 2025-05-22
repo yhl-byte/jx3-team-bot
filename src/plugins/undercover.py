@@ -1,7 +1,7 @@
 '''
 Date: 2025-03-06 17:21:21
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-22 17:53:06
+LastEditTime: 2025-05-22 18:16:28
 FilePath: /team-bot/jx3-team-bot/src/plugins/undercover.py
 '''
 # src/plugins/undercover.py
@@ -43,6 +43,7 @@ class UndercoverGame:
         self.votes = {}  # 投票结果: voter_id -> target_id
         self.speaking_timer = None
         self.vote_timer = None
+        self.player_speeches = {}  # 存储玩家发言: user_id -> [发言1, 发言2, ...]
 
 # 存储每个群的游戏状态
 games: Dict[int, UndercoverGame] = {}
@@ -474,6 +475,16 @@ async def next_player_speak(bot: Bot, group_id: int):
         game.status = UndercoverGameStatus.VOTING
         game.votes = {}
         result_msg = ""
+
+        # 添加本轮发言记录
+        result_msg += f"\n【第 {game.current_round} 轮发言记录】\n"
+        for player_id, player_info in game.players.items():
+            if not player_info["eliminated"]:
+                player_speech = "未发言"
+                if player_id in game.player_speeches and len(game.player_speeches[player_id]) >= game.current_round:
+                    player_speech = game.player_speeches[player_id][game.current_round - 1]
+                result_msg += f"{player_info['code']}号 {player_info['nickname']}: ({player_speech})\n"
+
         result_msg += "\n【玩家列表】\n"
     
         for player_id, player_info in game.players.items():
@@ -855,12 +866,26 @@ async def handle_speak_message(bot: Bot, event: GroupMessageEvent, state: T_Stat
         return
     
     game = games[group_id]
-    if game.current_speaker_index >= len(game.speaking_order):
+    # if game.current_speaker_index >= len(game.speaking_order):
+    #     return
+    # 检查是否轮到该玩家发言
+    if game.current_speaker_index >= len(game.speaking_order) or game.speaking_order[game.current_speaker_index] != user_id:
         return
         
+    # 获取发言内容
+    speech_content = state["_matched"].group(1).strip()
+    if not speech_content:
+        await SpeakCommand.finish(message="发言内容不能为空")
+        return
+
     current_speaker_id = game.speaking_order[game.current_speaker_index]
     if user_id != current_speaker_id:
         return
+
+    # 记录发言
+    if user_id not in game.player_speeches:
+        game.player_speeches[user_id] = []
+    game.player_speeches[user_id].append(speech_content)
     
     # 取消发言计时器
     if game.speaking_timer:
@@ -868,4 +893,7 @@ async def handle_speak_message(bot: Bot, event: GroupMessageEvent, state: T_Stat
     
     # 移动到下一个发言人
     game.current_speaker_index += 1
+
+    # await SpeakCommand.finish(message=f"{game.players[user_id]['nickname']} 发言完毕")
+
     await next_player_speak(bot, group_id)
