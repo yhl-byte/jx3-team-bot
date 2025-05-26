@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-21 10:56:53
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-09 16:02:53
+LastEditTime: 2025-05-26 11:11:42
 FilePath: /team-bot/jx3-team-bot/src/utils/index.py
 '''
 import json
@@ -134,13 +134,15 @@ def path_to_base64(image_path: str) -> str:
 
 
 def format_daily_data(data: dict) -> str:
+
+    print(data)
     """格式化日常数据"""
     # 构建格式化字符串
     formatted = f"{data['date']}星期{data['week']}\n"
     formatted += f"大战：{data['war']}\n"
     formatted += f"战场：{data['battle']}\n"
     formatted += f"宗门：{data['school']}\n"
-    formatted += f"画像：{data['draw']}\n" 
+    formatted += f"画像：{data.get('draw', '无')}\n" 
     formatted += f"福缘：{','.join(data['luck'])}\n"
     formatted += f"驰援：{data['rescue']}\n"
     

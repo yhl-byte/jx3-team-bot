@@ -656,21 +656,21 @@ async def end_voting(bot: Bot, group_id: int):
         
         # 进入下一轮
         game.current_round += 1
-         # 统计存活的卧底和平民数量
-        alive_undercovers = 0
-        alive_civilians = 0
+        #  # 统计存活的卧底和平民数量
+        # alive_undercovers = 0
+        # alive_civilians = 0
         
-        for player_id, player_info in game.players.items():
-            if not player_info["eliminated"]:
-                if player_info["is_undercover"]:
-                    alive_undercovers += 1
-                else:
-                    alive_civilians += 1
-        # 如果只剩下2名平民和1名卧底，进入最终投票
-        if alive_civilians == 2 and alive_undercovers == 1:
-            # 所有轮次结束，进入最终投票
-            await final_vote(bot, group_id)
-            return
+        # for player_id, player_info in game.players.items():
+        #     if not player_info["eliminated"]:
+        #         if player_info["is_undercover"]:
+        #             alive_undercovers += 1
+        #         else:
+        #             alive_civilians += 1
+        # # 如果只剩下2名平民和1名卧底，进入最终投票
+        # if alive_civilians == 2 and alive_undercovers == 1:
+        #     # 所有轮次结束，进入最终投票
+        #     await final_vote(bot, group_id)
+        #     return
         # if game.current_round > game.max_rounds:
         #     # 所有轮次结束，进入最终投票
         #     await final_vote(bot, group_id)

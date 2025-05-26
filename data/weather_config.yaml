@@ -1,0 +1,11 @@
+daily_push:
+  default_cities:
+    '1034970817': 唐山
+  enabled: true
+  groups:
+  - '1034970817'
+  subscribed_cities:
+    '1034970817':
+    - 武汉
+    - 成都
+  time: 07:00
