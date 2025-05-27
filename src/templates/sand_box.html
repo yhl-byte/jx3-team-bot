@@ -1,0 +1,374 @@
+<!--
+ * @Date: 2025-05-26 14:50:41
+ * @LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
+ * @LastEditTime: 2025-05-27 16:59:05
+ * @FilePath: /team-bot/jx3-team-bot/src/templates/sand_box.html
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>沙盘</title>
+    <style>
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+        }
+    </style>
+    <style>
+        html {
+            width: 1340px;
+            height: 920px;
+            margin: 0 0;
+            padding: 0
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+        }
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-size: 100%;
+        }
+        .stronghold_name {
+            display: block;
+            color: #fffcd0;
+            font-size: 12px;
+            line-height: 18px;
+            width: 1em;
+            text-shadow: 1px 1px 1px #000;
+            right: 60px;
+            top: 36px;
+            position: absolute;
+            z-index: 10;
+        }
+        .stronghold_tong_name {
+            display: block;
+            color: #000;
+            font-size: 12px;
+            line-height: 18px;
+            width: 1em;
+            text-shadow:
+                0 0 6px #fff,
+                0 0 12px #fff,
+                0 0 18px #fffa90,
+                0 0 24px #ffd700,
+                1px 1px 2px #fff;
+            right: 60px;
+            top: 36px;
+            position: absolute;
+            z-index: 10;
+        }
+        .stronghold_icon {
+            position: absolute;
+            z-index: 10;
+        }
+        header {
+            padding: 10px;
+            position: absolute;
+            top: 56px;
+            width: 100%;
+            text-align: center;
+        }
+        header div:first-child {
+            font-size: 48px;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            font-family: 'STXingkai', 'KaiTi', serif;
+            letter-spacing: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="background: url(data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/backgroud.png')}}) no-repeat;">
+        <header>
+            <div style="font-weight: bold;">{{info.server}}</div>
+            <div style="color: #333;">{{format_time(info.updateTime)}}</div>
+        </header>
+        <div style="position: absolute;top: 200px;left: 130px;z-index: 10;">
+            <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/line.png')}}" alt="stronghold_line">
+        </div>
+        <div style="position: absolute;top: 64px;left: 237px;">
+            <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/e27.png')}}" alt="stronghold_bg">
+            <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/erengu.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+            top: 41px;
+            left: 66px;">
+            <div class="stronghold_name">恶人谷</div>
+        </div>
+        {% for item in maps %}
+            {% if item.castleName == '凛风堡' %}
+                <div style="position: absolute;top: 118px;left: 314px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'301.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'_lingfengbao.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 50px;
+                    left: 112px;">
+                    <div class="stronghold_name">凛风堡</div>
+                    <div class="stronghold_tong_name" style="right: 40px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '飞沙关' %}
+                <div style="position: absolute;top: 189px;left: 528px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'232.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'01.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 21px;
+                    left: 12px;">
+                    <div class="stronghold_name" style="top:13px;right: 35px;">飞沙关</div>
+                    <div class="stronghold_tong_name" style="top:13px;right: 15px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '龙门镇' %}
+                <div style="position: absolute;top: 170px;left: 560px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'231.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'02.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 16px;
+                    left: 51px;">
+                    <div class="stronghold_name" style="top:6px;right: 9px;">龙门镇</div>
+                    <div class="stronghold_tong_name" style="top:6px;right: -11px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '扶风郡' %}
+                <div style="position: absolute;top: 240px;left: 460px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'1532.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'01.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 22px;
+                    left: 24px;">
+                    <div class="stronghold_name" style="top:18px;right: 14px;">扶风郡</div>
+                    <div class="stronghold_tong_name" style="top:18px;right: -6px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '世外坡' %}
+                <div style="position: absolute;top: 286px;left: 400px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'1531.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'05.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 44px;
+                    left: 18px;">
+                    <div class="stronghold_name" style="top:32px;right: 68px;">世外坡</div>
+                    <div class="stronghold_tong_name" style="top:32px;right: 48px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '神池岭' %}
+                <div style="position: absolute;top: 259px;left: 273px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'1031.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'02.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 38px;
+                    left: 24px;">
+                    <div class="stronghold_name" style="top:30px;right: 52px;">神池岭</div>
+                    <div class="stronghold_tong_name" style="top:30px;right: 32px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '烈日岗' %}
+                <div style="position: absolute;top: 324px;left: 177px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'1032.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'01.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 44px;
+                    left: 48px;">
+                    <div class="stronghold_name" style="top:32px;right: 66px;">烈日岗</div>
+                    <div class="stronghold_tong_name" style="top:32px;right: 46px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '啖杏林' %}
+                <div style="position: absolute;top: 206px;left: 669px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'1391.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'01.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 26px;
+                    left: 18px;">
+                    <div class="stronghold_name" style="top:14px;right: 58px;">啖杏林</div>
+                    <div class="stronghold_tong_name" style="top:14px;right: 38px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '枫湖寨' %}
+                <div style="position: absolute;top: 256px;left: 662px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'1392.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'03.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 32px;
+                    left: 80px;">
+                    <div class="stronghold_name" style="top:28px;right: 2px;">枫湖寨</div>
+                    <div class="stronghold_tong_name" style="top:28px;right: -18px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '金门关' %}
+                <div style="position: absolute;top: 175px;left: 803px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'131.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'04.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 84px;
+                    left: 45px;">
+                    <div class="stronghold_name" style="top:78px;right: 30px;">金门关</div>
+                    <div class="stronghold_tong_name" style="top:78px;right: 0px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '青云坞' %}
+                <div style="position: absolute;top: 197px;left: 898px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'132.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'01.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 32px;
+                    left: 32px;">
+                    <div class="stronghold_name" style="top:26px;right: 2px;">青云坞</div>
+                    <div class="stronghold_tong_name" style="top:26px;right: -18px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '秋雨堡' %}
+                <div style="position: absolute;top: 372px;left: 789px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'91.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'01.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 40px;
+                    left: 40px;">
+                    <div class="stronghold_name" style="top:36px;right: 52px;">秋雨堡</div>
+                    <div class="stronghold_tong_name" style="top:36px;right: 32px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '红莲岗' %}
+                <div style="position: absolute;top: 313px;left: 773px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'92.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'02.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 14px;
+                    left: 72px;">
+                    <div class="stronghold_name" style="top:8px;right: 52px;">红莲岗</div>
+                    <div class="stronghold_tong_name" style="top:8px;right: 32px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '惊虬谷' %}
+                <div style="position: absolute;top: 440px;left: 177px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'1041.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'01.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 48px;
+                    left: 114px;">
+                    <div class="stronghold_name" style="top:38px;right: 28px;">惊虬谷</div>
+                    <div class="stronghold_tong_name" style="top:38px;right: 8px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '凤鸣堡' %}
+                <div style="position: absolute;top: 547px;left: 189px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'1042.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'04.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 30px;
+                    left: 40px;">
+                    <div class="stronghold_name" style="top: 22px;right: 70px;">凤鸣堡</div>
+                    <div class="stronghold_tong_name" style="top: 22px;right: 50px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '日月崖' %}
+                <div style="position: absolute;top: 410px;left: 423px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'1002.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'02.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 75px;
+                    left: 78px;">
+                    <div class="stronghold_name" style="top:66px;right: 28px;">日月崖</div>
+                    <div class="stronghold_tong_name" style="top:66px;right: 8px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '卧龙坡' %}
+                <div style="position: absolute;top: 529px;left: 392px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'1001.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'03.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 56px;
+                    left: 82px;">
+                    <div class="stronghold_name" style="top: 46px;right: 70px;">卧龙坡</div>
+                    <div class="stronghold_tong_name" style="top: 46px;right: 50px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '不空关' %}
+                <div style="position: absolute;top: 421px;left: 557px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'351.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'04.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 32px;
+                    left: 96px;">
+                    <div class="stronghold_name" style="top:24px;right: 6px;">不空关</div>
+                    <div class="stronghold_tong_name" style="top:24px;right: -14px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '激流坞' %}
+                <div style="position: absolute;top: 483px;left: 597px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'352.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'01.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 34px;
+                    left: 24px;">
+                    <div class="stronghold_name" style="top: 24px;right: 60px;">激流坞</div>
+                    <div class="stronghold_tong_name" style="top: 24px;right: 40px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '逐鹿坪' %}
+                <div style="position: absolute;top: 443px;left: 739px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'212.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'03.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 32px;
+                    left: 52px;">
+                    <div class="stronghold_name" style="top:24px;right: 12px;">逐鹿坪</div>
+                    <div class="stronghold_tong_name" style="top:24px;right: -8px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '盘龙坞' %}
+                <div style="position: absolute;top: 528px;left: 668px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'211.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'05.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 34px;
+                    left: 94px;">
+                    <div class="stronghold_name" style="top: 26px;right: 42px;">盘龙坞</div>
+                    <div class="stronghold_tong_name" style="top: 26px;right: 22px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '霜戈堡' %}
+                <div style="position: absolute;top: 656px;left: 218px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'1011.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'01.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 32px;
+                    left: 52px;">
+                    <div class="stronghold_name" style="top:24px;right: 90px;">霜戈堡</div>
+                    <div class="stronghold_tong_name" style="top:24px;right: 70px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '澜沧城' %}
+                <div style="position: absolute;top: 679px;left: 289px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'1012.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'03.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 86px;
+                    left: 70px;">
+                    <div class="stronghold_name" style="top: 80px;right: 70px;">澜沧城</div>
+                    <div class="stronghold_tong_name" style="top: 80px;right: 50px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '大理山城' %}
+                <div style="position: absolute;top: 660px;left: 470px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'1051.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'04.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 15px;
+                    left: 20px;">
+                    <div class="stronghold_name" style="top:-4px;right: 90px;">大理山城</div>
+                    <div class="stronghold_tong_name" style="top:-4px;right: 70px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '千岩关' %}
+                <div style="position: absolute;top: 634px;left: 470px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'1052.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'01.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 144px;
+                    left: 70px;">
+                    <div class="stronghold_name" style="top: 140px;right: 166px;">千岩关</div>
+                    <div class="stronghold_tong_name" style="top: 140px;right: 146px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+            {% if item.castleName == '武王城' %}
+                <div style="position: absolute;top: 484px;left: 728px;">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'221.png')}}" alt="stronghold_bg">
+                    <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/'+ ('h' if item.campId == 1 else 'e')  +'_wuwangcheng.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+                    top: 138px;
+                    left: 124px;">
+                    <div class="stronghold_name" style="top: 130px;right: 58px;">武王城</div>
+                    <div class="stronghold_tong_name"  style="top: 130px;right: 38px;">{{item.tongName}}</div>
+                </div>
+            {% endif %}
+        {% endfor %}
+        <div style="position: absolute;top: 576px;left: 848px;">
+            <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/h25.png')}}" alt="stronghold_bg">
+            <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/camp/haoqimeng.png')}}" alt="stronghold_icon" class="stronghold_icon" style="
+            top: 102px;
+            left: 70px;">
+            <div class="stronghold_name" style="top: 106px;right: 32px;">浩气盟</div>
+        </div>
+        
+    </div>
+</body>
+</html>

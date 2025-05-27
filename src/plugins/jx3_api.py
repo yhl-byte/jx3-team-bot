@@ -14,7 +14,7 @@ import json
 from typing import Dict, List, Optional
 from jx3api import JX3API,AsyncJX3API
 from ..utils.index import format_daily_data,format_role_data,path_to_base64,render_team_template,darken_color
-from .html_generator import render_role_attribute,img_to_base64,render_role_cd_record,render_role_luck
+from .html_generator import render_role_attribute,img_to_base64,render_role_cd_record,render_role_luck,render_sandbox_html
 from .render_image import generate_html_screenshot
 from src.config import STATIC_PATH
 # from html2image import Html2Image
@@ -129,7 +129,7 @@ async def handle_role_detail(bot: Bot, event: GroupMessageEvent, state: T_State)
             if panel.get("name") not in ["会心", "会心效果", "破防", "无双", "破招", "加速"]
         ]
     }
-    # print(res.get('equipList', []))
+    print(res.get('equipList', []))
     # 生成 HTML 内容
     html_content = render_role_attribute(roleInfo)
     # # 转换为图片
@@ -287,17 +287,30 @@ async def handle_role_status(bot: Bot, event: GroupMessageEvent, state: T_State)
     # res = await async_api.request(endpoint="/data/role/online/status", server= server_name, name=role_name)
     await RoleCard.finish(MessageSegment.image(res.get('showAvatar')))
 
-# # 沙盘
-# ServerSand = on_regex(pattern=r'^沙盘(?:\s+(\S+))?', priority=1)
-# @ServerSand.handle()
-# async def handle_role_status(bot: Bot, event: GroupMessageEvent, state: T_State):
-#     matched = state['_matched']
-#     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
-#     server_name = matched.group(1) if matched.group(1) else default_server
-#     try:
-#         res = await async_api.server_sand(server= server_name)
-#     except:  # 不推荐，但可以捕获所有异常
-#         await ServerSand.finish(message=f"沙盘接口调用失败")
-#         return
-#     print(res)
-#     await ServerSand.finish(MessageSegment.image(res))
+# 沙盘
+ServerSand = on_regex(pattern=r'^沙盘(?:\s+(\S+))?', priority=1)
+@ServerSand.handle()
+async def handle_role_status(bot: Bot, event: GroupMessageEvent, state: T_State):
+    matched = state['_matched']
+    # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
+    server_name = matched.group(1) if matched.group(1) else default_server
+    try:
+        res = await async_api.server_sand(server= server_name)
+    except:  # 不推荐，但可以捕获所有异常
+        await ServerSand.finish(message=f"沙盘接口调用失败")
+        return
+
+    info = {
+        "updateTime": res.get('update', ''),
+        **res
+    }
+    # print(info)
+    # 生成 HTML 内容
+    html_content = render_sandbox_html(info)
+    # # 转换为图片
+    image_path = await generate_html_screenshot(html_content, 1340)
+    # # 发送图片
+    await ServerSand.finish(MessageSegment.image(path_to_base64(image_path)))
+    # 清理临时文件
+    os.unlink(image_path)
+    

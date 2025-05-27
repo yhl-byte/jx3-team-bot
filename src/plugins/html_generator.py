@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:33:31
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-15 18:09:51
+LastEditTime: 2025-05-27 15:53:06
 FilePath: /team-bot/jx3-team-bot/src/plugins/html_generator.py
 '''
 # src/plugins/chat_plugin/html_generator.py
@@ -202,4 +202,29 @@ def render_role_luck(roleInfo) -> str:
     )
     return html_content
     
+def render_sandbox_html(info, template_name="sand_box.html") -> str:
+    # 获取模板目录
+    template_dir = TEMPLATE_PATH.parent
     
+    # 确保模板目录存在
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+    
+    # 加载模板
+    env = Environment(
+        loader=FileSystemLoader(template_dir),
+        autoescape=True,
+        extensions=['jinja2.ext.do'] 
+        )
+    template = env.get_template(template_name)
+    
+    # 渲染数据
+    html_content = template.render(
+        info=info,
+        maps=info.get('data', []),
+        format_time=format_time,
+        static_path=STATIC_PATH.absolute(),
+        img_to_base64=img_to_base64,
+        str=str 
+    )
+    return html_content
