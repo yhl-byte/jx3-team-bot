@@ -1,7 +1,7 @@
 '''
 Date: 2025-03-06 17:21:21
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-22 18:16:28
+LastEditTime: 2025-05-28 17:42:09
 FilePath: /team-bot/jx3-team-bot/src/plugins/undercover.py
 '''
 # src/plugins/undercover.py
@@ -44,6 +44,7 @@ class UndercoverGame:
         self.speaking_timer = None
         self.vote_timer = None
         self.player_speeches = {}  # 存储玩家发言: user_id -> [发言1, 发言2, ...]
+        self.change_word_timer = None  # 换词计时器
 
 # 存储每个群的游戏状态
 games: Dict[int, UndercoverGame] = {}
@@ -106,8 +107,6 @@ async def fetch_word_pairs() -> List[Tuple[str, str]]:
         ("咖啡", "奶茶"),
         ("地铁", "公交"),
         ("滴滴", "花小猪"),
-        ("美团", "饿了么"),
-        ("百度", "谷歌"),
         ("支付宝", "云闪付"),
         ("知乎", "小红书"),
         ("B站", "抖音"),
@@ -121,26 +120,20 @@ async def fetch_word_pairs() -> List[Tuple[str, str]]:
         ("人工智能", "仿生机器人"),
         ("柯南", "福尔摩斯"),
         ("中央空调", "暖男"),
-        ("网易云", "QQ音乐"),
         ("大众", "五菱"),
         ("泡面", "方便面"),
-        ("拖鞋", "人字拖"),
-        ("小龙虾", "龙虾"),
+        ("小龙虾", "大闸蟹"),
         ("粽子", "咸鸭蛋"),
         ("春节", "元宵节"),
-        ("剪刀", "美工刀"),
+        ("指甲刀", "美工刀"),
         ("蚊子", "苍蝇"),
-        ("眼镜", "隐形眼镜"),
+        ("美瞳", "隐形眼镜"),
         ("电饭煲", "高压锅"),
         ("空调", "电风扇"),
-        ("豆浆", "豆奶"),
         ("火车", "高铁"),
-        ("大熊猫", "熊猫"),
         ("剑网三", "天刀"),
         ("原神", "崩坏星穹铁道"),
         ("米哈游", "网易"),
-        ("腾讯", "字节跳动"),
-        ("阿里巴巴", "京东"),
         ("外卖", "堂食"),
         ("KTV", "录音棚"),
         ("健身房", "体育馆"),
@@ -148,7 +141,6 @@ async def fetch_word_pairs() -> List[Tuple[str, str]]:
         ("电影院", "剧场"),
         ("动漫", "漫画"),
         ("漫展", "游戏展"),
-        ("手游", "端游"),
         ("笔记本", "平板"),
         ("卫生巾", "护垫"),
         ("煎饼果子", "鸡蛋灌饼"),
@@ -177,12 +169,9 @@ async def fetch_word_pairs() -> List[Tuple[str, str]]:
         ("前女友", "前男友"),
         ("双胞胎", "龙凤胎"),
         ("富二代", "高富帅"),
-        ("妈妈", "娘亲"),
         ("神雕侠侣", "天龙八部"),
         ("拉面", "刀削面"),
-        ("葡萄", "提子"),
-        ("猕猴桃", "奇异果"),
-        ("曲奇", "饼干"),
+        ("奥利奥", "趣多多"),
         ("早餐", "宵夜"),
         ("相亲", "联谊"),
         ("加班", "值班"),
@@ -198,11 +187,8 @@ async def fetch_word_pairs() -> List[Tuple[str, str]]:
         ("催婚", "催生"),
         ("丈母娘", "婆婆"),
         ("岳父", "公公"),
-        ("聚餐", "聚会"),
         ("AA制", "请客"),
         ("网红", "明星"),
-        ("打工人", "社畜"),
-        ("996", "007"),
         ("键盘侠", "网络喷子"),
         ("南京条约", "马关条约"),
         ("赤壁之战", "官渡之战"),
@@ -234,13 +220,7 @@ async def fetch_word_pairs() -> List[Tuple[str, str]]:
         ("刀剑神域", "鬼滅之刃"),
         ("魔卡少女樱", "美少女战士"),
         ("银魂", "齐木楠雄的灾难"),
-        ("科幻小说", "奇幻小说"),
-        ("悬疑小说", "推理小说"),
-        ("历史小说", "架空历史"),
-        ("玄幻小说", "修真小说"),
-        ("穿越小说", "重生小说"),
-        ("师父", "师傅"),
-        ("师兄", "师弟"),
+        ("穿越", "重生"),
         ("皇子", "王爷"),
         ("公主", "格格"),
         ("侠客", "刺客"),
@@ -250,14 +230,12 @@ async def fetch_word_pairs() -> List[Tuple[str, str]]:
         ("捕快", "衙役"),
         ("将军", "元帅"),
         ("宰相", "丞相"),
-        ("大侠", "游侠"),
         ("才女", "佳人"),
         ("富商", "大户"),
         ("道士", "和尚"),
         ("仙女", "妖精"),
-        ("奇遇", "机缘"),
         ("南派三叔", "天下霸唱"),
-         ("诛仙", "斗破苍穹"),
+        ("诛仙", "斗破苍穹"),
         ("盗墓笔记", "鬼吹灯"),
         ("三体", "流浪地球"),
         ("围城", "平凡的世界"),
@@ -265,7 +243,6 @@ async def fetch_word_pairs() -> List[Tuple[str, str]]:
         ("令狐冲", "杨过"),
         ("郭靖", "张无忌"),
         ("段誉", "萧峰"),
-        ("韦小宝", "陈家洛"),
         ("黄蓉", "小龙女"),
         ("王语嫣", "赵敏"),
         ("东方不败", "任我行"),
@@ -283,7 +260,8 @@ async def fetch_word_pairs() -> List[Tuple[str, str]]:
         ("潘金莲", "西门庆"),
         ("李逵", "李鬼"),
         ("叶修", "苏沐橙"),
-         ("唐三", "萧炎"),
+        ("唐三", "萧炎"),
+        ("故宫", "颐和园"),
         ("充电宝", "充电器")
     ]
 
@@ -370,6 +348,22 @@ async def start_game_process(bot: Bot, group_id: int):
     game = games[group_id]
     game.status = UndercoverGameStatus.PLAYING
     
+   # 获取词库并分配词语和身份
+    await assign_words_and_roles(bot, group_id)
+    
+    # 发送换词提示
+    change_word_msg = f"词语已分配完成，是否需要更换词语和身份？\n发送「换词」重新分配，发送「不换词」开始游戏。\n30秒后将自动开始游戏。"
+    await bot.send_group_msg(group_id=group_id, message=change_word_msg)
+    
+    # 设置换词计时器
+    if game.change_word_timer:
+        game.change_word_timer.cancel()
+    game.change_word_timer = asyncio.create_task(change_word_timer(bot, group_id))
+
+# 分配词语和身份
+async def assign_words_and_roles(bot: Bot, group_id: int):
+    game = games[group_id]
+    
     # 获取词库
     word_pairs = await fetch_word_pairs()
     chosen_pair = random.choice(word_pairs)
@@ -400,7 +394,6 @@ async def start_game_process(bot: Bot, group_id: int):
     random.shuffle(game.speaking_order)
     game.current_speaker_index = 0
     game.current_round = 1
-    # game.max_rounds = min(3, num_players)  # 最多3轮，或者玩家数量
     
     # 发送游戏开始消息
     await bot.send_group_msg(group_id=group_id, message=f"游戏开始！共有{num_players}名玩家，其中{num_undercovers}名卧底。我已经私聊告知大家各自的词语，请查看。")
@@ -413,17 +406,90 @@ async def start_game_process(bot: Bot, group_id: int):
         except Exception as e:
             print(f"向玩家 {player_id} 发送私聊失败: {e}")
             failed_users.append(player_id)
-            
     
     # 如果有私聊发送失败的用户，提醒他们添加机器人为好友
     if failed_users:
         reminder_msg = "部分玩家无法接收私聊消息。请通过私聊机器人发送「查询身份」来获取你的身份牌。"
         await bot.send_group_msg(group_id=group_id, message=reminder_msg)
-        # 等待10秒，让玩家有时间看到提醒
-        await asyncio.sleep(10)
-        
-    await asyncio.sleep(10)
+        await asyncio.sleep(5)
 
+# 换词计时器
+async def change_word_timer(bot: Bot, group_id: int):
+    await asyncio.sleep(30)
+    
+    if group_id in games and games[group_id].status == UndercoverGameStatus.PLAYING:
+        game = games[group_id]
+        if game.change_word_timer and not game.change_word_timer.cancelled():
+            await bot.send_group_msg(group_id=group_id, message="时间到，开始游戏！")
+            # 开始第一轮发言
+            await start_speaking_round(bot, group_id)
+
+# 换词命令
+ChangeWord = on_regex(pattern=r'^换词$', priority=1)
+@ChangeWord.handle()
+async def handle_change_word(bot: Bot, event: GroupMessageEvent, state: T_State):
+    group_id = event.group_id
+    user_id = event.user_id
+    
+    if group_id not in games or games[group_id].status != UndercoverGameStatus.PLAYING:
+        await ChangeWord.finish(message="当前没有进行中的谁是卧底游戏")
+        return
+    
+    game = games[group_id]
+    
+    # 检查是否是游戏参与者
+    if user_id not in game.players:
+        await ChangeWord.finish(message="只有游戏参与者才能发起换词")
+        return
+    
+    # 检查是否在换词阶段
+    if not game.change_word_timer or game.change_word_timer.cancelled():
+        await ChangeWord.finish(message="当前不在换词阶段")
+        return
+    
+    # 取消计时器
+    game.change_word_timer.cancel()
+    
+    await bot.send_group_msg(group_id=group_id, message="正在重新分配词语和身份...")
+    
+    # 重新分配词语和身份
+    await assign_words_and_roles(bot, group_id)
+    
+    # 重新发送换词提示
+    change_word_msg = f"词语已重新分配，是否需要更换词语和身份？\n发送「换词」重新分配，发送「不换词」开始游戏。\n30秒后将自动开始游戏。"
+    await bot.send_group_msg(group_id=group_id, message=change_word_msg)
+    
+    # 重新设置换词计时器
+    game.change_word_timer = asyncio.create_task(change_word_timer(bot, group_id))
+
+# 不换词命令
+KeepWord = on_regex(pattern=r'^不换词$', priority=1)
+@KeepWord.handle()
+async def handle_keep_word(bot: Bot, event: GroupMessageEvent, state: T_State):
+    group_id = event.group_id
+    user_id = event.user_id
+    
+    if group_id not in games or games[group_id].status != UndercoverGameStatus.PLAYING:
+        await KeepWord.finish(message="当前没有进行中的谁是卧底游戏")
+        return
+    
+    game = games[group_id]
+    
+    # 检查是否是游戏参与者
+    if user_id not in game.players:
+        await KeepWord.finish(message="只有游戏参与者才能决定是否换词")
+        return
+    
+    # 检查是否在换词阶段
+    if not game.change_word_timer or game.change_word_timer.cancelled():
+        await KeepWord.finish(message="当前不在换词阶段")
+        return
+    
+    # 取消计时器
+    game.change_word_timer.cancel()
+    
+    await bot.send_group_msg(group_id=group_id, message="开始游戏！")
+    
     # 开始第一轮发言
     await start_speaking_round(bot, group_id)
 
@@ -478,7 +544,8 @@ async def next_player_speak(bot: Bot, group_id: int):
 
         # 添加本轮发言记录
         result_msg += f"\n【第 {game.current_round} 轮发言记录】\n"
-        for player_id, player_info in game.players.items():
+        for i, player_id in enumerate(game.speaking_order):
+            player_info = game.players[player_id]
             if not player_info["eliminated"]:
                 player_speech = "未发言"
                 if player_id in game.player_speeches and len(game.player_speeches[player_id]) >= game.current_round:
