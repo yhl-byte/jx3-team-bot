@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-19 16:31:59
+LastEditTime: 2025-05-29 16:22:20
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -605,6 +605,7 @@ async def handle_check_team(bot: Bot, event: GroupMessageEvent, state: T_State):
        "external": external,
        "pastor": pastor,
        "tank": tank,
+       "registered": tank + pastor + external + internal,
        "members": memberslist,
     }
     # 生成 HTML 内容

@@ -1,7 +1,7 @@
 <!--
  * @Date: 2025-02-18 13:34:35
  * @LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
- * @LastEditTime: 2025-05-09 11:39:21
+ * @LastEditTime: 2025-05-29 16:46:16
  * @FilePath: /team-bot/jx3-team-bot/src/templates/team.html
 -->
 <!-- src/templates/message.html -->
@@ -59,32 +59,55 @@
             height: 64px;
             line-height: 64px;
             width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            column-gap: 24px;
         }
-        section > span {
-            width: 24%;
+        section > div {
+            width: 20%;
             display: inline-block;
             text-align: center;
             background: #ffffff;
             border-radius: 20px;
             letter-spacing: 20px;
-            margin-right: 7px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             font-weight: 500;
+            padding: 8px 20px;
         }
-        section > span:nth-child(1) {
+        section div:nth-child(1) span {
             color: #ff6b6b;
+            background-color: rgba(255, 107, 107, 0.1);
+            padding: 4px 12px;
+            border-radius: 10px;
         }
         
-        section > span:nth-child(2) {
+        section div:nth-child(2) span {
             color: #4dabf7;
+            background-color: rgba(77, 171, 247, 0.1);
+            padding: 4px 12px;
+            border-radius: 10px;
         }
         
-        section > span:nth-child(3) {
+        section div:nth-child(3) span {
             color: #51cf66;
+            background-color: rgba(81, 207, 102, 0.1);
+            padding: 4px 12px;
+            border-radius: 10px;
         }
         
-        section > span:nth-child(4) {
+        section div:nth-child(4) span {
             color: #fab005;
+            background-color: rgba(250, 176, 5, 0.1);
+            padding: 4px 12px;
+            border-radius: 10px;
+        }
+
+        section div:nth-child(5) span {
+            color: #845ef7;
+            background-color: rgba(132, 94, 247, 0.1);
+            padding: 4px 12px;
+            border-radius: 10px;
         }
         .footer {
             text-align: right;
@@ -144,6 +167,31 @@
             color: #666;
             font-size: 10px;
         }
+        .tag {
+            position: absolute;
+            right: 4px;
+            top: 4px;
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        /* 内功心法背景色 */
+        .tag[data-type="内功"] {
+            background-color: #ff6b6b;
+        }
+        /* 外功心法背景色 */
+        .tag[data-type="外功"] {
+            background-color: #4dabf7;
+        }
+        /* 治疗心法背景色 */
+        .tag[data-type="治疗"] {
+            background-color: #51cf66;
+        }
+        /* 坦克心法背景色 */
+        .tag[data-type="坦克"] {
+            background-color: #fab005;
+        }
         .front {
             display: inline-block;
             width: 60px;
@@ -176,10 +224,11 @@
         <span class="desc">遇见即是缘</span>
     </header>
     <section>
-        <span>内功{{ team_box.internal }}位</span>
-        <span>外功{{ team_box.external }}位</span>
-        <span>治疗{{ team_box.pastor }}位</span>
-        <span>坦克{{ team_box.tank }}位</span>
+        <div>内功<span>{{ team_box.internal }}</span>位</div>
+        <div>外功<span>{{ team_box.external }}</span>位</div>
+        <div>治疗<span>{{ team_box.pastor }}</span>位</div>
+        <div>坦克<span>{{ team_box.tank }}</span>位</div>
+        <div>已报名<span>{{ team_box.registered }}</span>位</div>
     </section>
     <div id="members">
         {% for col in range(5) %}
@@ -194,6 +243,9 @@
             {% endfor %}
             <div class="member"  {% if member.value %}style="border-color: {{ member.value.color }}"{% endif %}>
                 <span class="num">位置：{{ position }}</span>
+                {% if member.value %}
+                <span class="tag" data-type="{{ member.value.xf_duty }}">{{ member.value.xf_duty }}</span>
+                {% endif %}
                 {% if member.value %}
                 <div class="front">
                     <img src="data:image/png;base64,{{ img_to_base64(str(static_path) + '/xf-icon/' + member.value.xf_id|string + '.png')  }}" alt="xf" width="48">
