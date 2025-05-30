@@ -1,7 +1,7 @@
 '''
 Date: 2025-03-06 17:21:21
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-30 16:26:58
+LastEditTime: 2025-05-30 17:33:13
 FilePath: /team-bot/jx3-team-bot/src/plugins/undercover.py
 '''
 # src/plugins/undercover.py
@@ -799,7 +799,6 @@ def should_end_game(game: UndercoverGame) -> bool:
 async def end_game(bot: Bot, group_id: int):
     game = games[group_id]
     game.status = UndercoverGameStatus.ENDED
-    
     # 统计存活的卧底和平民数量
     alive_undercovers = 0
     alive_civilians = 0
@@ -810,35 +809,39 @@ async def end_game(bot: Bot, group_id: int):
                 alive_undercovers += 1
             else:
                 alive_civilians += 1
-    
     # 确定胜利方并更新积分
-    if alive_undercovers == 0:
-        winner = "平民"
-        # 平民胜利，所有平民+10分
-        for player_id, player_info in game.players.items():
-            if not player_info["is_undercover"]:
-                await update_player_score(
-                    str(player_id),
-                    str(group_id),
-                    10,
-                    'undercover',
-                    '平民',
-                    'win'
-                )
-    else:
-        winner = "卧底"
-        # 卧底胜利，所有卧底+15分
-        for player_id, player_info in game.players.items():
-            if player_info["is_undercover"]:
-                await update_player_score(
-                    str(player_id),
-                    str(group_id),
-                    15,
-                    'undercover',
-                    '卧底',
-                    'win'
-                )
-    
+    try:
+        if alive_undercovers == 0:
+            winner = "平民"
+            # 平民胜利，所有平民+10分
+            for player_id, player_info in game.players.items():
+                if not player_info["is_undercover"]:
+                    print(f"正在给平民 {player_info['nickname']} 添加积分")
+                    await update_player_score(
+                        str(player_id),
+                        str(group_id),
+                        10,
+                        'undercover',
+                        '平民',
+                        'win'
+                    )
+        else:
+            winner = "卧底"
+            # 卧底胜利，所有卧底+15分
+            for player_id, player_info in game.players.items():
+                if player_info["is_undercover"]:
+                    print(f"正在给卧底 {player_info['nickname']} 添加积分")
+                    await update_player_score(
+                        str(player_id),
+                        str(group_id),
+                        15,
+                        'undercover',
+                        '卧底',
+                        'win'
+                    )
+        print("胜利方积分更新完成")
+    except Exception as e:
+        print(f"更新胜利方积分时出错：{str(e)}")
     # 给所有参与者加5分参与奖励
     for player_id in game.players:
         await update_player_score(

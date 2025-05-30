@@ -1,7 +1,7 @@
 '''
 Date: 2025-05-30 16:17:02
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-30 16:43:29
+LastEditTime: 2025-05-30 17:24:57
 FilePath: /team-bot/jx3-team-bot/src/plugins/game_score.py
 '''
 from .database import TeamRecordDB
@@ -9,6 +9,7 @@ from nonebot import on_command,on_regex
 from nonebot.adapters.onebot.v11 import MessageEvent, GroupMessageEvent, Bot, Message, MessageSegment
 
 db = TeamRecordDB()
+db.init_db()  # 确保数据库表已创建
 
 check_score =  on_regex(pattern=r"^查询积分$", priority=5)
 check_ranking =  on_regex(pattern=r"^积分排行$", priority=5)
@@ -25,10 +26,15 @@ async def update_player_score(user_id: str, group_id: str, score_change: int, ga
             'participation_count': 1
         })
     else:
-        db.update('game_players', 
-                  {'total_score': player['total_score'] + score_change,
-                   'participation_count': player['participation_count'] + 1},
-                  f"user_id = ? AND group_id = ?", (user_id, group_id))
+         db.update(
+                'game_players',
+                {"total_score": player['total_score'] + score_change, 'participation_count': player['participation_count'] + 1},
+                f"user_id = {user_id} AND group_id = '{group_id}'"
+            )
+        # db.update('game_players', 
+        #           {'total_score': player['total_score'] + score_change,
+        #            'participation_count': player['participation_count'] + 1},
+        #           f"user_id = ? AND group_id = ?", (user_id, group_id))
     
     # 记录游戏记录
     db.insert('game_records', {
@@ -50,7 +56,11 @@ async def get_group_ranking(group_id: str, limit: int = 10):
             "SELECT * FROM game_players WHERE group_id = ? ORDER BY total_score DESC LIMIT ?",
             (group_id, limit)
         )
-        return cursor.fetchall()
+        rows = cursor.fetchall()
+        # 获取列名
+        columns = [col[0] for col in cursor.description]
+        # 将结果转换为字典列表
+        return [dict(zip(columns, row)) for row in rows]
 
 
 @check_score.handle()
