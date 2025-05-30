@@ -2,6 +2,7 @@ from nonebot import on_command,on_regex
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import MessageEvent, GroupMessageEvent, Bot, Message, MessageSegment
 from typing import Dict
+from .game_score import update_player_score
 import random
 import asyncio
 
@@ -73,6 +74,9 @@ async def handle_signup(bot: Bot, event: GroupMessageEvent):
         "nickname": user_info['nickname'],
         "number": game.player_count
     }
+
+    # 添加参与游戏基础分
+    await update_player_score(str(user_id), str(group_id), 5, 'guessing', None, 'participation')
     
     await signup.finish(f"玩家 {user_info['nickname']} (编号 {game.player_count}) 报名成功！")
 
@@ -158,6 +162,12 @@ async def handle_guess(bot: Bot, event: GroupMessageEvent):
     game.guessed_numbers.add(guessed_number)
 
     if guessed_number == game.target_number:
+        # 当前玩家失败
+        await update_player_score(str(user_id), str(group_id), -50, 'guessing', None, 'lose')
+        # 其他玩家获胜
+        for player_id in game.players:
+            if player_id != user_id:
+                await update_player_score(str(player_id), str(group_id), 30, 'guessing', None, 'win')
         # 游戏结束，当前玩家失败
         game.game_status = 'finished'
         msg = f"玩家 {game.players[user_id]['nickname']} (编号 {game.players[user_id]['number']}) 猜中了数字 {guessed_number}，游戏结束！\n"

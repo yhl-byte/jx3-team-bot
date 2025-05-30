@@ -2,6 +2,7 @@ from nonebot import on_command, on_regex
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import MessageEvent, GroupMessageEvent, Bot, Message, MessageSegment
 from typing import Dict, List
+from .game_score import update_player_score
 import random
 import asyncio
 
@@ -87,6 +88,8 @@ async def handle_signup(bot: Bot, event: GroupMessageEvent):
     game.players[user_id] = {"cards": [], "number": game.player_count}
     game.player_order.append(user_id)
     user_info = await bot.get_group_member_info(group_id=group_id, user_id=user_id)
+    # 添加参与游戏基础分
+    await update_player_score(str(user_id), str(group_id), 5, 'guessing', None, 'participation')
     msg = (
         MessageSegment.at(user_id)  + '\n'  + 
         Message(f"【{user_info['nickname']}】报名成功！您的编号是 {game.player_count}")
@@ -367,6 +370,24 @@ async def next_player(bot: Bot, group_id: int, current_user_id: int):
 async def end_game(bot: Bot, group_id: int):
     game = games[group_id]
     game.game_status = 'finished'
+
+    # 计算庄家赢的人数
+    dealer_wins = 0
+    for user_id in game.player_order:
+        if user_id != game.dealer_id:
+            points = game.calculate_points(game.players[user_id]['cards'])
+            dealer_points = game.calculate_points(game.dealer_cards)
+            
+            if points <= 21:
+                if dealer_points > 21 or points > dealer_points:
+                    # 闲家赢
+                    await update_player_score(user_id, str(group_id), 10, 'blackjack', 'player', 'win')
+                elif points < dealer_points:
+                    dealer_wins += 1
+    
+    # 庄家积分
+    if dealer_wins > 0:
+        await update_player_score(str(game.dealer_id), str(group_id), dealer_wins * 10, 'blackjack', 'dealer', 'win')
     
     # 计算结果
     msg = "游戏结束！\n最终结果：\n"

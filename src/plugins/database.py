@@ -1,8 +1,8 @@
 '''
 Date: 2025-02-18 13:32:40
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-03-04 14:52:24
-FilePath: /bott/bot-dd/src/plugins/database.py
+LastEditTime: 2025-05-30 16:16:59
+FilePath: /team-bot/jx3-team-bot/src/plugins/database.py
 '''
 # src/plugins/chat_plugin/database.py
 import sqlite3
@@ -66,6 +66,32 @@ class TeamRecordDB:
                 role_name TEXT NOT NULL,
                 role_area TEXT NOT NULL,
                 role_career TEXT NOT NULL
+            )
+            ''')
+
+            # 创建游戏玩家积分表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS game_players (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                total_score INTEGER DEFAULT 0,
+                participation_count INTEGER DEFAULT 0,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
+
+            # 创建游戏记录表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS game_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                game_type TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                score_change INTEGER NOT NULL,
+                game_role TEXT,
+                game_result TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
             ''')
             conn.commit()     

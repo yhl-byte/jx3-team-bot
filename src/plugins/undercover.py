@@ -1,7 +1,7 @@
 '''
 Date: 2025-03-06 17:21:21
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-28 17:42:09
+LastEditTime: 2025-05-30 16:26:58
 FilePath: /team-bot/jx3-team-bot/src/plugins/undercover.py
 '''
 # src/plugins/undercover.py
@@ -16,6 +16,7 @@ import asyncio
 import aiohttp
 import json
 from typing import Dict, List, Tuple, Set, Optional
+from .game_score import update_player_score
 # require('nonebot_plugin_saa')
 # from nonebot_plugin_saa import enable_auto_select_bot
 # enable_auto_select_bot()
@@ -810,11 +811,44 @@ async def end_game(bot: Bot, group_id: int):
             else:
                 alive_civilians += 1
     
-    # 确定胜利方
+    # 确定胜利方并更新积分
     if alive_undercovers == 0:
         winner = "平民"
+        # 平民胜利，所有平民+10分
+        for player_id, player_info in game.players.items():
+            if not player_info["is_undercover"]:
+                await update_player_score(
+                    str(player_id),
+                    str(group_id),
+                    10,
+                    'undercover',
+                    '平民',
+                    'win'
+                )
     else:
         winner = "卧底"
+        # 卧底胜利，所有卧底+15分
+        for player_id, player_info in game.players.items():
+            if player_info["is_undercover"]:
+                await update_player_score(
+                    str(player_id),
+                    str(group_id),
+                    15,
+                    'undercover',
+                    '卧底',
+                    'win'
+                )
+    
+    # 给所有参与者加5分参与奖励
+    for player_id in game.players:
+        await update_player_score(
+            str(player_id),
+            str(group_id),
+            5,
+            'undercover',
+            '参与奖励',
+            'participation'
+        )
     
     # 生成游戏结果消息
     result_msg = f"游戏结束！{winner}获胜！\n\n"
