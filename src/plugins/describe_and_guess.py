@@ -19,6 +19,7 @@ class DescribeGuessGame:
         self.game_start_time = None  # 游戏开始时间
         self.word_change_count = 0  # 换词次数
         self.max_word_changes = 3   # 最大换词次数
+        self.current_word_guessed = False  # 当前词汇是否已被猜
         self.word_list = [
             "苹果", "电脑", "汽车", "书本", "手机", "咖啡", "音乐", "电影", "足球", "猫咪",
             "太阳", "月亮", "星星", "海洋", "山峰", "花朵", "蝴蝶", "彩虹", "雪花", "火焰",
@@ -76,6 +77,7 @@ class DescribeGuessGame:
             self.players[player_id]["correct_guesses"] = 0
         self.current_word = None
         self.word_change_count = 0
+        self.current_word_guessed = False
         self.game_start_time = None
 
 # 存储每个群的游戏实例
@@ -280,8 +282,11 @@ async def handle_guess_word(bot: Bot, event: GroupMessageEvent):
     
     user_info = game.players[user_id]
     
-    # 检查是否猜对
-    if guess_text == game.current_word:
+    # 检查是否猜对且当前词汇未被猜中
+    if guess_text == game.current_word and not game.current_word_guessed:
+        # 标记当前词汇已被猜中，防止其他玩家重复猜中
+        game.current_word_guessed = True
+        
         game.players[user_id]["correct_guesses"] += 1
         
         msg = (
@@ -294,6 +299,7 @@ async def handle_guess_word(bot: Bot, event: GroupMessageEvent):
         
         # 更换新词汇
         game.current_word = game.get_random_word()
+        game.current_word_guessed = False  # 重置新词汇的猜中状态
         
         # 私聊发送新词汇给描述者
         await bot.send_private_msg(
@@ -305,6 +311,9 @@ async def handle_guess_word(bot: Bot, event: GroupMessageEvent):
             group_id=group_id,
             message="描述者请继续描述下一个词汇！"
         )
+    elif guess_text == game.current_word and game.current_word_guessed:
+        # 词汇已被其他玩家猜中，给出提示
+        await guess_word.finish("很遗憾，这个词汇刚刚已经被其他玩家猜中了！请等待下一个词汇。")
     else:
         # 猜错了，不做特殊处理，让游戏继续
         pass
@@ -335,6 +344,7 @@ async def end_describing_game(bot: Bot, group_id: int):
     await update_player_score(str(game.describer_id), str(group_id), describer_score, 'describe_guess', None, 'describer')
     
     result_msg = f"🎮 游戏结束！\n\n📊 本轮结果：\n"
+    result_msg = f"当前词汇是：【{game.current_word}】\n"
     result_msg += f"👑 描述者：【{describer_info['nickname']}】\n"
     result_msg += f"💰 描述者得分：{describer_score}分 (共{total_correct}次猜对 × 5分)\n\n"
     result_msg += "🏆 猜词玩家得分：\n"
