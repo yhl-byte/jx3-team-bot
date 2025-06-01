@@ -157,7 +157,7 @@ async def handle_end_signup(bot: Bot, event: GroupMessageEvent):
         pass  # 计时器被取消，不做处理
 
 # 竞选描述者
-apply_describer = on_regex(pattern=r"^登基$", priority=5)
+apply_describer = on_regex(pattern=r"^(登基|竞选|夺嫡)$", priority=5)
 @apply_describer.handle()
 async def handle_apply_describer(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
@@ -225,7 +225,7 @@ async def start_describing_game(bot: Bot, group_id: int):
     # 私聊发送词汇给描述者
     await bot.send_private_msg(
         user_id=game.describer_id,
-        message=f"您是本轮的描述者！\n需要描述的词汇是：【{game.current_word}】\n\n" +
+        message=f"【{game.current_word}】\n您是本轮的描述者！这是需要描述的词汇！\n" +
                 "请在群里用文字描述这个词汇，让其他玩家猜出来。\n" +
                 "注意：不能直接说出词汇中的任何字和谐音词！\n" +
                 "游戏时长5分钟，加油！"
@@ -298,7 +298,7 @@ async def handle_guess_word(bot: Bot, event: GroupMessageEvent):
         # 私聊发送新词汇给描述者
         await bot.send_private_msg(
             user_id=game.describer_id,
-            message=f"有人猜对了！\n新的词汇是：【{game.current_word}】\n继续描述吧！"
+            message=f"【{game.current_word}】\n 有人猜对了！这是 新的词汇\n继续描述吧！"
         )
         
         await bot.send_group_msg(
@@ -406,7 +406,7 @@ async def handle_describe_help(bot: Bot, event: GroupMessageEvent):
 • 开始猜词 - 开始游戏
 • 报名猜词 - 报名参与
 • 结束猜词报名 - 结束报名阶段
-• 登基 - 申请当描述者
+• 登基|竞选|夺嫡 - 申请当描述者
 • 猜词+答案 - 猜测词汇
 • 换词语 - 描述者主动换词（限3次）
 • 强制结束猜词 - 管理员强制结束
