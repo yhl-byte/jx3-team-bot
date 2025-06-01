@@ -18,6 +18,7 @@ class GuessingGame:
         self.player_count = 0  # 玩家计数（用于分配编号）
         self.player_order = []  # 玩家顺序
         self.current_player_index = 0  # 当前玩家索引
+        self.timer = None  # 用于计时的变量
 
     def init_game(self):
         self.target_number = random.randint(1, 100)
@@ -119,6 +120,18 @@ async def handle_end_signup(bot: Bot, event: GroupMessageEvent):
     msg += MessageSegment.at(game.player_order[0])
     await end_signup.finish(msg)
 
+    # 设置1分钟超时计时器
+    if game.timer:
+        game.timer.cancel()
+    game.timer = asyncio.create_task(asyncio.sleep(60))
+    try:
+        await game.timer
+        # 如果计时器正常结束（没有被取消），则处理超时
+        if game.game_status == 'playing':
+            await handle_timeout(bot, group_id)
+    except asyncio.CancelledError:
+        pass  # 计时器被取消，不做处理
+
 @guess.handle()
 async def handle_guess(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
@@ -140,6 +153,10 @@ async def handle_guess(bot: Bot, event: GroupMessageEvent):
     if user_id != current_player:
         await guess.finish(f"还没轮到你！现在是 {game.players[current_player]['nickname']} (编号 {game.players[current_player]['number']}) 的回合")
         return
+    
+    # 取消当前计时器
+    if game.timer and not game.timer.done():
+        game.timer.cancel()
 
     # 获取猜测的数字
     args = str(event.get_message()).strip()
@@ -193,6 +210,16 @@ async def handle_guess(bot: Bot, event: GroupMessageEvent):
         msg += f"轮到 {game.players[next_player]['nickname']} (编号 {game.players[next_player]['number']}) 猜数"
         await guess.finish(msg)
 
+        # 为下一个玩家设置新的计时器
+        game.timer = asyncio.create_task(asyncio.sleep(60))
+        try:
+            await game.timer
+            # 如果计时器正常结束（没有被取消），则处理超时
+            if game.game_status == 'playing':
+                await handle_timeout(bot, group_id)
+        except asyncio.CancelledError:
+            pass  # 计时器被取消，不做处理
+
 @force_end.handle()
 async def handle_force_end(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
@@ -205,7 +232,11 @@ async def handle_force_end(bot: Bot, event: GroupMessageEvent):
     if game.game_status == 'finished':
         await force_end.finish("游戏已经结束！")
         return
-
+    
+    # 取消计时器
+    if game.timer and not game.timer.done():
+        game.timer.cancel()
+    
     game.game_status = 'finished'
     msg = "游戏被强制结束！\n"
     if game.game_status == 'playing':
@@ -232,3 +263,34 @@ async def handle_help(bot: Bot, event: GroupMessageEvent):
     msg += "6. 开口中帮助：显示本帮助信息"
     
     await guessing_help.finish(msg)
+
+
+async def handle_timeout(bot: Bot, group_id: int):
+    """处理玩家猜数超时"""
+    game = games.get(group_id)
+    if not game or game.game_status != 'playing':
+        return
+    
+    current_player = game.player_order[game.current_player_index]
+    user_info = game.players[current_player]
+    
+    # 玩家超时，视为猜中数字并失败
+    await bot.send_group_msg(
+        group_id=group_id,
+        message=f"玩家 {user_info['nickname']} (编号 {user_info['number']}) 超过1分钟未猜数，视为猜中了数字！"
+    )
+    
+    # 当前玩家失败
+    await update_player_score(str(current_player), str(group_id), -50, 'guessing', None, 'lose')
+    # 其他玩家获胜
+    for player_id in game.players:
+        if player_id != current_player:
+            await update_player_score(str(player_id), str(group_id), 30, 'guessing', None, 'win')
+    
+    # 游戏结束，当前玩家失败
+    game.game_status = 'finished'
+    msg = f"玩家 {user_info['nickname']} (编号 {user_info['number']}) 超时，视为猜中了数字 {game.target_number}，游戏结束！\n"
+    msg += f"很遗憾，{user_info['nickname']} 失败了！\n"
+    msg += "其他玩家获胜！"
+    
+    await bot.send_group_msg(group_id=group_id, message=msg)

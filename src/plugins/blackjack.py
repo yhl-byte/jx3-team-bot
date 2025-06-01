@@ -220,7 +220,7 @@ async def start_dealing(bot: Bot, group_id: int):
     dealer_points = game.calculate_points(visible_cards)
     msg = (
         MessageSegment.at(game.current_player)  + '\n'  +
-        Message(f"庄家牌面：[暗牌] {game.format_cards(visible_cards)} (点数：{dealer_points})\n 你的牌面：{game.format_cards(cards)} (点数：{points})\n 请玩家 {user_info['nickname']} (编号 {game.players[game.current_player]['number']}) 选择要牌还是停牌")
+        Message(f"庄家牌面：[暗牌] {game.format_cards(visible_cards)} (点数：{dealer_points})\n 你的牌面：{game.format_cards(cards)} (点数：{points})\n 请玩家 {user_info['nickname']} (编号 {game.players[game.current_player]['number']}) 选择【要牌】还是【停牌】")
     )
     await bot.send_group_msg(
         group_id=group_id,
@@ -240,6 +240,10 @@ async def handle_hit(bot: Bot, event: GroupMessageEvent):
     game = games[group_id]
     if user_id != game.current_player:
         return
+    
+    # 取消超时计时器
+    if game.timer and not game.timer.done():
+        game.timer.cancel()
     
     # 发一张牌
     new_card = game.deal_card()
@@ -305,6 +309,10 @@ async def handle_stand(bot: Bot, event: GroupMessageEvent):
     if user_id != game.current_player:
         return
     
+    # 取消超时计时器
+    if game.timer and not game.timer.done():
+        game.timer.cancel()
+    
     if user_id == game.dealer_id:
         # 如果是庄家停牌，直接结束游戏
         await end_game(bot, group_id)
@@ -317,6 +325,10 @@ async def next_player(bot: Bot, group_id: int, current_user_id: int):
     current_index = game.player_order.index(current_user_id)
     next_index = (current_index + 1) % len(game.player_order)
     next_player_id = game.player_order[next_index]
+    
+    # 取消之前的计时器（如果有）
+    if game.timer and not game.timer.done():
+        game.timer.cancel()
     
     if next_player_id == game.dealer_id and current_user_id == game.player_order[game.player_order.index(game.dealer_id) - 1]:
         # 轮到庄家第一次操作
@@ -332,7 +344,7 @@ async def next_player(bot: Bot, group_id: int, current_user_id: int):
             user_id=next_player_id,
             message=f"您当前的总点数是：{total_points}"
         )
-        msg += "请选择【要牌】还是【停牌】"
+        msg += "请选择【要牌】还是【停牌】（20秒内未操作将视为停牌）"
         await bot.send_group_msg(group_id=group_id, message=msg)
     elif next_player_id == game.dealer_id:
         # 庄家继续操作
@@ -346,7 +358,7 @@ async def next_player(bot: Bot, group_id: int, current_user_id: int):
             user_id=next_player_id,
             message=f"您当前的总点数是：{total_points}"
         )
-        msg += "请继续选择要牌还是停牌"
+        msg += "请继续选择【要牌】还是【停牌】（20秒内未操作将视为停牌）"
         await bot.send_group_msg(group_id=group_id, message=msg)
     elif current_user_id == game.dealer_id:
         # 庄家停牌，游戏结束
@@ -361,12 +373,36 @@ async def next_player(bot: Bot, group_id: int, current_user_id: int):
         dealer_points = game.calculate_points(visible_cards)
         msg = (
             MessageSegment.at(next_player_id)  + '\n'  + 
-            Message(f"庄家牌面：[暗牌] {game.format_cards(visible_cards)} (点数：{dealer_points})\n 你的牌面：{game.format_cards(cards)} (点数：{points})\n请玩家 {user_info['nickname']} (编号 {game.players[next_player_id]['number']}) 选择要牌还是停牌")
+            Message(f"庄家牌面：[暗牌] {game.format_cards(visible_cards)} (点数：{dealer_points})\n 你的牌面：{game.format_cards(cards)} (点数：{points})\n请玩家 {user_info['nickname']} (编号 {game.players[next_player_id]['number']}) 选择【要牌】还是【停牌】（20秒内未操作将视为停牌）")
         )
         await bot.send_group_msg(
             group_id=group_id,
             message=msg
         )
+    
+    # 设置20秒超时计时器
+    game.timer = asyncio.create_task(handle_timeout(bot, group_id, next_player_id, 20))
+
+async def handle_timeout(bot: Bot, group_id: int, player_id: int, timeout: int):
+    """处理玩家操作超时"""
+    await asyncio.sleep(timeout)
+    game = games.get(group_id)
+    
+    # 检查游戏是否仍在进行中且当前玩家未变
+    if game and game.game_status == 'playing' and game.current_player == player_id:
+        user_info = await bot.get_group_member_info(group_id=group_id, user_id=player_id)
+        await bot.send_group_msg(
+            group_id=group_id,
+            message=f"玩家 {user_info['nickname']} 操作超时，自动停牌！"
+        )
+        
+        # 按停牌处理
+        if player_id == game.dealer_id:
+            # 如果是庄家超时，直接结束游戏
+            await end_game(bot, group_id)
+        else:
+            # 如果是普通玩家超时，轮到下一个玩家
+            await next_player(bot, group_id, player_id)
 async def end_game(bot: Bot, group_id: int):
     game = games[group_id]
     game.game_status = 'finished'
