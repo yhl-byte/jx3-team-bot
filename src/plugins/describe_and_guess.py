@@ -141,7 +141,7 @@ async def handle_end_signup(bot: Bot, event: GroupMessageEvent):
     
     player_list = "\n".join([f"{info['number']}. {info['nickname']}" for user_id, info in game.players.items()])
     
-    await end_signup.finish(
+    await end_signup.send(
         f"报名结束！共有 {len(game.players)} 名玩家参与：\n{player_list}\n\n" +
         "现在开始竞选描述者！\n" +
         "想要当描述者的玩家请发送【竞选描述者】\n" +
@@ -408,7 +408,7 @@ async def handle_describe_help(bot: Bot, event: GroupMessageEvent):
 • 结束描述猜词报名 - 结束报名阶段
 • 竞选描述者 - 申请当描述者
 • 猜词+答案 - 猜测词汇
-• 换词 - 描述者主动换词（限3次）
+• 换词语 - 描述者主动换词（限3次）
 • 强制结束描述猜词 - 管理员强制结束
 • 描述猜词帮助 - 查看帮助
 
@@ -417,7 +417,7 @@ async def handle_describe_help(bot: Bot, event: GroupMessageEvent):
     await describe_help.finish(help_text)
 
 # 描述者换词
-change_word = on_regex(pattern=r"^换词$", priority=5)
+change_word = on_regex(pattern=r"^换词语$", priority=5)
 @change_word.handle()
 async def handle_change_word(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
