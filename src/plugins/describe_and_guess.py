@@ -92,7 +92,7 @@ async def handle_start_game(bot: Bot, event: GroupMessageEvent):
 
     games[group_id] = DescribeGuessGame()
     
-    await start_game.finish("《我来描述你来猜》游戏开始！\n请玩家发送【报名描述猜词】进行报名，至少需要2名玩家。\n通过【结束描述猜词报名】来结束报名阶段。")
+    await start_game.finish("《我来描述你来猜》游戏开始！\n请玩家发送【报名猜词】进行报名，至少需要2名玩家。\n通过【结束猜词报名】来结束报名阶段。")
 
 # 玩家报名
 signup = on_regex(pattern=r"^报名猜词$", priority=5)
@@ -144,7 +144,7 @@ async def handle_end_signup(bot: Bot, event: GroupMessageEvent):
     await end_signup.send(
         f"报名结束！共有 {len(game.players)} 名玩家参与：\n{player_list}\n\n" +
         "现在开始竞选描述者！\n" +
-        "想要当描述者的玩家请发送【竞选描述者】\n" +
+        "想要当描述者的玩家请发送【竞选】\n" +
         "30秒后将自动选择描述者并开始游戏。"
     )
     
