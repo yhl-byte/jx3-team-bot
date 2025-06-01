@@ -299,7 +299,6 @@ async def handle_guess_word(bot: Bot, event: GroupMessageEvent):
         
         # 更换新词汇
         game.current_word = game.get_random_word()
-        game.current_word_guessed = False  # 重置新词汇的猜中状态
         
         # 私聊发送新词汇给描述者
         await bot.send_private_msg(
@@ -311,6 +310,7 @@ async def handle_guess_word(bot: Bot, event: GroupMessageEvent):
             group_id=group_id,
             message="描述者请继续描述下一个词汇！"
         )
+        game.current_word_guessed = False  # 重置新词汇的猜中状态
     elif guess_text == game.current_word and game.current_word_guessed:
         # 词汇已被其他玩家猜中，给出提示
         await guess_word.finish("很遗憾，这个词汇刚刚已经被其他玩家猜中了！请等待下一个词汇。")
@@ -452,6 +452,7 @@ async def handle_change_word(bot: Bot, event: GroupMessageEvent):
     old_word = game.current_word
     game.current_word = game.get_random_word()
     game.word_change_count += 1
+    game.current_word_guessed = False  # 重置新词汇的猜中状态
     
     # 确保新词与旧词不同
     while game.current_word == old_word:
