@@ -1,7 +1,7 @@
 '''
 Date: 2025-03-06 17:21:21
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-30 17:33:13
+LastEditTime: 2025-06-02 07:19:59
 FilePath: /team-bot/jx3-team-bot/src/plugins/undercover.py
 '''
 # src/plugins/undercover.py
@@ -666,7 +666,7 @@ async def handle_vote(bot: Bot, event: MessageEvent, state: T_State):
     target_nickname = user_game.players[target_id]["nickname"]
     target_code = user_game.players[target_id]["code"]
     
-    await VoteCommand.finish(message=f"{user_game.players[user_id]['nickname']} 投票给了 {target_code}号玩家 {target_nickname}")
+    await VoteCommand.send(message=f"{user_game.players[user_id]['nickname']} 投票给了 {target_code}号玩家 {target_nickname}")
     
     # 检查是否所有存活玩家都已投票
     alive_players = [pid for pid, pinfo in user_game.players.items() if not pinfo["eliminated"]]
