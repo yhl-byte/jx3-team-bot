@@ -82,7 +82,7 @@ class DescribeGuessGame:
 games: Dict[int, DescribeGuessGame] = {}
 
 # 开始游戏命令
-start_game = on_regex(pattern=r"^开始描述猜词$", priority=5)
+start_game = on_regex(pattern=r"^开始猜词$", priority=5)
 @start_game.handle()
 async def handle_start_game(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
@@ -95,7 +95,7 @@ async def handle_start_game(bot: Bot, event: GroupMessageEvent):
     await start_game.finish("《我来描述你来猜》游戏开始！\n请玩家发送【报名描述猜词】进行报名，至少需要2名玩家。\n通过【结束描述猜词报名】来结束报名阶段。")
 
 # 玩家报名
-signup = on_regex(pattern=r"^报名描述猜词$", priority=5)
+signup = on_regex(pattern=r"^报名猜词$", priority=5)
 @signup.handle()
 async def handle_signup(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
@@ -124,7 +124,7 @@ async def handle_signup(bot: Bot, event: GroupMessageEvent):
     await signup.finish(message=Message(msg))
 
 # 结束报名
-end_signup = on_regex(pattern=r"^结束描述猜词报名$", priority=5)
+end_signup = on_regex(pattern=r"^结束猜词报名$", priority=5)
 @end_signup.handle()
 async def handle_end_signup(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
@@ -157,7 +157,7 @@ async def handle_end_signup(bot: Bot, event: GroupMessageEvent):
         pass  # 计时器被取消，不做处理
 
 # 竞选描述者
-apply_describer = on_regex(pattern=r"^竞选描述者$", priority=5)
+apply_describer = on_regex(pattern=r"^登基$", priority=5)
 @apply_describer.handle()
 async def handle_apply_describer(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
@@ -228,7 +228,7 @@ async def start_describing_game(bot: Bot, group_id: int):
         message=f"您是本轮的描述者！\n需要描述的词汇是：【{game.current_word}】\n\n" +
                 "请在群里用文字描述这个词汇，让其他玩家猜出来。\n" +
                 "注意：不能直接说出词汇中的任何字和谐音词！\n" +
-                "游戏时长3分钟，加油！"
+                "游戏时长5分钟，加油！"
     )
     
     # 群里通知游戏开始
@@ -238,12 +238,12 @@ async def start_describing_game(bot: Bot, group_id: int):
         message=f"游戏开始！\n描述者：【{describer_info['nickname']}】\n\n" +
                 "其他玩家请根据描述者的描述来猜词！\n" +
                 "猜词格式：【猜词】+您的答案\n" +
-                "游戏时长：3分钟\n" +
+                "游戏时长：5分钟\n" +
                 "\n描述者开始描述吧！"
     )
     
-    # 设置3分钟计时器
-    game.timer = asyncio.create_task(asyncio.sleep(180))  # 3分钟
+    # 设置5分钟计时器
+    game.timer = asyncio.create_task(asyncio.sleep(300))  # 5分钟
     try:
         await game.timer
         await end_describing_game(bot, group_id)
@@ -354,7 +354,7 @@ async def end_describing_game(bot: Bot, group_id: int):
     del games[group_id]
 
 # 强制结束游戏
-force_end = on_regex(pattern=r"^强制结束描述猜词$", priority=5)
+force_end = on_regex(pattern=r"^强制结束猜词$", priority=5)
 @force_end.handle()
 async def handle_force_end(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
@@ -383,7 +383,7 @@ async def handle_force_end(bot: Bot, event: GroupMessageEvent):
         await force_end.finish("游戏已被强制结束！")
 
 # 游戏帮助
-describe_help = on_regex(pattern=r"^描述猜词帮助$", priority=5)
+describe_help = on_regex(pattern=r"^猜词帮助$", priority=5)
 @describe_help.handle()
 async def handle_describe_help(bot: Bot, event: GroupMessageEvent):
     help_text = """
@@ -394,7 +394,7 @@ async def handle_describe_help(bot: Bot, event: GroupMessageEvent):
 2. 竞选描述者，无人竞选则随机选择
 3. 描述者通过文字描述词汇，不能说出词汇中的字和谐音
 4. 其他玩家根据描述猜词
-5. 游戏时长3分钟
+5. 游戏时长5分钟
 6. 描述者可以主动换词，每局最多3次
 
 💰 计分规则：
@@ -403,13 +403,13 @@ async def handle_describe_help(bot: Bot, event: GroupMessageEvent):
 • 参与游戏：+5分
 
 🎯 游戏命令：
-• 开始描述猜词 - 开始游戏
-• 报名描述猜词 - 报名参与
-• 结束描述猜词报名 - 结束报名阶段
-• 竞选描述者 - 申请当描述者
+• 开始猜词 - 开始游戏
+• 报名猜词 - 报名参与
+• 结束猜词报名 - 结束报名阶段
+• 登基 - 申请当描述者
 • 猜词+答案 - 猜测词汇
 • 换词语 - 描述者主动换词（限3次）
-• 强制结束描述猜词 - 管理员强制结束
+• 强制结束猜词 - 管理员强制结束
 • 描述猜词帮助 - 查看帮助
 
 🎉 快来体验有趣的描述猜词游戏吧！
