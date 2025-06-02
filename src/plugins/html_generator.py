@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:33:31
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-27 15:53:06
+LastEditTime: 2025-06-02 23:23:34
 FilePath: /team-bot/jx3-team-bot/src/plugins/html_generator.py
 '''
 # src/plugins/chat_plugin/html_generator.py
@@ -103,6 +103,26 @@ def render_html(team_box, template_name="team.html") -> str:
         static_path=STATIC_PATH.absolute(),
         img_to_base64=img_to_base64,
         str=str 
+    )
+    return html_content
+
+
+def render_game_help() -> str:
+    # 获取模板目录
+    template_dir = TEMPLATE_PATH.parent
+    help_template = "games_help.html"
+    
+    # 确保模板目录存在
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+    
+    # 加载模板
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template(help_template)
+    
+    # 渲染数据
+    html_content = template.render(
+        static_path=STATIC_PATH.absolute()
     )
     return html_content
 

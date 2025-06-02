@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>年崽机器人游戏帮助文档</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .game-card.roulette {
+            border-left-color: #ff6b6b;
+        }
+
+        .game-card.blackjack {
+            border-left-color: #4ecdc4;
+        }
+
+        .game-card.guessing {
+            border-left-color: #45b7d1;
+        }
+
+        .game-card.describe {
+            border-left-color: #96ceb4;
+        }
+
+        .game-card.undercover {
+            border-left-color: #feca57;
+        }
+
+        .game-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .game-description {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+        }
+
+        .commands-section {
+            margin-top: 20px;
+        }
+
+        .commands-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #34495e;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .commands-title::before {
+            content: "🎮";
+            margin-right: 8px;
+        }
+
+        .command-list {
+            list-style: none;
+        }
+
+        .command-item {
+            background: #f8f9fa;
+            margin: 5px 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            border-left: 3px solid #e9ecef;
+        }
+
+        .command-item code {
+            background: #e3f2fd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #1976d2;
+            font-weight: bold;
+        }
+
+        .score-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 30px;
+        }
+
+        .score-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .score-commands {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .score-command {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .score-command code {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            border-top: 1px solid #ecf0f1;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 年崽机器人游戏中心</h1>
+            <p>丰富多彩的群聊游戏，让聊天更有趣！</p>
+        </div>
+
+        <div class="content">
+            <div class="games-grid">
+                <!-- 俄罗斯转盘 -->
+                <div class="game-card roulette">
+                    <div class="game-title">🔫 俄罗斯转盘</div>
+                    <div class="game-description">
+                        经典的俄罗斯转盘游戏，6发子弹中只有1发是真的。玩家轮流开枪，中弹者游戏结束。刺激紧张，考验运气！
+                    </div>
+                    <div class="commands-section">
+                        <div class="commands-title">游戏命令</div>
+                        <ul class="command-list">
+                            <li class="command-item"><code>开始转盘</code> - 开始游戏报名</li>
+                            <li class="command-item"><code>报名转盘</code> - 加入游戏</li>
+                            <li class="command-item"><code>结束转盘报名</code> - 结束报名，开始游戏</li>
+                            <li class="command-item"><code>开枪</code> - 轮到你时开枪</li>
+                            <li class="command-item"><code>转盘状态</code> - 查看游戏状态</li>
+                            <li class="command-item"><code>转盘规则</code> - 查看游戏规则</li>
+                            <li class="command-item"><code>强制结束转盘</code> - 强制结束游戏</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 21点 -->
+                <div class="game-card blackjack">
+                    <div class="game-title">🃏 21点</div>
+                    <div class="game-description">
+                        经典的21点纸牌游戏。目标是让手牌点数尽可能接近21点但不超过。与庄家比拼，点数高者获胜！
+                    </div>
+                    <div class="commands-section">
+                        <div class="commands-title">游戏命令</div>
+                        <ul class="command-list">
+                            <li class="command-item"><code>开始21点</code> - 开始游戏报名</li>
+                            <li class="command-item"><code>报名21点</code> - 加入游戏</li>
+                            <li class="command-item"><code>结束21点报名</code> - 结束报名，开始游戏</li>
+                            <li class="command-item"><code>我要当庄</code> - 申请当庄家</li>
+                            <li class="command-item"><code>要牌</code> - 要一张牌</li>
+                            <li class="command-item"><code>停牌</code> - 停止要牌</li>
+                            <li class="command-item"><code>强制结束21点</code> - 强制结束游戏</li>
+                            <li class="command-item"><code>21点帮助</code> - 查看游戏帮助</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 开口中 -->
+                <div class="game-card guessing">
+                    <div class="game-title">🔢 开口中（猜数字）</div>
+                    <div class="game-description">
+                        猜数字游戏，系统随机生成1-100的数字，玩家轮流猜测。根据提示缩小范围，猜中者获胜！
+                    </div>
+                    <div class="commands-section">
+                        <div class="commands-title">游戏命令</div>
+                        <ul class="command-list">
+                            <li class="command-item"><code>开始开口中</code> - 开始游戏报名</li>
+                            <li class="command-item"><code>报名开口中</code> - 加入游戏</li>
+                            <li class="command-item"><code>结束开口中报名</code> - 结束报名，开始游戏</li>
+                            <li class="command-item"><code>猜数 [数字]</code> - 猜测数字(如：猜数 50)</li>
+                            <li class="command-item"><code>强制结束开口中</code> - 强制结束游戏</li>
+                            <li class="command-item"><code>开口中帮助</code> - 查看游戏帮助</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 猜词游戏 -->
+                <div class="game-card describe">
+                    <div class="game-title">💭 猜词游戏</div>
+                    <div class="game-description">
+                        一人描述，其他人猜词。描述者通过语言描述让其他玩家猜出指定词语，考验表达能力和理解能力！
+                    </div>
+                    <div class="commands-section">
+                        <div class="commands-title">游戏命令</div>
+                        <ul class="command-list">
+                            <li class="command-item"><code>开始猜词</code> - 开始游戏报名</li>
+                            <li class="command-item"><code>报名猜词</code> - 加入游戏</li>
+                            <li class="command-item"><code>结束猜词报名</code> - 结束报名，开始游戏</li>
+                            <li class="command-item"><code>登基/竞选/夺嫡</code> - 申请当描述者</li>
+                            <li class="command-item"><code>猜词 [词语]</code> - 猜测词语</li>
+                            <li class="command-item"><code>换词语</code> - 描述者换词</li>
+                            <li class="command-item"><code>强制结束猜词</code> - 强制结束游戏</li>
+                            <li class="command-item"><code>猜词帮助</code> - 查看游戏帮助</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 谁是卧底 -->
+                <div class="game-card undercover">
+                    <div class="game-title">🕵️ 谁是卧底</div>
+                    <div class="game-description">
+                        经典的推理游戏。大部分玩家拿到相同词语，少数卧底拿到相似词语。通过发言和投票找出卧底！
+                    </div>
+                    <div class="commands-section">
+                        <div class="commands-title">游戏命令</div>
+                        <ul class="command-list">
+                            <li class="command-item"><code>开始谁是卧底</code> - 开始游戏报名</li>
+                            <li class="command-item"><code>报名卧底</code> - 加入游戏</li>
+                            <li class="command-item"><code>结束报名</code> - 结束报名，开始游戏</li>
+                            <li class="command-item"><code>换词|不换词</code> - 是否更换词汇和身份</li>
+                            <li class="command-item"><code>发言 [内容]</code> - 描述词汇</li>
+                            <li class="command-item"><code>投票 [编号]</code> - 投票给你认为的卧底</li>
+                            <li class="command-item"><code>结束谁是卧底</code> - 强制结束游戏</li>
+                            <li class="command-item"><code>谁是卧底状态</code> - 查看游戏状态</li>
+                            <li class="command-item"><code>谁是卧底帮助</code> - 查看游戏帮助</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 积分系统 -->
+            <div class="score-section">
+                <div class="score-title">🏆 积分系统</div>
+                <div class="score-commands">
+                    <div class="score-command">
+                        <code>查询积分</code>
+                        <div>查看个人积分</div>
+                    </div>
+                    <div class="score-command">
+                        <code>积分排行</code>
+                        <div>查看积分排行榜</div>
+                    </div>
+                    <div class="score-command">
+                        <code>积分说明</code>
+                        <div>查看积分规则说明</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🤖 年崽机器人 | 让群聊更有趣的游戏助手</p>
+            <p>如有问题或建议，请联系管理员</p>
+        </div>
+    </div>
+</body>
+</html>
