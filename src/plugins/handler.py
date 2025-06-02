@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-01 17:59:50
+LastEditTime: 2025-06-02 22:53:51
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -22,10 +22,12 @@ from .jx3_api import *
 from .undercover import *
 # 导入21点游戏模块
 from .blackjack import *
-# 导开口中戏模块
+# 导开口中游戏模块
 from .guessing_game import *
-# 导描述猜词戏模块
+# 导描述猜词游戏模块
 from .describe_and_guess import *
+# 导入俄罗斯转盘游戏模块
+from .russian_roulette import *
 import os
 
 # 用于存储每个群的状态
