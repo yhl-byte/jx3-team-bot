@@ -22,6 +22,14 @@ class RussianRouletteGame:
         self.last_action_time = 0  # 最后操作时间
         self.timeout_duration = 60  # 超时时间（秒）
         
+    def calculate_chamber_size(self):
+        """根据玩家数量计算弹夹容量"""
+        player_count = len(self.players)
+        if player_count <= 4:
+            return 6
+        else:
+            return 6 + (player_count - 4)
+        
     def start_signup(self, group_id: str):
         """开始报名阶段"""
         self.game_status = 'signup'
@@ -34,6 +42,8 @@ class RussianRouletteGame:
         # 取消之前的超时任务
         if self.timeout_task and not self.timeout_task.done():
             self.timeout_task.cancel()
+        # 初始弹夹容量为6
+        self.chamber_size = 6
         # 随机生成子弹位置 (1-6)
         self.bullet_position = random.randint(1, self.chamber_size)
         
@@ -43,14 +53,19 @@ class RussianRouletteGame:
             return False, "当前不在报名阶段"
         if user_id in self.players:
             return False, "你已经报名了"
-        if len(self.players) >= 8:  # 限制最大玩家数
-            return False, "报名人数已满（最多8人）"
+        # 移除最大玩家数限制
             
         self.players[user_id] = {
             "nickname": nickname,
             "qq": user_id
         }
-        return True, f"{nickname} 报名成功！当前报名人数：{len(self.players)}"
+        
+        # 动态更新弹夹容量
+        self.chamber_size = self.calculate_chamber_size()
+        # 重新生成子弹位置
+        self.bullet_position = random.randint(1, self.chamber_size)
+        
+        return True, f"{nickname} 报名成功！当前报名人数：{len(self.players)}，弹夹容量：{self.chamber_size}发"
         
     def start_game(self):
         """开始游戏"""
@@ -59,6 +74,11 @@ class RussianRouletteGame:
         if len(self.players) < 2:
             return False, "至少需要2人才能开始游戏"
             
+        # 最终确定弹夹容量
+        self.chamber_size = self.calculate_chamber_size()
+        # 重新生成子弹位置
+        self.bullet_position = random.randint(1, self.chamber_size)
+        
         # 随机排列玩家顺序
         self.player_order = list(self.players.keys())
         random.shuffle(self.player_order)
@@ -73,7 +93,7 @@ class RussianRouletteGame:
     def get_game_start_message(self):
         """获取游戏开始消息"""
         message = "🎯 俄罗斯转盘游戏开始！\n"
-        message += f"📦 弹夹容量：{self.chamber_size}发\n"
+        message += f"📦 弹夹容量：{self.chamber_size}发（玩家数：{len(self.players)}人）\n"
         message += f"💥 子弹已装填（位置随机）\n\n"
         message += "🎲 玩家顺序：\n"
         for i, player_id in enumerate(self.player_order, 1):
@@ -83,7 +103,7 @@ class RussianRouletteGame:
         message += "• 按顺序轮流开枪\n"
         message += "• 中弹者游戏结束，扣除100积分\n"
         message += "• 其他玩家获得50积分\n"
-        message += "• 发送'开枪'进行游戏\n"
+        message += "• 发送'砰'进行游戏\n"
         message += f"• ⏰ 超时{self.timeout_duration}秒未开枪将自动中弹\n\n"
         
         current_player = self.players[self.player_order[0]]["nickname"]
@@ -212,7 +232,7 @@ class RussianRouletteGame:
                 message += "📋 报名列表：\n"
                 for i, (user_id, info) in enumerate(self.players.items(), 1):
                     message += f"{i}. {info['nickname']}\n"
-            message += "\n💡 发送'报名转盘'参与游戏\n"
+            message += "\n💡 发送'biu'参与游戏\n"
             message += "💡 发送'结束转盘报名'开始游戏\n"
             message += "💡 发送'强制结束转盘'取消游戏"
             return message
@@ -304,9 +324,9 @@ async def timeout_handler(group_id: str, bot: Bot):
 
 # 命令处理器
 start_roulette = on_regex(pattern=r"^开始转盘$", priority=5)
-signup_roulette = on_regex(pattern=r"^报名转盘$", priority=5)
+signup_roulette = on_regex(pattern=r"^biu$", priority=5)
 end_signup = on_regex(pattern=r"^结束转盘报名$", priority=5)
-shoot_gun = on_regex(pattern=r"^开枪$", priority=5)
+shoot_gun = on_regex(pattern=r"^砰$", priority=5)
 roulette_status = on_regex(pattern=r"^转盘状态$", priority=5)
 roulette_rules = on_regex(pattern=r"^转盘规则$", priority=5)
 force_end_roulette = on_regex(pattern=r"^强制结束转盘$", priority=5)
@@ -331,7 +351,7 @@ async def handle_start_roulette(bot: Bot, event: GroupMessageEvent):
     message += "• 中弹者扣除100积分\n"
     message += "• 幸存者每人获得50积分\n"
     message += f"• ⏰ 开枪超时{game.timeout_duration}秒自动中弹\n\n"
-    message += "📝 发送'报名转盘'参与游戏\n"
+    message += "📝 发送'biu'参与游戏\n"
     message += "📝 发送'结束转盘报名'开始游戏\n"
     message += "📝 发送'转盘状态'查看当前状态\n"
     message += "📝 发送'强制结束转盘'取消游戏"
@@ -361,7 +381,7 @@ async def handle_end_signup(bot: Bot, event: GroupMessageEvent):
         # 艾特第一个玩家
         first_player_id = game.player_order[0]
         at_message = MessageSegment.at(first_player_id)
-        await end_signup.send(at_message + f" 轮到你了！发送'开枪'进行游戏（{game.timeout_duration}秒内）")
+        await end_signup.send(at_message + f" 轮到你了！发送'砰'进行游戏（{game.timeout_duration}秒内）")
         
         # 启动超时任务
         game.timeout_task = asyncio.create_task(timeout_handler(group_id, bot))
@@ -429,9 +449,9 @@ async def handle_roulette_rules(bot: Bot, event: GroupMessageEvent):
     message = "🎯 俄罗斯转盘游戏规则\n\n"
     message += "📋 游戏流程：\n"
     message += "1. 发送'开始转盘'开始报名\n"
-    message += "2. 发送'报名转盘'参与游戏\n"
+    message += "2. 发送'biu'参与游戏\n"
     message += "3. 发送'结束转盘报名'开始游戏\n"
-    message += "4. 按顺序发送'开枪'进行游戏\n\n"
+    message += "4. 按顺序发送'砰'进行游戏\n\n"
     message += "🎮 游戏规则：\n"
     message += "• 弹夹容量6发，其中1发是实弹\n"
     message += "• 玩家按随机顺序轮流开枪\n"
