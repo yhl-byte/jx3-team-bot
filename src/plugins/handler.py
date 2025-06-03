@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-02 23:24:08
+LastEditTime: 2025-06-03 08:26:22
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -690,7 +690,7 @@ async def handle_game_help(bot: Bot, event: GroupMessageEvent, state: T_State):
     
     # 转换为图片
     # image_path = html_to_image(html_content)
-    image_path = await generate_html_screenshot(html_content)
+    image_path = await generate_html_screenshot(html_content, 1920)
     
     # 发送图片
     await GameHelp.finish(MessageSegment.image(path_to_base64(image_path)))
