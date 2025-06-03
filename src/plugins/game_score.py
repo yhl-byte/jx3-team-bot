@@ -1,7 +1,7 @@
 '''
 Date: 2025-05-30 16:17:02
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-30 17:24:57
+LastEditTime: 2025-06-03 09:54:44
 FilePath: /team-bot/jx3-team-bot/src/plugins/game_score.py
 '''
 from .database import TeamRecordDB
@@ -49,7 +49,7 @@ async def update_player_score(user_id: str, group_id: str, score_change: int, ga
 async def get_player_score(user_id: str, group_id: str):
     return db.fetch_one('game_players', f"user_id = ? AND group_id = ?", (user_id, group_id))
 
-async def get_group_ranking(group_id: str, limit: int = 10):
+async def get_group_ranking(group_id: str, limit: int = 50):
     with db._get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
