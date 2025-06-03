@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-03 08:26:22
+LastEditTime: 2025-06-03 14:00:00
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -28,6 +28,10 @@ from .guessing_game import *
 from .describe_and_guess import *
 # 导入俄罗斯转盘游戏模块
 from .russian_roulette import *
+# 导入猜歌游戏模块
+from .guess_song_game import *
+# 导入监听自动同意好友请求
+from .friend_handler import *
 import os
 
 # 用于存储每个群的状态
