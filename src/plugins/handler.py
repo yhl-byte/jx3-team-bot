@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-03 14:00:00
+LastEditTime: 2025-06-04 12:43:51
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -30,6 +30,8 @@ from .describe_and_guess import *
 from .russian_roulette import *
 # 导入猜歌游戏模块
 from .guess_song_game import *
+# # 导入海龟汤游戏模块
+# from .turtle_soup_game import *
 # 导入监听自动同意好友请求
 from .friend_handler import *
 import os

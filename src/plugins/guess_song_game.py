@@ -4,7 +4,6 @@ import time
 from typing import Dict, List, Optional, Set
 from dataclasses import dataclass, field
 from enum import Enum
-
 from nonebot import on_command, on_message,on_regex
 from nonebot.adapters.onebot.v11 import Bot, Event, GroupMessageEvent, MessageSegment
 from nonebot.permission import SUPERUSER
@@ -13,15 +12,19 @@ from nonebot.typing import T_State
 from nonebot.matcher import Matcher
 from nonebot.params import CommandArg, ArgPlainText
 from nonebot.adapters.onebot.v11.message import Message
-
+import re
 # QQ音乐API导入
-from qqmusic_api import search, song
+from qqmusic_api import search, song, lyric
 
 class GameState(Enum):
     WAITING = "waiting"  # 等待开始
     SIGNUP = "signup"    # 报名阶段
     PLAYING = "playing"  # 游戏进行中
     FINISHED = "finished" # 游戏结束
+
+class GuessMode(Enum):
+    TITLE_ONLY = "title_only"  # 只猜歌名
+    TITLE_AND_ARTIST = "title_and_artist"  # 歌名和歌手都要猜对
 
 @dataclass
 class Player:
@@ -33,12 +36,15 @@ class Player:
 @dataclass
 class SongInfo:
     song_id: str
+    song_mid: str
     title: str
     artist: str
     album: str = ""
     duration: int = 0  # 秒
     preview_url: str = ""  # 试听链接
     lyric: str = ""  # 歌词
+    play_duration: int = 30  # 播放时长（秒）
+    vs: List[str] = field(default_factory=list)  # 新增
 
 @dataclass
 class GuessGame:
@@ -57,122 +63,152 @@ class GuessGame:
     correct_guessed: bool = False
     timeout_task: Optional[asyncio.Task] = None
     game_task: Optional[asyncio.Task] = None
+    guess_mode: GuessMode = GuessMode.TITLE_ONLY  # 猜歌模式
+    play_duration: int = 30  # 音频播放时长（秒）
 
 # 游戏实例存储
 games: Dict[str, GuessGame] = {}
 
-# QQ音乐API相关函数
 async def search_songs(keyword: str, num: int = 10) -> List[SongInfo]:
     """搜索歌曲"""
     try:
-        result = await search.search_by_type(keyword=keyword, num=num, type_=0)  # type_=0表示搜索歌曲
+        result = await search.search_by_type(keyword=keyword, num=num)
         songs = []
+        print(f"搜索到的歌曲: {len(result) if result else 0}条")
         
-        if result and 'data' in result and 'song' in result['data'] and 'list' in result['data']['song']:
-            for song_data in result['data']['song']['list']:
+        if result:
+            for song_data in result:
+                # 直接从搜索结果提取信息
                 song_info = SongInfo(
-                    song_id=str(song_data.get('songid', '')),
-                    title=song_data.get('songname', ''),
-                    artist=', '.join([singer.get('name', '') for singer in song_data.get('singer', [])]),
-                    album=song_data.get('albumname', ''),
-                    duration=song_data.get('interval', 0)
+                    song_id=str(song_data.get('id', '')),
+                    title=song_data.get('name', ''),
+                    artist=song_data.get('singer', [{}])[0].get('name', '') if song_data.get('singer') else '未知歌手',
+                    album=song_data.get('album', {}).get('name', '') if song_data.get('album') else '',
+                    duration=song_data.get('interval', 0),
+                    song_mid=song_data.get('mid', ''),
+                    vs=song_data.get('vs', [])
                 )
-                songs.append(song_info)
+                
+                # 只添加有效的歌曲信息
+                if song_info.song_id and song_info.title and song_info.song_mid:
+                    songs.append(song_info)
         
+        print(f"解析后的歌曲数量: {len(songs)}")
         return songs
     except Exception as e:
         print(f"搜索歌曲失败: {e}")
         return []
 
-async def get_song_detail(song_id: str) -> Optional[SongInfo]:
-    """获取歌曲详细信息"""
+async def get_song_detail(song_info: SongInfo, play_duration: int = 30) -> Optional[SongInfo]:
+    """获取歌曲详细信息（歌词和试听链接）"""
     try:
-        # 获取歌曲信息
-        song_info = await song.get_song_info(song_id)
-        if not song_info:
-            return None
-            
+        print(f"获取歌曲详情: {song_info.title} - {song_info.artist}")
+        
         # 获取歌词
-        lyric_info = await song.get_song_lyric(song_id)
         lyric_text = ""
-        if lyric_info and 'lyric' in lyric_info:
-            lyric_text = lyric_info['lyric']
+        try:
+            lyric_data = await lyric.get_lyric(song_info.song_mid)
+            if lyric_data and 'lyric' in lyric_data:
+                raw_lyric = lyric_data['lyric']
+                # 去除时间标签，提取纯歌词
+                pure_lyric = re.sub(r'\[.*?\]', '', raw_lyric).strip()
+                # 按行分割，去除空行
+                lyric_lines = [line.strip() for line in pure_lyric.split('\n') if line.strip()]
+
+                # 取中间两句
+                if len(lyric_lines) >= 5:
+                    mid = len(lyric_lines) // 2
+                    lyric_text = lyric_lines[mid-2:mid+3]
+                else:
+                    lyric_text = lyric_lines
+                
+            print(f"歌词获取成功: {len(lyric_text)} 字符")
+            print(f"歌词---: {lyric_text} ")
+        except Exception as e:
+            print(f"获取歌词失败: {e}")
         
-        # 获取播放链接
-        play_url = await song.get_song_url(song_id)
-        preview_url = play_url.get('url', '') if play_url else ''
+        # 获取试听链接
+        preview_url = ""
+        try:
+            if song_info.vs and len(song_info.vs) > 0:
+                # 使用vs[0]获取试听链接
+                url_result = await song.get_try_url(song_info.song_mid, song_info.vs[0])
+                if url_result:
+                        preview_url = url_result
+            print(f"播放链接获取: {'成功' if preview_url else '失败'}")
+        except Exception as e:
+            print(f"获取播放链接失败: {e}")
         
-        return SongInfo(
-            song_id=song_id,
-            title=song_info.get('songname', ''),
-            artist=', '.join([singer.get('name', '') for singer in song_info.get('singer', [])]),
-            album=song_info.get('albumname', ''),
-            duration=song_info.get('interval', 0),
+        # 更新歌曲信息
+        detailed_song = SongInfo(
+            song_id=song_info.song_id,
+            title=song_info.title,
+            artist=song_info.artist,
+            album=song_info.album,
+            duration=song_info.duration,
             preview_url=preview_url,
-            lyric=lyric_text
+            lyric=lyric_text,
+            play_duration=play_duration,
+            song_mid=song_info.song_mid,
+            vs=song_info.vs
         )
+        
+        print(f"歌曲详情获取完成: {detailed_song.title} - {detailed_song.artist} - {detailed_song}")
+        return detailed_song
+        
     except Exception as e:
         print(f"获取歌曲详情失败: {e}")
         return None
 
-async def prepare_song_queue(num_songs: int = 8) -> List[SongInfo]:
+async def prepare_song_queue(num_songs: int = 8, play_duration: int = 30) -> List[SongInfo]:
     """准备歌曲队列"""
     # 热门歌手和关键词
     popular_keywords = [
         "周杰伦", "邓紫棋", "林俊杰", "陈奕迅", "薛之谦", "毛不易", "李荣浩", "张学友",
         "王力宏", "刘德华", "张信哲", "五月天", "Beyond", "梁静茹", "田馥甄", "蔡依林",
-        "热门歌曲", "经典老歌", "流行音乐", "华语金曲"
+        "热门歌曲", "经典老歌", "流行音乐", "华语金曲", "抖音热歌", "网络歌曲"
     ]
     
     all_songs = []
     
     # 从多个关键词搜索歌曲
-    for keyword in random.sample(popular_keywords, min(5, len(popular_keywords))):
-        songs = await search_songs(keyword, 3)
-        all_songs.extend(songs)
+    search_count = min(6, len(popular_keywords))
+    for keyword in random.sample(popular_keywords, search_count):
+        try:
+            songs = await search_songs(keyword, num=3)
+            all_songs.extend(songs)
+            await asyncio.sleep(0.5)  # 避免请求过快
+        except Exception as e:
+            print(f"搜索关键词 '{keyword}' 失败: {e}")
+            continue
+    
+    # 去重（基于歌曲ID）
+    seen_ids = set()
+    unique_songs = []
+    for song in all_songs:
+        if song.song_id not in seen_ids:
+            seen_ids.add(song.song_id)
+            unique_songs.append(song)
     
     # 随机选择指定数量的歌曲
-    if len(all_songs) >= num_songs:
-        selected_songs = random.sample(all_songs, num_songs)
-    else:
-        selected_songs = all_songs
+    selected_songs = random.sample(unique_songs, min(num_songs, len(unique_songs)))
     
-    # 获取详细信息
+    # 获取每首歌的详细信息
     detailed_songs = []
     for song_info in selected_songs:
-        detailed = await get_song_detail(song_info.song_id)
-        if detailed:
-            detailed_songs.append(detailed)
+        try:
+            detailed_song = await get_song_detail(song_info, play_duration)
+            if detailed_song and detailed_song.preview_url and detailed_song.lyric:
+                print(f"获取歌曲详情成功: {detailed_song.title} - {detailed_song.artist}")
+                detailed_songs.append(detailed_song)
+            await asyncio.sleep(0.3)  # 避免请求过快
+        except Exception as e:
+            print(f"获取歌曲详情失败: {e}")
+            continue
     
+    print(f"成功准备了 {len(detailed_songs)} 首歌曲")
     return detailed_songs
 
-def get_lyric_hint(lyric: str, reveal_ratio: float = 0.3) -> str:
-    """获取歌词提示（部分遮挡）"""
-    if not lyric:
-        return "暂无歌词"
-    
-    # 简单处理歌词，去除时间标记
-    import re
-    clean_lyric = re.sub(r'\[\d+:\d+\.\d+\]', '', lyric)
-    lines = [line.strip() for line in clean_lyric.split('\n') if line.strip()]
-    
-    if not lines:
-        return "暂无歌词"
-    
-    # 选择前几行作为提示
-    hint_lines = lines[:3]
-    
-    # 部分遮挡
-    masked_lines = []
-    for line in hint_lines:
-        if len(line) > 10:
-            reveal_count = int(len(line) * reveal_ratio)
-            masked = line[:reveal_count] + "*" * (len(line) - reveal_count)
-            masked_lines.append(masked)
-        else:
-            masked_lines.append(line)
-    
-    return "\n".join(masked_lines)
 
 def normalize_answer(text: str) -> str:
     """标准化答案（去除空格、标点等）"""
@@ -181,24 +217,35 @@ def normalize_answer(text: str) -> str:
     normalized = re.sub(r'[\s\-_\(\)（）\[\]【】]', '', text.lower())
     return normalized
 
-def check_answer(user_answer: str, correct_title: str, correct_artist: str) -> bool:
+def check_answer(user_answer: str, correct_title: str, correct_artist: str, mode: GuessMode = GuessMode.TITLE_ONLY) -> bool:
     """检查答案是否正确"""
     user_norm = normalize_answer(user_answer)
     title_norm = normalize_answer(correct_title)
     artist_norm = normalize_answer(correct_artist)
     
-    # 检查是否包含歌名或歌手名
-    return (title_norm in user_norm or user_norm in title_norm or 
-            artist_norm in user_norm or user_norm in artist_norm)
+    # 检查歌名匹配
+    title_match = title_norm in user_norm or user_norm in title_norm
+    
+    if mode == GuessMode.TITLE_ONLY:
+        # 只需要猜对歌名
+        return title_match
+    elif mode == GuessMode.TITLE_AND_ARTIST:
+        # 需要同时猜对歌名和歌手
+        artist_match = artist_norm in user_norm or user_norm in artist_norm
+        return title_match and artist_match
+    
+    return title_match
 
-# 命令处理器 on_regex(pattern=r'^猜歌\s+(.+)$', priority=1)
-guess_song_start = on_regex(pattern=r'^开始猜歌\s+(.+)$', priority=5)
-guess_song_join = on_regex(pattern=r'^报名猜歌\s+(.+)$', priority=5)
-guess_song_skip = on_regex(pattern=r'^跳过\s+(.+)$', priority=5)
-guess_song_status = on_regex(pattern=r'^猜歌状态\s+(.+)$', priority=5)
-guess_song_stop = on_regex(pattern=r'^强制结束猜歌\s+(.+)$', priority=5)
-guess_song_rules = on_regex(pattern=r'^猜歌规则\s+(.+)$', priority=5)
-guess_song_end_signup = on_regex(pattern=r'^结束猜歌报名\s+(.+)$', priority=5)
+# 命令处理器
+guess_song_start = on_regex(pattern=r'^开始猜歌$', priority=5)
+guess_song_join = on_regex(pattern=r'^报名猜歌$', priority=5)
+guess_song_skip = on_regex(pattern=r'^跳过$', priority=5)
+guess_song_status = on_regex(pattern=r'^猜歌状态$', priority=5)
+guess_song_stop = on_regex(pattern=r'^强制结束猜歌$', priority=5)
+guess_song_rules = on_regex(pattern=r'^猜歌规则$', priority=5)
+guess_song_end_signup = on_regex(pattern=r'^结束猜歌报名$', priority=5)
+guess_song_set_duration = on_regex(pattern=r'^设置播放时长 (\d+)$', priority=5)
+guess_song_set_mode = on_regex(pattern=r'^设置猜歌模式 (\d+)$', priority=5)
 
 # 消息处理器（用于猜歌）
 guess_handler = on_message(priority=10)
@@ -221,7 +268,9 @@ async def start_guess_game(bot: Bot, event: GroupMessageEvent):
         "⏰ 报名时间：5min\n"
         "🎯 游戏时长：5分钟\n"
         "💡 发送 '猜歌规则' 查看详细规则\n"
-        "🚀 发送 '结束猜歌报名' 可提前开始游戏"
+        "🚀 发送 '结束猜歌报名' 可提前开始游戏\n"
+        # "⚙️ 发送 '设置播放时长 数字' 调整播放时长\n"
+        "⚙️ 发送 '设置猜歌模式 1/2' 切换模式"
     )
     
     # 300秒后开始游戏
@@ -230,13 +279,59 @@ async def start_guess_game(bot: Bot, event: GroupMessageEvent):
     if group_id in games and games[group_id].state == GameState.SIGNUP:
         await start_game_process(bot, group_id)
 
+@guess_song_set_duration.handle()
+async def set_play_duration(bot: Bot, event: GroupMessageEvent):
+    group_id = str(event.group_id)
+    duration = int(event.get_message().extract_plain_text().split()[-1])
+    
+    if group_id not in games:
+        await guess_song_set_duration.send("当前没有猜歌游戏！")
+        return
+    
+    game = games[group_id]
+    
+    if game.state != GameState.SIGNUP:
+        await guess_song_set_duration.send("只能在报名阶段设置播放时长！")
+        return
+    
+    if duration < 10 or duration > 60:
+        await guess_song_set_duration.send("播放时长必须在10-60秒之间！")
+        return
+    
+    game.play_duration = duration
+    await guess_song_set_duration.send(f"✅ 播放时长已设置为 {duration} 秒")
+
+@guess_song_set_mode.handle()
+async def set_guess_mode(bot: Bot, event: GroupMessageEvent):
+    group_id = str(event.group_id)
+    mode_num = int(event.get_message().extract_plain_text().split()[-1])
+    
+    if group_id not in games:
+        await guess_song_set_mode.send("当前没有猜歌游戏！")
+        return
+    
+    game = games[group_id]
+    
+    if game.state != GameState.SIGNUP:
+        await guess_song_set_mode.send("只能在报名阶段设置猜歌模式！")
+        return
+    
+    if mode_num == 1:
+        game.guess_mode = GuessMode.TITLE_ONLY
+        await guess_song_set_mode.send("✅ 猜歌模式已设置为：只猜歌名")
+    elif mode_num == 2:
+        game.guess_mode = GuessMode.TITLE_AND_ARTIST
+        await guess_song_set_mode.send("✅ 猜歌模式已设置为：歌名和歌手都要猜对")
+    else:
+        await guess_song_set_mode.send("模式编号错误！1=只猜歌名，2=歌名和歌手都要猜对")
+
 @guess_song_join.handle()
 async def join_guess_game(bot: Bot, event: GroupMessageEvent):
     group_id = str(event.group_id)
     user_id = str(event.user_id)
     
     if group_id not in games:
-        await guess_song_join.send("当前没有猜歌游戏，发送 '猜歌' 开始新游戏！")
+        await guess_song_join.send("当前没有猜歌游戏，发送 '开始猜歌' 开始新游戏！")
         return
     
     game = games[group_id]
@@ -272,13 +367,20 @@ async def start_game_process(bot: Bot, group_id: str):
     game.state = GameState.PLAYING
     game.start_time = time.time()
     
+    mode_text = "只猜歌名" if game.guess_mode == GuessMode.TITLE_ONLY else "歌名和歌手都要猜对"
+    
     await bot.send_group_msg(
         group_id=int(group_id), 
-        message=f"🎵 猜歌游戏开始！参与玩家：{len(game.players)}人\n⏰ 游戏时长：5分钟\n🎯 准备歌曲中..."
+        message=f"🎵 猜歌游戏开始！\n"
+                f"👥 参与玩家：{len(game.players)}人\n"
+                f"⏰ 游戏时长：5分钟\n"
+                # f"🎼 播放时长：{game.play_duration}秒/首\n"
+                f"🎮 猜歌模式：{mode_text}\n"
+                f"🎯 准备歌曲中..."
     )
     
     # 准备歌曲队列
-    game.song_queue = await prepare_song_queue(8)
+    game.song_queue = await prepare_song_queue(8, game.play_duration)
     
     if not game.song_queue:
         await bot.send_group_msg(group_id=int(group_id), message="❌ 获取歌曲失败，游戏结束！")
@@ -290,7 +392,9 @@ async def start_game_process(bot: Bot, group_id: str):
     
     await bot.send_group_msg(
         group_id=int(group_id), 
-        message=f"✅ 歌曲准备完成！共{len(game.song_queue)}首歌\n🗳️ 跳过投票需要{game.skip_threshold}票\n🎵 开始第一首歌..."
+        message=f"✅ 歌曲准备完成！共{len(game.song_queue)}首歌\n"
+                f"🗳️ 跳过投票需要{game.skip_threshold}票\n"
+                f"🎵 开始第一首歌..."
     )
     
     # 开始播放第一首歌
@@ -298,6 +402,7 @@ async def start_game_process(bot: Bot, group_id: str):
     
     # 设置游戏总时长定时器
     game.game_task = asyncio.create_task(game_timer(bot, group_id))
+
 
 async def play_next_song(bot: Bot, group_id: str):
     """播放下一首歌"""
@@ -315,27 +420,43 @@ async def play_next_song(bot: Bot, group_id: str):
     song = game.current_song
     
     # 构建消息
+    mode_hint = "请猜歌名！" if game.guess_mode == GuessMode.TITLE_ONLY else "请猜歌名和歌手！"
+    
+    # 处理歌词显示
+    lyric_display = ""
+    if song.lyric:
+        if isinstance(song.lyric, str):
+            lyric_display = song.lyric
+        elif isinstance(song.lyric, (list, set)):
+            lyric_display = "\n".join(str(line) for line in song.lyric)
+        else:
+            lyric_display = str(song.lyric)
+    
+   
     message_parts = [
         f"🎵 第{game.current_song_index + 1}首歌开始！\n",
-        f"🎤 歌手：{song.artist}\n",
-        f"💿 专辑：{song.album}\n" if song.album else "",
-        f"⏱️ 时长：{song.duration}秒\n" if song.duration else "",
-        "\n💡 歌词提示：\n",
-        get_lyric_hint(song.lyric),
-        "\n\n🎯 请猜歌名！发送 '跳过' 投票跳过"
+        "\n💡 歌词提示：\n\n",
+        lyric_display,
+        f"\n\n🎯 {mode_hint}\n",
+        "📝 发送 '跳过' 投票跳过"
     ]
+
+     # 添加试听链接（如果有的话）
+    if song.preview_url:
+        
+        # 使用CQ码创建可点击链接
+        message_parts.extend([
+            "\n🎧 试听链接\n",
+             f"🔗 点击试听: {song.preview_url}\n\n"
+        ])
     
     message = "".join(message_parts)
     
-    # 如果有试听链接，添加音频消息
-    if song.preview_url:
-        try:
-            audio_msg = MessageSegment.record(song.preview_url)
-            await bot.send_group_msg(group_id=int(group_id), message=[audio_msg, message])
-        except:
-            await bot.send_group_msg(group_id=int(group_id), message=message)
-    else:
+    try:
         await bot.send_group_msg(group_id=int(group_id), message=message)
+    except Exception as e:
+        print(f"发送消息失败: {e}")
+        return
     
     # 设置歌曲超时
     if game.timeout_task:
@@ -430,7 +551,7 @@ async def handle_guess(bot: Bot, event: GroupMessageEvent):
         return
     
     # 检查答案
-    if check_answer(message, game.current_song.title, game.current_song.artist):
+    if check_answer(message, game.current_song.title, game.current_song.artist, game.guess_mode):
         game.correct_guessed = True
         
         if game.timeout_task:
@@ -466,7 +587,13 @@ async def show_game_status(bot: Bot, event: GroupMessageEvent):
     game = games[group_id]
     
     if game.state == GameState.SIGNUP:
-        await guess_song_status.send(f"🎵 猜歌游戏报名中\n👥 当前参与人数：{len(game.players)}")
+        mode_text = "只猜歌名" if game.guess_mode == GuessMode.TITLE_ONLY else "歌名和歌手都要猜对"
+        await guess_song_status.send(
+            f"🎵 猜歌游戏报名中\n"
+            f"👥 当前参与人数：{len(game.players)}\n"
+            # f"🎼 播放时长：{game.play_duration}秒\n"
+            f"🎮 猜歌模式：{mode_text}"
+        )
         return
     
     if game.state != GameState.PLAYING:
@@ -480,10 +607,13 @@ async def show_game_status(bot: Bot, event: GroupMessageEvent):
     # 排序玩家
     sorted_players = sorted(game.players.values(), key=lambda p: p.score, reverse=True)
     
+    mode_text = "只猜歌名" if game.guess_mode == GuessMode.TITLE_ONLY else "歌名和歌手都要猜对"
+    
     status_msg = [
         f"🎵 猜歌游戏进行中\n",
         f"🎯 当前第{game.current_song_index + 1}首歌\n",
-        f"⏰ 剩余时间：{int(remaining)}秒\n\n",
+        f"⏰ 剩余时间：{int(remaining)}秒\n",
+        f"🎮 猜歌模式：{mode_text}\n\n",
         "🏆 当前排行榜：\n"
     ]
     
@@ -497,10 +627,14 @@ async def stop_game(bot: Bot, event: GroupMessageEvent):
     group_id = str(event.group_id)
     user_id = event.user_id
     
-    # 检查是否为管理员（这里简化处理，实际可以加入权限检查）
-    member_info = await bot.get_group_member_info(group_id=group_id, user_id=user_id)
-    if member_info['role'] not in ['admin', 'owner']:
-        await force_end.finish("只有管理员可以强制结束游戏！")
+    # 检查是否为管理员
+    try:
+        member_info = await bot.get_group_member_info(group_id=group_id, user_id=user_id)
+        if member_info['role'] not in ['admin', 'owner']:
+            await guess_song_stop.send("只有管理员可以强制结束游戏！")
+            return
+    except:
+        await guess_song_stop.send("权限检查失败！")
         return
     
     if group_id not in games:
@@ -558,8 +692,14 @@ async def show_rules(bot: Bot, event: GroupMessageEvent):
         "• 游戏总时长：5分钟\n"
         "• 每首歌最长1分钟\n"
         "• 答对一首歌得10分\n"
-        "• 可以猜歌名或歌手名\n"
+        "• 支持两种猜歌模式\n"
         "• 发送 '跳过' 投票跳过当前歌曲\n\n"
+        "🎮 猜歌模式：\n"
+        "• 模式1：只猜歌名（默认）\n"
+        "• 模式2：歌名和歌手都要猜对\n\n"
+        "⚙️ 设置选项：\n"
+        # "• 设置播放时长 10-60秒\n"
+        "• 设置猜歌模式 1或2\n\n"
         "🏆 获胜条件：\n"
         "游戏结束时分数最高者获胜\n\n"
         "💡 提示：\n"
@@ -570,7 +710,6 @@ async def show_rules(bot: Bot, event: GroupMessageEvent):
     
     await guess_song_rules.send(rules)
 
-# 新增：结束报名命令处理器
 @guess_song_end_signup.handle()
 async def end_signup_early(bot: Bot, event: GroupMessageEvent):
     group_id = str(event.group_id)
@@ -589,9 +728,13 @@ async def end_signup_early(bot: Bot, event: GroupMessageEvent):
         await guess_song_end_signup.send("至少需要1名玩家才能开始游戏！")
         return
     
+    mode_text = "只猜歌名" if game.guess_mode == GuessMode.TITLE_ONLY else "歌名和歌手都要猜对"
+    
     await guess_song_end_signup.send(
         f"📢 报名提前结束！\n"
         f"👥 参与玩家：{len(game.players)}人\n"
+        f"🎼 播放时长：{game.play_duration}秒\n"
+        f"🎮 猜歌模式：{mode_text}\n"
         f"🎵 游戏即将开始..."
     )
     
