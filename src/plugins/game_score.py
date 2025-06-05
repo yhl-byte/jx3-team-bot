@@ -1,7 +1,7 @@
 '''
 Date: 2025-05-30 16:17:02
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-05 10:28:28
+LastEditTime: 2025-06-05 17:37:12
 FilePath: /team-bot/jx3-team-bot/src/plugins/game_score.py
 '''
 from .database import TeamRecordDB
@@ -116,6 +116,10 @@ async def handle_score_rules(bot: Bot, event: GroupMessageEvent):
     rules += "   - 第1名：额外获得8分\n"
     rules += "   - 第2名：额外获得5分\n"
     rules += "   - 第3名：额外获得3分\n\n"
+    rules += "9. 害你在心口难开：\n"
+    rules += "   - 基础参与分：-10分\n"
+    rules += "   - 每说一次自己的禁词：-5分\n"
+    rules += "   - 每说一句超过3个字的话：+1分\n\n"
     rules += "💡 提示：积分可通过【查询积分】和【积分排行】查看"
     
     
