@@ -196,7 +196,7 @@ async def prepare_song_queue(num_songs: int = 8, play_duration: int = 30) -> Lis
         
         # 场景主题
         "KTV必点", "婚礼歌曲", "毕业歌", "生日歌", "新年歌", "圣诞歌",
-        "运动音乐", "开车音乐", "睡前音乐", "工作音乐"
+        "运动音乐", "开车音乐", "睡前音乐", "工作音乐", "剑网三", "二次元"
     ]
     
     all_songs = []
@@ -205,7 +205,7 @@ async def prepare_song_queue(num_songs: int = 8, play_duration: int = 30) -> Lis
     search_count = min(6, len(popular_keywords))
     for keyword in random.sample(popular_keywords, search_count):
         try:
-            songs = await search_songs(keyword, num=3)
+            songs = await search_songs(keyword, num=50)
             all_songs.extend(songs)
             await asyncio.sleep(0.5)  # 避免请求过快
         except Exception as e:
