@@ -2,7 +2,7 @@
 Author: yhl
 Date: 2025-01-XX XX:XX:XX
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-05 12:18:32
+LastEditTime: 2025-06-05 12:30:54
 FilePath: /team-bot/jx3-team-bot/src/plugins/classic_lines_game.py
 '''
 # src/plugins/classic_lines_game.py
@@ -522,7 +522,7 @@ CLASSIC_LINES = [
     Question("人生得意须尽欢，莫使金樽空对月。", "将进酒", "古诗", 3),
     Question("安能摧眉折腰事权贵，使我不得开心颜。", "梦游天姥吟留别", "古诗", 4),
     Question("长风破浪会有时，直挂云帆济沧海。", "行路难", "古诗", 3),
-    Question("我劝天公重抖擞，不拘一格降人才。", "己亥杂诗", "古诗", 4)
+    Question("我劝天公重抖擞，不拘一格降人才。", "己亥杂诗", "古诗", 4),
 
     Question("我一直相信，如果你做正确的事情，好事就会发生。但有时候，正确的事情并不容易做到。", "阿甘正传", "电影", 3),
     Question("生活就像一盒巧克力，你永远不知道下一颗是什么味道，但这正是生活的魅力所在。", "阿甘正传", "电影", 2),
