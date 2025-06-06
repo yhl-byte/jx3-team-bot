@@ -311,7 +311,7 @@ async def handle_start_bottle_playing(bot: Bot, event: GroupMessageEvent):
             f"{game.get_board_display()}\n"
             f"👤 当前玩家：{current_player.nickname}\n"
             f"💡 发送【移动 位置1 位置2】来交换瓶子\n"
-            f"⏰ 每次移动限时 {game.move_timeout} 秒"
+            f"⏰ 每次移动限时 {game.move_timeout} 秒\n" + MessageSegment.at(current_player.user_id)
         )
     else:
         await start_bottle_playing.finish(f"❌ {message}")
@@ -362,7 +362,7 @@ async def handle_move_bottles(bot: Bot, event: GroupMessageEvent):
             game.timeout_task = asyncio.create_task(move_timeout(bot, group_id))
             
             current_player = game.get_current_player()
-            response += f"\n👤 下一位玩家：{current_player.nickname}"
+            response += f"\n👤 下一位玩家：{current_player.nickname}\n" + MessageSegment.at(current_player.user_id)
             
             await move_bottles.finish(response)
     else:
@@ -487,7 +487,7 @@ async def move_timeout(bot: Bot, group_id: str):
                 await bot.send_group_msg(
                     group_id=int(group_id),
                     message=f"⏰ {current_player.nickname} 移动超时，扣除10分！\n\n"
-                           f"👤 下一位玩家：{game.get_current_player().nickname}"
+                           f"👤 下一位玩家：{game.get_current_player().nickname}\n"  + MessageSegment.at(game.get_current_player().user_id)
                 )
                 
                 # 启动下一个玩家的超时任务
