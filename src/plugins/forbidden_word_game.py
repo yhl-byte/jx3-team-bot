@@ -2,7 +2,7 @@
 Author: yhl
 Date: 2025-01-XX XX:XX:XX
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-05 17:31:23
+LastEditTime: 2025-06-06 08:36:18
 FilePath: /team-bot/jx3-team-bot/src/plugins/forbidden_word_game.py
 '''
 # src/plugins/forbidden_word_game.py
@@ -603,7 +603,7 @@ async def handle_forbidden_help(bot: Bot, event: GroupMessageEvent, state: T_Sta
 🎮 游戏指令：
 • 开始害你在心口难开 [X分钟] - 开始新游戏（可选择时长1-30分钟，默认5分钟）
 • 报名害你 / 报名禁词 - 报名参加游戏
-• 开始禁词游戏 - 提前结束报名阶段并开始游戏
+• 结束禁词报名 - 提前结束报名阶段并开始游戏
 • 设置禁词时长 X分钟 - 在报名阶段设置游戏时长
 • 禁词状态 - 查看当前游戏状态
 • 强制结束禁词 - 强制结束当前游戏（仅管理员）
