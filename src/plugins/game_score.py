@@ -1,7 +1,7 @@
 '''
 Date: 2025-05-30 16:17:02
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-05 17:37:12
+LastEditTime: 2025-06-06 12:32:23
 FilePath: /team-bot/jx3-team-bot/src/plugins/game_score.py
 '''
 from .database import TeamRecordDB
@@ -120,6 +120,15 @@ async def handle_score_rules(bot: Bot, event: GroupMessageEvent):
     rules += "   - 基础参与分：-10分\n"
     rules += "   - 每说一次自己的禁词：-5分\n"
     rules += "   - 每说一句超过3个字的话：+1分\n\n"
+    rules += "10. 海龟汤：\n"
+    rules += "   - 猜中真相：获得20分\n"
+    rules += "   - 出题者（有人猜中）：获得15分\n"
+    rules += "   - 参与提问：每个有效问题获得1分\n\n"
+    rules += "11. 瓶子排序游戏：\n"
+    rules += "   - 完成排序：基础20分 + 时间奖励(最高15分)\n"
+    rules += "   - 第1名：额外获得10分\n"
+    rules += "   - 第2名：额外获得6分\n"
+    rules += "   - 第3名：额外获得3分\n\n"
     rules += "💡 提示：积分可通过【查询积分】和【积分排行】查看"
     
     
