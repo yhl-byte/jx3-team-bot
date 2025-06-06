@@ -514,7 +514,7 @@ async def handle_change_word(bot: Bot, event: GroupMessageEvent):
     # 私聊发送新词汇给描述者
     await bot.send_private_msg(
         user_id=game.describer_id,
-        message=f"换词成功！\n新的词汇是：【{game.current_word}】\n\n" +
+        message=f"【{game.current_word}】\n\n换词成功！\n这是新的词汇。\n\n" +
                 f"剩余换词次数：{game.max_word_changes - game.word_change_count}次\n" +
                 "继续描述吧！"
     )
