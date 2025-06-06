@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-04 12:43:51
+LastEditTime: 2025-06-06 08:44:21
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -682,7 +682,7 @@ async def handle_help(bot: Bot, event: GroupMessageEvent, state: T_State):
     os.unlink(image_path)
 
 # # 游戏中心帮助
-GameHelp = on_regex(pattern=r'^游戏帮助$',priority=1)
+GameHelp = on_regex(pattern=r'^(游戏帮助|游戏大厅)$',priority=1)
 @GameHelp.handle()
 async def handle_game_help(bot: Bot, event: GroupMessageEvent, state: T_State):
     if not await check_command_enabled(bot, event, "游戏帮助"):
