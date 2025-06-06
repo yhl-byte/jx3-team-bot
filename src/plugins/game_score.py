@@ -1,7 +1,7 @@
 '''
 Date: 2025-05-30 16:17:02
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-06 12:32:23
+LastEditTime: 2025-06-06 16:34:31
 FilePath: /team-bot/jx3-team-bot/src/plugins/game_score.py
 '''
 from .database import TeamRecordDB
@@ -129,6 +129,9 @@ async def handle_score_rules(bot: Bot, event: GroupMessageEvent):
     rules += "   - 第1名：额外获得10分\n"
     rules += "   - 第2名：额外获得6分\n"
     rules += "   - 第3名：额外获得3分\n\n"
+    rules += "12. 井字棋竞猜：\n"
+    rules += "   - 参与游戏：获得5分\n"
+    rules += "   - 获胜：额外获得20分\n\n"
     rules += "💡 提示：积分可通过【查询积分】和【积分排行】查看"
     
     
