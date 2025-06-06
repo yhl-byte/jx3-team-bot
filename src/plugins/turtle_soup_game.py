@@ -589,9 +589,9 @@ STORY_DATABASE = [
 
 
 # 游戏命令注册
-start_game = on_regex(pattern=r"^(开始海龟汤|开始海|海龟汤)$", priority=5)
-signup = on_regex(pattern=r"^(报名海龟汤|报名海|加入海龟汤)$", priority=5)
-start_story = on_regex(pattern=r"^(结束报名|开始游戏|开始出题)$", priority=5)
+start_game = on_regex(pattern=r"^(开始海龟汤|海龟汤)$", priority=5)
+signup = on_regex(pattern=r"^(报名海龟汤|加入海龟汤)$", priority=5)
+start_story = on_regex(pattern=r"^(结束海龟汤报名|开始游戏|开始出题)$", priority=5)
 change_story = on_regex(pattern=r"^(换题|更换题目|下一题)$", priority=5)
 end_game = on_regex(pattern=r"^(强制结束|结束游戏|结束海龟汤)$", priority=5)
 game_status = on_regex(pattern=r"^(海龟汤状态|游戏状态|海状态)$", priority=5)
