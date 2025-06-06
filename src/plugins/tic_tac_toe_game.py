@@ -13,7 +13,9 @@ from dataclasses import dataclass
 class TicTacToeGameState(Enum):
     WAITING = "waiting"
     SIGNUP = "signup"
+    MODE_SELECTION = "mode_selection"  # 新增：模式选择
     ROCK_PAPER_SCISSORS = "rock_paper_scissors"
+    COIN_FLIP = "coin_flip"  # 新增：掷硬币阶段
     PLACING_PIECE = "placing_piece"
     FINISHED = "finished"
 
@@ -23,6 +25,11 @@ class RPSChoice(Enum):
     PAPER = "布"
     SCISSORS = "剪刀"
 
+# 新增游戏模式枚举
+class GameMode(Enum):
+    RPS = "rps"  # 石头剪刀布模式
+    COIN = "coin"  # 硬币模式
+
 @dataclass
 class TicTacToePlayer:
     user_id: str
@@ -30,6 +37,8 @@ class TicTacToePlayer:
     piece: str  # "⚪" 或 "⚫"
     rps_choice: Optional[RPSChoice] = None
     rps_submitted: bool = False
+    has_heads: bool = False  # 新增：是否掷出正面
+
 
 @dataclass
 class TicTacToeGame:
@@ -40,7 +49,9 @@ class TicTacToeGame:
     state: TicTacToeGameState
     round_count: int
     start_time: float
+    mode: Optional[GameMode] = None  # 新增：游戏模式
     winner_id: Optional[str] = None
+    coin_flip_active: bool = False  # 新增：是否正在掷硬币
     
     def __post_init__(self):
         if not self.board:
@@ -56,6 +67,8 @@ rps_choice = on_regex(pattern=r"^(石头|剪刀|布)$", priority=5)
 place_piece = on_regex(pattern=r"^下棋\s*([1-9])$", priority=5)
 show_board = on_regex(pattern=r"^(查看棋盘|棋盘状态)$", priority=5)
 quit_tic_tac_toe = on_regex(pattern=r"^(退出井字棋|结束井字棋)$", priority=5)
+select_mode = on_regex(pattern=r"^(选择模式|游戏模式)\s*([12])$", priority=5)
+coin_flip = on_regex(pattern=r"^(掷|硬币|掷硬币)$", priority=5)
 
 @start_tic_tac_toe.handle()
 async def handle_start_tic_tac_toe(bot: Bot, event: GroupMessageEvent):
@@ -150,12 +163,103 @@ async def handle_join_tic_tac_toe(bot: Bot, event: GroupMessageEvent):
     
     message = f"✅ {nickname} 加入游戏，执{piece}棋"
     
-    # 如果人数够了，开始游戏
+    # 如果人数够了，进入模式选择
     if len(game.players) == 2:
-        game.state = TicTacToeGameState.ROCK_PAPER_SCISSORS
-        message += "\n\n🎯 游戏开始！请两位玩家私聊机器人发送：石头/剪刀/布"
+        game.state = TicTacToeGameState.MODE_SELECTION
+        message += ("\n\n🎮 请选择游戏模式：\n"
+                   "1️⃣ 石头剪刀布模式（发送：选择模式 1）\n"
+                   "2️⃣ 硬币竞速模式（发送：选择模式 2）\n\n"
+                   "💡 硬币模式：两人同时掷硬币，先掷到正面的下棋！")
     
     await join_tic_tac_toe.send(message)
+
+@select_mode.handle()
+async def handle_select_mode(bot: Bot, event: GroupMessageEvent):
+    group_id = str(event.group_id)
+    user_id = str(event.user_id)
+    
+    if group_id not in games:
+        return
+    
+    game = games[group_id]
+    
+    if game.state != TicTacToeGameState.MODE_SELECTION:
+        return
+    
+    # 只有参与游戏的玩家可以选择模式
+    if user_id not in game.players:
+        await select_mode.finish("只有游戏参与者可以选择模式")
+    
+    import re
+    match = re.match(r"^(选择模式|游戏模式)\s*([12])$", event.get_plaintext())
+    if not match:
+        return
+    
+    mode_choice = match.group(2)
+    
+    if mode_choice == "1":
+        game.mode = GameMode.RPS
+        game.state = TicTacToeGameState.ROCK_PAPER_SCISSORS
+        message = ("🎯 已选择石头剪刀布模式！\n\n"
+                  "📝 游戏规则：\n"
+                  "• 每轮通过石头剪刀布决定谁下棋\n"
+                  "• 私聊机器人发送：石头/剪刀/布\n\n"
+                  "🎮 请两位玩家私聊机器人发送：石头/剪刀/布")
+    else:
+        game.mode = GameMode.COIN
+        game.state = TicTacToeGameState.COIN_FLIP
+        message = ("🪙 已选择硬币竞速模式！\n\n"
+                  "📝 游戏规则：\n"
+                  "• 两人同时在群里掷硬币\n"
+                  "• 先掷到正面的玩家下棋\n"
+                  "• 正面概率：30%\n"
+                  "• 发送：掷 或 硬币\n\n"
+                  f"{get_board_display(game.board)}\n\n"
+                  "🎮 开始掷硬币！发送：掷")
+    
+    await select_mode.send(message)
+
+@coin_flip.handle()
+async def handle_coin_flip(bot: Bot, event: GroupMessageEvent):
+    group_id = str(event.group_id)
+    user_id = str(event.user_id)
+    
+    if group_id not in tic_tac_toe_games:
+        await coin_flip.finish("当前没有进行中的井字棋游戏")
+    
+    game = tic_tac_toe_games[group_id]
+    
+    # 检查游戏状态
+    if game.state != TicTacToeGameState.COIN_FLIP:
+        await coin_flip.finish("当前不是掷硬币阶段")
+    
+    # 检查是否是游戏玩家
+    if user_id not in [game.player1.user_id, game.player2.user_id]:
+        await coin_flip.finish("只有游戏玩家才能掷硬币")
+    
+    player = game.players[user_id]
+    
+    # 掷硬币（30%概率正面）
+    is_heads = random.random() < 0.3
+    result_emoji = "🟡" if is_heads else "⚫"
+    result_text = "正面" if is_heads else "反面"
+    
+    if is_heads:
+        # 掷到正面，获得下棋权
+        player.has_heads = True
+        message = (f"🪙 {player.nickname} 掷硬币：{result_emoji} {result_text}\n\n"
+                  f"🎉 {player.nickname} 掷到正面，获得下棋权！\n\n"
+                  f"{get_board_display(game.board)}\n\n"
+                  f"📍 请 {player.nickname} 下棋，发送：下棋 [1-9]")
+        
+        await bot.send_group_msg(
+            group_id=int(group_id),
+            message=MessageSegment.text(message) + MessageSegment.at(int(user_id))
+        )
+    else:
+        # 掷到反面，继续掷硬币
+        message = f"🪙 {player.nickname} 掷硬币：{result_emoji} {result_text}，继续掷硬币！"
+        await coin_flip.send(message)
 
 @rps_choice.handle()
 async def handle_rps_choice(bot: Bot, event: PrivateMessageEvent):
@@ -261,12 +365,23 @@ async def handle_place_piece(bot: Bot, event: GroupMessageEvent):
     game = games[group_id]
     
     # 检查游戏状态
-    if game.state != TicTacToeGameState.PLACING_PIECE:
+    if game.state not in [TicTacToeGameState.PLACING_PIECE, TicTacToeGameState.COIN_FLIP]:
         return
     
-    # 检查是否轮到该玩家
-    if game.current_player_id != user_id:
-        await place_piece.finish("现在不是你的回合")
+    # 检查是否是游戏玩家
+    if user_id not in game.players:
+        return
+    
+    player = game.players[user_id]
+    
+    # 在掷硬币模式下，检查该玩家是否掷出了正面
+    if game.mode == GameMode.COIN and game.state == TicTacToeGameState.COIN_FLIP:
+        if not player.has_heads:
+            await place_piece.finish("你还没有掷出正面，无法下棋！请先掷硬币")
+    elif game.state == TicTacToeGameState.PLACING_PIECE:
+        # 石头剪刀布模式下，检查是否轮到该玩家
+        if game.current_player_id != user_id:
+            await place_piece.finish("现在不是你的回合")
     
     # 解析位置
     import re
@@ -281,8 +396,11 @@ async def handle_place_piece(bot: Bot, event: GroupMessageEvent):
         await place_piece.finish("该位置已被占用，请选择其他位置")
     
     # 下棋
-    player = game.players[user_id]
     game.board[position] = player.piece
+    
+    # 在掷硬币模式下，下棋后重置该玩家的正面状态
+    if game.mode == GameMode.COIN:
+        player.has_heads = False
     
     # 检查是否获胜
     if check_winner(game.board, player.piece):
@@ -318,15 +436,20 @@ async def handle_place_piece(bot: Bot, event: GroupMessageEvent):
         await place_piece.send(message)
         return
     
-    # 继续游戏，开始新一轮竞猜
-    game.state = TicTacToeGameState.ROCK_PAPER_SCISSORS
-    
+    # 继续游戏，根据模式进入不同阶段
     board_display = get_board_display(game.board)
-    message = (
-        f"✅ {player.nickname} 在位置{position + 1}下了{player.piece}\n\n"
-        f"{board_display}\n\n"
-        f"🎯 请两位玩家私聊机器人发送：石头/剪刀/布"
-    )
+    base_message = f"✅ {player.nickname} 在位置{position + 1}下了{player.piece}\n\n{board_display}\n\n"
+    
+    if game.mode == GameMode.RPS:
+        # 石头剪刀布模式
+        game.state = TicTacToeGameState.ROCK_PAPER_SCISSORS
+        message = base_message + "🎯 请两位玩家私聊机器人发送：石头/剪刀/布"
+    else:
+        # 硬币模式 - 重置所有玩家的正面状态，继续掷硬币
+        for p in game.players.values():
+            p.has_heads = False
+        game.state = TicTacToeGameState.COIN_FLIP
+        message = base_message + "🪙 继续掷硬币！发送：掷"
     
     await place_piece.send(message)
 
@@ -345,9 +468,20 @@ async def handle_show_board(bot: Bot, event: GroupMessageEvent):
     board_display = get_board_display(game.board)
     players_info = "\n".join([f"👤 {p.nickname}：{p.piece}" for p in game.players.values()])
     
+    # 显示游戏模式
+    mode_info = ""
+    if game.mode == GameMode.RPS:
+        mode_info = "🎯 石头剪刀布模式"
+    elif game.mode == GameMode.COIN:
+        mode_info = "🪙 硬币竞速模式（30%正面概率）"
+    
     current_state = ""
-    if game.state == TicTacToeGameState.ROCK_PAPER_SCISSORS:
+    if game.state == TicTacToeGameState.MODE_SELECTION:
+        current_state = "🎮 等待选择游戏模式"
+    elif game.state == TicTacToeGameState.ROCK_PAPER_SCISSORS:
         current_state = "🎯 等待玩家私聊竞猜"
+    elif game.state == TicTacToeGameState.COIN_FLIP:
+        current_state = "🪙 等待玩家掷硬币"
     elif game.state == TicTacToeGameState.PLACING_PIECE:
         current_player = game.players[game.current_player_id]
         current_state = f"📍 等待 {current_player.nickname} 下棋"
@@ -362,9 +496,9 @@ async def handle_show_board(bot: Bot, event: GroupMessageEvent):
         f"🎮 井字棋游戏状态\n\n"
         f"{board_display}\n\n"
         f"👥 玩家信息：\n{players_info}\n\n"
+        f"🎯 游戏模式：{mode_info}\n"
         f"📊 当前状态：{current_state}"
     )
-    
     await show_board.send(message)
 
 @quit_tic_tac_toe.handle()

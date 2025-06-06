@@ -110,6 +110,10 @@
             border-left-color: #3498db;
         }
 
+        .game-card.gomoku {
+            border-left-color: #2ecc71;
+        }
+
 
         .game-title {
             font-size: 1.5em;
@@ -453,7 +457,8 @@
                             <li class="command-item"><code>报名海龟汤</code> - 加入游戏</li>
                             <li class="command-item"><code>结束海龟汤报名</code> - 结束报名，开始游戏</li>
                             <li class="command-item"><code>换题</code> - 出题者更换题目</li>
-                            <li class="command-item"><code>答案是 [内容]</code> - 猜测完整真相</li>
+                            <li class="command-item"><code>不换题</code> - 直接开始游戏</li>
+                            <li class="command-item"><code>真相是 [内容]</code> - 猜测完整真相</li>
                             <li class="command-item"><code>海龟汤状态</code> - 查看游戏状态</li>
                             <li class="command-item"><code>强制结束海龟汤</code> - 强制结束游戏</li>
                             <li class="command-item"><code>海龟汤规则</code> - 查看游戏规则</li>
@@ -472,10 +477,32 @@
                         <ul class="command-list">
                             <li class="command-item"><code>开始井字棋</code> - 开始游戏报名</li>
                             <li class="command-item"><code>加入井字棋</code> - 加入游戏</li>
+                            <li class="command-item"><code>选择模式 1|2</code> - 选择猜拳|硬币模式</li>
                             <li class="command-item"><code>石头/剪刀/布</code> - 私聊机器人发送竞猜选择</li>
+                            <li class="command-item"><code>掷硬币</code> - 正面获得下棋权</li>
                             <li class="command-item"><code>下棋 [1-9]</code> - 在指定位置落子</li>
                             <li class="command-item"><code>查看棋盘</code> - 查看当前棋盘状态</li>
                             <li class="command-item"><code>退出井字棋</code> - 结束游戏</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 五子棋游戏 -->
+                <div class="game-card gomoku">
+                    <div class="game-title">[策略] 五子棋</div>
+                    <div class="game-description">
+                        经典的五子棋对战游戏！15x15棋盘上两人对弈，率先连成五子者获胜。支持横、竖、斜四个方向连珠，考验策略思维和布局能力！
+                    </div>
+                    <div class="commands-section">
+                        <div class="commands-title">游戏命令</div>
+                        <ul class="command-list">
+                            <li class="command-item"><code>开始五子棋</code> - 开始游戏报名</li>
+                            <li class="command-item"><code>加入五子棋</code> - 加入游戏</li>
+                            <li class="command-item"><code>石头/剪刀/布</code> - 私聊机器人决定先手</li>
+                            <li class="command-item"><code>下棋 [位置]</code> - 下棋(如：下棋 H8)</li>
+                            <li class="command-item"><code>查看棋盘</code> - 查看当前棋盘状态</li>
+                            <li class="command-item"><code>退出五子棋</code> - 退出游戏或认输</li>
+                            <li class="command-item"><code>五子棋帮助</code> - 查看游戏说明</li>
                         </ul>
                     </div>
                 </div>
