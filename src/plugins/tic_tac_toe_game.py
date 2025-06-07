@@ -63,7 +63,7 @@ games: Dict[str, TicTacToeGame] = {}
 # 游戏命令
 start_tic_tac_toe = on_regex(pattern=r"^(开始井字棋|井字棋游戏|tic.*tac.*toe)$", priority=5)
 join_tic_tac_toe = on_regex(pattern=r"^(加入井字棋|参加井字棋)$", priority=5)
-rps_choice = on_regex(pattern=r"^(石头|剪刀|布)$", priority=5)
+rps_choice = on_regex(pattern=r"^井字棋(石头|剪刀|布)$", priority=5)
 place_piece = on_regex(pattern=r"^下棋\s*([1-9])$", priority=5)
 show_board = on_regex(pattern=r"^(查看棋盘|棋盘状态)$", priority=5)
 quit_tic_tac_toe = on_regex(pattern=r"^(退出井字棋|结束井字棋)$", priority=5)

@@ -53,7 +53,7 @@ games: Dict[str, GomokuGame] = {}
 # 游戏命令
 start_gomoku = on_regex(pattern=r"^(开始五子棋|五子棋游戏|gomoku)$", priority=5)
 join_gomoku = on_regex(pattern=r"^(加入五子棋|参加五子棋)$", priority=5)
-rps_choice = on_regex(pattern=r"^(石头|剪刀|布)$", priority=5)
+rps_choice = on_regex(pattern=r"^五子棋(石头|剪刀|布)$", priority=5)
 place_piece = on_regex(pattern=r"^下棋\s*([A-O])([1-9]|1[0-5])$", priority=5)
 show_board = on_regex(pattern=r"^(查看棋盘|棋盘状态|五子棋棋盘)$", priority=5)
 quit_gomoku = on_regex(pattern=r"^(退出五子棋|结束五子棋)$", priority=5)
@@ -196,7 +196,7 @@ async def handle_join_gomoku(bot: Bot, event: GroupMessageEvent):
         # 开始石头剪刀布决定先手
         game.state = GomokuGameState.ROCK_PAPER_SCISSORS
         msg += "\n🎲 人数已满，开始石头剪刀布决定先手！\n"
-        msg += "请两位玩家私聊发送【石头】【剪刀】【布】"
+        msg += "请两位玩家私聊发送【五子棋石头|剪刀|布】"
         
         # 设置30秒超时
         asyncio.create_task(rps_timeout(bot,group_id))
@@ -229,19 +229,26 @@ async def rps_timeout(bot: Bot,group_id: str):
         msg += f"当前轮到：{first_player.nickname} {first_player.piece}\n"
         msg += "发送【下棋 位置】下棋，如：下棋 H8\n"
         msg += "发送【查看棋盘】查看当前棋盘"
-        bot.send_group_msg(group_id=int(group_id), message=msg)
-        # 这里需要通过bot发送消息，但在异步任务中无法直接访问bot
-        # 可以考虑使用全局变量或其他方式
+        # 修复消息发送方式
+        await bot.send_group_msg(group_id=int(group_id), message=msg)
         
 @rps_choice.handle()
-async def handle_rps_choice(bot: Bot, event: GroupMessageEvent):
-    group_id = str(event.group_id)
+async def handle_rps_choice(bot: Bot, event: PrivateMessageEvent):
+   # 需要从私聊消息中获取用户所在的游戏群组
     user_id = str(event.user_id)
     choice_text = event.get_plaintext().strip()
     
-    if group_id not in games:
-        return
+    # 查找用户参与的游戏
+    game_group_id = None
+    for group_id, game in games.items():
+        if user_id in game.players and game.state == GomokuGameState.ROCK_PAPER_SCISSORS:
+            game_group_id = group_id
+            break
     
+    if not game_group_id:
+        await rps_choice.finish("您当前没有参与五子棋游戏或不在石头剪刀布阶段")
+    
+    game = games[game_group_id]
     game = games[group_id]
     
     if game.state != GomokuGameState.ROCK_PAPER_SCISSORS:
