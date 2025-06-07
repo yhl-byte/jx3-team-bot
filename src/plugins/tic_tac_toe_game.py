@@ -224,10 +224,10 @@ async def handle_coin_flip(bot: Bot, event: GroupMessageEvent):
     group_id = str(event.group_id)
     user_id = str(event.user_id)
     
-    if group_id not in tic_tac_toe_games:
+    if group_id not in games:
         await coin_flip.finish("当前没有进行中的井字棋游戏")
     
-    game = tic_tac_toe_games[group_id]
+    game = games[group_id]
     
     # 检查游戏状态
     if game.state != TicTacToeGameState.COIN_FLIP:
