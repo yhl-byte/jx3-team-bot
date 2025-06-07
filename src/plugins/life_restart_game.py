@@ -47,7 +47,7 @@ class LifeRestartGame:
 games: Dict[str, LifeRestartGame] = {}
 # 添加全局变量来跟踪每日游戏次数
 daily_game_count: Dict[str, Dict[str, int]] = {}  # {date: {user_group_key: count}}
-MAX_DAILY_GAMES = 3  # 每日最大游戏次数
+MAX_DAILY_GAMES = 10  # 每日最大游戏次数
 
 # 升级版天赋系统 - 按稀有度分类
 TALENTS = {
@@ -978,11 +978,11 @@ async def handle_start_simulation(bot: Bot, event: GroupMessageEvent):
     # 显示人生历程
     game.life_events.sort(key=lambda x: x[0])
     
-    for age, event in game.life_events[:20]:  # 显示前20个重要事件
+    for age, event in game.life_events[:12]:  # 显示前12个重要事件
         message += f"📅 {age}岁：{event['description']}\n"
     
-    if len(game.life_events) > 20:
-        message += f"\n... 还有{len(game.life_events) - 20}个人生事件\n"
+    if len(game.life_events) > 12:
+        message += f"\n... 还有{len(game.life_events) - 12}个人生事件\n"
     
     # 计算最终属性和年龄
     final_age = random.randint(70, 95)
