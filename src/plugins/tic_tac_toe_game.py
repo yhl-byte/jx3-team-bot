@@ -448,9 +448,8 @@ async def handle_place_piece(bot: Bot, event: GroupMessageEvent):
         game.state = TicTacToeGameState.ROCK_PAPER_SCISSORS
         message = base_message + "🎯 请两位玩家私聊机器人发送：石头/剪刀/布"
     else:
-        # 硬币模式 - 重置所有玩家的正面状态，继续掷硬币
-        for p in game.players.values():
-            p.has_heads = False
+        # 硬币模式 - 只重置当前下棋玩家的正面状态，其他玩家保持状态
+        player.has_heads = False
         game.state = TicTacToeGameState.COIN_FLIP
         message = base_message + "🪙 继续掷硬币！发送：掷"
     
