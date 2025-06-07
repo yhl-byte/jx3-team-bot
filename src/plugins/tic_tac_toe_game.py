@@ -233,8 +233,11 @@ async def handle_coin_flip(bot: Bot, event: GroupMessageEvent):
     if game.state != TicTacToeGameState.COIN_FLIP:
         await coin_flip.finish("当前不是掷硬币阶段")
     
+    players = list(game.players.values())
+    player1, player2 = players[0], players[1]
+
     # 检查是否是游戏玩家
-    if user_id not in [game.player1.user_id, game.player2.user_id]:
+    if user_id not in [player1.user_id, player2.user_id]:
         await coin_flip.finish("只有游戏玩家才能掷硬币")
     
     player = game.players[user_id]
