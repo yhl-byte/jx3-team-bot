@@ -199,8 +199,8 @@ class BottleSortGame:
             display += "📦 ❓❓❓❓❓❓❓ （隐藏）\n\n"
         
         display += "🔄 当前顺序（盒子外部）：\n"
-        current_line = "".join([f"【{i+1}{COLORS[color][0]}】" for i, color in enumerate(self.current_order)])
-        display += f"📋 {current_line}\n\n"
+        current_line = "".join([f"【{i+1} {COLORS[color][0]}】\n" for i, color in enumerate(self.current_order)])
+        display += f"{current_line}\n\n"
         
         # 显示正确位置数量
         correct_count = self.count_correct_positions()
