@@ -1,4 +1,5 @@
 from nonebot import on_regex
+from nonebot.rule import to_me
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import MessageEvent, GroupMessageEvent, Bot, Message, MessageSegment
 from typing import Dict, List, Optional
@@ -81,36 +82,6 @@ TALENTS = {
             'description': '获得了神秘系统的帮助，人生开挂模式', 
             'effect': {'intelligence': 1, 'strength': 1, 'appearance': 1, 'wealth': 1},
             'special': 'system_host'
-        },
-        {
-            'name': '剑心通明',
-            'description': '你拥有剑道天赋，心如明镜，剑意通天',
-            'effect': {'strength': 4, 'intelligence': 3, 'appearance': 2},
-            'special': 'sword_master'
-        },
-        {
-            'name': '江湖传说',
-            'description': '你注定要在江湖中留下传说',
-            'effect': {'strength': 3, 'intelligence': 2, 'appearance': 4},
-            'special': 'jianghu_legend'
-        },
-        {
-            'name': '天策血脉',
-            'description': '你拥有天策府的血脉传承，天生将才',
-            'effect': {'strength': 5, 'intelligence': 3, 'wealth': 2},
-            'special': 'tiancefuBloodline'
-        },
-        {
-            'name': '纯阳道体',
-            'description': '你拥有纯阳宫的道体，修道天赋异禀',
-            'effect': {'intelligence': 5, 'strength': 2, 'appearance': 3},
-            'special': 'chunyang_dao'
-        },
-        {
-            'name': '万花医仙',
-            'description': '你拥有万花谷的医道传承，妙手回春',
-            'effect': {'intelligence': 4, 'appearance': 3, 'wealth': 3},
-            'special': 'wanhua_doctor'
         }
     ],
     'SR': [  # 稀有 4.5%
@@ -143,72 +114,6 @@ TALENTS = {
             'description': '颜值+1，智力+1，表演天赋出众', 
             'effect': {'appearance': 1, 'intelligence': 1},
             'special': 'acting_talent'
-        },
-        {
-            'name': '美食家', 
-            'description': '对美食有着超凡的天赋和品味', 
-            'effect': {'appearance': 1, 'wealth': 1},
-            'special': 'gourmet'
-        },
-        {
-            'name': '武术奇才', 
-            'description': '天生的武术天赋，身手不凡', 
-            'effect': {'strength': 2, 'appearance': 1},
-            'special': 'martial_arts'
-        },
-        {
-            'name': '音乐天才', 
-            'description': '拥有绝对音感，音乐天赋异禀', 
-            'effect': {'appearance': 2, 'intelligence': 1},
-            'special': 'music_genius'
-        },
-        {
-            'name': '发明家', 
-            'description': '创新思维强，善于发明创造', 
-            'effect': {'intelligence': 2, 'wealth': 1},
-            'special': 'inventor'
-        },
-        {
-            'name': '心理大师', 
-            'description': '能够洞察人心，社交能力超强', 
-            'effect': {'intelligence': 1, 'appearance': 2},
-            'special': 'psychologist'
-        },
-        {
-            'name': '剑三玩家',
-            'description': '你是资深的剑网三玩家，对江湖了如指掌',
-            'effect': {'intelligence': 2, 'appearance': 1, 'wealth': 1},
-            'special': 'jx3_player'
-        },
-        {
-            'name': '武学奇才',
-            'description': '你在武学方面有着惊人的天赋',
-            'effect': {'strength': 3, 'intelligence': 1},
-            'special': 'martial_genius'
-        },
-        {
-            'name': '琴棋书画',
-            'description': '你精通琴棋书画，是个文艺青年',
-            'effect': {'intelligence': 2, 'appearance': 2},
-            'special': 'scholar_artist'
-        },
-        {
-            'name': '商业头脑',
-            'description': '你有着敏锐的商业嗅觉',
-            'effect': {'intelligence': 2, 'wealth': 2},
-            'special': 'business_mind'
-        },
-        {
-            'name': '社交达人',
-            'description': '你天生就是社交场合的焦点',
-            'effect': {'appearance': 3, 'intelligence': 1},
-            'special': 'social_butterfly'
-        },
-        {
-            'name': '健身达人',
-            'description': '你热爱运动，身体素质极佳',
-            'effect': {'strength': 3, 'appearance': 1},
-            'special': 'fitness_enthusiast'
         }
     ],
     'R': [  # 普通 25%
@@ -240,66 +145,6 @@ TALENTS = {
             'description': '颜值+1，艺术天赋', 
             'effect': {'appearance': 1},
             'special': 'artistic'
-        },
-        {
-            'name': '网红体质', 
-            'description': '天生容易走红，自带流量', 
-            'effect': {'appearance': 2},
-            'special': 'influencer'
-        },
-        {
-            'name': '游戏高手', 
-            'description': '在各种游戏中都能快速上手', 
-            'effect': {'intelligence': 1, 'appearance': 1},
-            'special': 'gamer'
-        },
-        {
-            'name': '动物朋友', 
-            'description': '与动物有着特殊的亲和力', 
-            'effect': {'appearance': 1, 'strength': 1},
-            'special': 'animal_friend'
-        },
-        {
-            'name': '料理达人', 
-            'description': '厨艺精湛，能做出美味料理', 
-            'effect': {'intelligence': 1, 'wealth': 1},
-            'special': 'chef'
-        },
-        {
-            'name': '直播天赋', 
-            'description': '天生适合直播，能吸引大量观众', 
-            'effect': {'appearance': 1, 'intelligence': 1},
-            'special': 'streamer'
-        },
-        {
-            'name': '游戏高手',
-            'description': '你在各种游戏中都表现出色',
-            'effect': {'intelligence': 1, 'appearance': 1},
-            'special': 'game_master'
-        },
-        {
-            'name': '二次元爱好者',
-            'description': '你热爱动漫和二次元文化',
-            'effect': {'intelligence': 1, 'appearance': 1},
-            'special': 'otaku'
-        },
-        {
-            'name': '夜猫子',
-            'description': '你习惯熬夜，精神力很强',
-            'effect': {'intelligence': 2, 'strength': -1},
-            'special': 'night_owl'
-        },
-        {
-            'name': '吃货',
-            'description': '你对美食有着特殊的执着',
-            'effect': {'appearance': 1, 'wealth': -1},
-            'special': 'foodie'
-        },
-        {
-            'name': '路痴',
-            'description': '你经常迷路，但也因此发现了很多有趣的地方',
-            'effect': {'intelligence': -1, 'appearance': 1},
-            'special': 'directionally_challenged'
         }
     ],
     'N': [  # 普通 70%
@@ -316,27 +161,9 @@ TALENTS = {
             'special': 'optimist'
         },
         {
-            'name': '悲观主义者',
-            'description': '你总是往坏处想',
-            'effect': {'intelligence': 1, 'appearance': -1},
-            'special': 'pessimist'
-        },
-        {
             'name': '勤奋努力', 
             'description': '后天努力，智力+1', 
             'effect': {'intelligence': 1}
-        },
-        {
-            'name': '懒惰',
-            'description': '你比较懒惰，不喜欢运动',
-            'effect': {'strength': -1, 'intelligence': 1},
-            'special': 'lazy'
-        },
-        {
-            'name': '勤奋',
-            'description': '你很勤奋，愿意付出努力',
-            'effect': {'intelligence': 1},
-            'special': 'hardworking'
         },
         {
             'name': '身体健康', 
@@ -348,6 +175,24 @@ TALENTS = {
             'description': '家境还行，家境+1', 
             'effect': {'wealth': 1}
         },
+        {
+            'name': '好奇心强',
+            'description': '对世界充满好奇，容易遇到奇遇',
+            'effect': {'intelligence': 1},
+            'special': 'curious'
+        },
+        {
+            'name': '武侠迷',
+            'description': '热爱武侠文化，梦想成为大侠',
+            'effect': {'strength': 1},
+            'special': 'wuxia_fan'
+        },
+        {
+            'name': '体质敏感',
+            'description': '对气场变化敏感，容易感知异常',
+            'effect': {'intelligence': 1},
+            'special': 'sensitive'
+        }
     ]
 }
 
@@ -359,32 +204,25 @@ LIFE_EVENTS = {
         {'name': '幼儿园表演', 'description': '你在幼儿园表演中表现出色', 'age_range': (3, 6), 'effects': {'appearance': 1}},
         {'name': '生病住院', 'description': '你生了一场大病，体质有所下降', 'age_range': (3, 6), 'effects': {'strength': -1}},
         {'name': '获得奖状', 'description': '你在幼儿园获得了第一张奖状', 'age_range': (4, 6), 'effects': {'intelligence': 1}},
+        
+        # SSR天赋专属事件
         {'name': '神秘梦境', 'description': '你做了一个奇怪的梦，梦见自己在修炼', 'age_range': (5, 6), 'effects': {'intelligence': 1}, 'requires': ['mystery_box']},
         {'name': '天赋觉醒', 'description': '你展现了超乎常人的能力', 'age_range': (4, 6), 'effects': {'intelligence': 2}, 'requires': ['mystery_box']},
-        {'name': '捡到神秘石头', 'description': '你在路边捡到一块会发光的石头', 'age_range': (5, 8), 'effects': {'intelligence': 1}, 'special_flag': 'mysterious_stone'},
-        {'name': '被动物救助', 'description': '你被困时被小动物救了出来', 'age_range': (4, 7), 'effects': {'strength': 1}, 'requires': ['animal_friend']},
-        {'name': '天才儿童', 'description': '你展现出了超越年龄的智慧', 'age_range': (3, 6), 'effects': {'intelligence': 2}, 'requires': ['system_host']},
         {'name': '龙血觉醒', 'description': '你体内的龙族血脉开始觉醒', 'age_range': (5, 8), 'effects': {'strength': 2, 'appearance': 1}, 'requires': ['dragon_blood']},
-        {
-            'name': '初识剑网三',
-            'description': '你第一次接触到剑网三这款游戏，被江湖世界深深吸引',
-            'age_range': (8, 12),
-            'effects': {'intelligence': 1, 'appearance': 1},
-            'special_flag': 'jx3_start'
-        },
-        {
-            'name': '武侠梦',
-            'description': '你做梦梦见自己成为了江湖大侠',
-            'age_range': (6, 10),
-            'effects': {'strength': 1, 'intelligence': 1},
-            'special_flag': 'wuxia_dream'
-        },
-        {
-            'name': '古装剧迷',
-            'description': '你迷上了古装武侠剧，对江湖充满向往',
-            'age_range': (7, 12),
-            'effects': {'appearance': 1, 'intelligence': 1}
-        }
+        {'name': '天才儿童', 'description': '你展现出了超越年龄的智慧', 'age_range': (3, 6), 'effects': {'intelligence': 2}, 'requires': ['system_host']},
+        {'name': '时空异象', 'description': '你感知到了时空的波动', 'age_range': (5, 6), 'effects': {'intelligence': 1}, 'requires': ['time_traveler']},
+        
+        # 普通天赋修仙路线
+        {'name': '捡到古书', 'description': '你在路边捡到一本古老的书籍', 'age_range': (5, 8), 'effects': {'intelligence': 1}, 'requires': ['curious'], 'special_flag': 'ancient_book'},
+        {'name': '武侠梦', 'description': '你做梦梦见自己成为了江湖大侠', 'age_range': (6, 10), 'effects': {'strength': 1}, 'requires': ['wuxia_fan'], 'special_flag': 'wuxia_dream'},
+        {'name': '气感初现', 'description': '你感觉到身体里有股奇怪的力量', 'age_range': (6, 8), 'effects': {'strength': 1}, 'requires': ['sensitive'], 'special_flag': 'qi_sense'},
+        
+        # 基础事件
+        {'name': '学习新技能', 'description': '你学会了一项新技能', 'age_range': (3, 6), 'effects': {'intelligence': 1}},
+        {'name': '交到好朋友', 'description': '你交到了一个好朋友', 'age_range': (4, 6), 'effects': {'appearance': 1}},
+        {'name': '帮助他人', 'description': '你帮助了需要帮助的人', 'age_range': (5, 6), 'effects': {'appearance': 1}},
+        {'name': '参加比赛', 'description': '你参加了一个小比赛', 'age_range': (5, 6), 'effects': {'strength': 1}},
+        {'name': '读书学习', 'description': '你认真读书学习', 'age_range': (3, 6), 'effects': {'intelligence': 1}}
     ],
     'youth': [
         {'name': '考试满分', 'description': '你在一次重要考试中获得满分', 'age_range': (7, 18), 'effects': {'intelligence': 2}},
@@ -392,187 +230,68 @@ LIFE_EVENTS = {
         {'name': '校园霸凌', 'description': '你遭遇了校园霸凌，身心受创', 'age_range': (7, 18), 'effects': {'appearance': -1, 'strength': -1}},
         {'name': '初恋', 'description': '你遇到了人生中的初恋', 'age_range': (14, 18), 'effects': {'appearance': 1}},
         {'name': '高考状元', 'description': '你成为了省高考状元', 'age_range': (18, 18), 'effects': {'intelligence': 3}},
+        
+        # SSR天赋专属事件
+        {'name': '修仙入门', 'description': '你意外获得了修仙功法', 'age_range': (16, 18), 'effects': {'intelligence': 3, 'strength': 2}, 'requires': ['mystery_box'], 'special_flag': 'cultivation_start'},
+        {'name': '异世界召唤', 'description': '你被神秘力量召唤到异世界', 'age_range': (17, 18), 'effects': {'intelligence': 2, 'strength': 2}, 'requires': ['system_host'], 'special_flag': 'isekai'},
+        {'name': '龙族传承', 'description': '你获得了龙族的传承记忆', 'age_range': (16, 18), 'effects': {'strength': 3, 'intelligence': 2}, 'requires': ['dragon_blood'], 'special_flag': 'dragon_heritage'},
+        {'name': '时空穿越', 'description': '你第一次成功穿越时空', 'age_range': (17, 18), 'effects': {'intelligence': 3}, 'requires': ['time_traveler'], 'special_flag': 'time_travel'},
+        
+        # 普通天赋修仙路线
+        {'name': '古书解读', 'description': '你终于读懂了那本古书的内容', 'age_range': (12, 16), 'effects': {'intelligence': 2}, 'requires_flag': ['ancient_book'], 'special_flag': 'basic_cultivation'},
+        {'name': '武学启蒙', 'description': '你开始学习真正的武术', 'age_range': (12, 18), 'effects': {'strength': 2}, 'requires_flag': ['wuxia_dream'], 'special_flag': 'martial_training'},
+        {'name': '内力觉醒', 'description': '你体内的气感越来越强烈', 'age_range': (14, 18), 'effects': {'strength': 2, 'intelligence': 1}, 'requires_flag': ['qi_sense'], 'special_flag': 'inner_power'},
+        
+        # 基础事件
         {'name': '艺术特长', 'description': '你在艺术方面展现出天赋', 'age_range': (10, 18), 'effects': {'appearance': 2}},
         {'name': '编程竞赛', 'description': '你在编程竞赛中获得冠军', 'age_range': (12, 18), 'effects': {'intelligence': 2}, 'requires': ['programmer']},
-        {'name': '星探发现', 'description': '你被星探发现，进入娱乐圈', 'age_range': (15, 18), 'effects': {'appearance': 2}, 'requires': ['star_potential']},
-        {'name': '修仙入门', 'description': '你意外获得了修仙功法', 'age_range': (16, 18), 'effects': {'intelligence': 3, 'strength': 2}, 'requires': ['mystery_box']},
-        {'name': '异世界召唤', 'description': '你被神秘力量召唤到异世界', 'age_range': (17, 18), 'effects': {'intelligence': 2, 'strength': 2}, 'special_flag': 'isekai'},
-        {'name': '网络走红', 'description': '你因为一个视频在网上走红', 'age_range': (13, 18), 'effects': {'appearance': 2, 'wealth': 1}, 'requires': ['influencer']},
-        {'name': '电竞冠军', 'description': '你在电竞比赛中获得冠军', 'age_range': (14, 18), 'effects': {'intelligence': 2, 'wealth': 2}, 'requires': ['gamer']},
-        {'name': '音乐比赛', 'description': '你在音乐比赛中获得第一名', 'age_range': (12, 18), 'effects': {'appearance': 3}, 'requires': ['music_genius']},
-        {'name': '武术大赛', 'description': '你在武术大赛中展现惊人实力', 'age_range': (15, 18), 'effects': {'strength': 3}, 'requires': ['martial_arts']},
-        {'name': '发明专利', 'description': '你的发明获得了专利', 'age_range': (16, 18), 'effects': {'intelligence': 2, 'wealth': 2}, 'requires': ['inventor']},
-        {'name': '时空异象', 'description': '你目睹了时空异象，获得了特殊能力', 'age_range': (17, 18), 'effects': {'intelligence': 3}, 'requires': ['time_traveler']},
-        {'name': '系统升级', 'description': '你的系统进行了重大升级', 'age_range': (16, 18), 'effects': {'intelligence': 2, 'strength': 1, 'wealth': 1}, 'requires': ['system_host']},
-        {
-            'name': '剑网三公测',
-            'description': '你参与了剑网三的公测，成为了第一批玩家',
-            'age_range': (12, 18),
-            'effects': {'intelligence': 2, 'appearance': 1},
-            'requires': ['jx3_player'],
-            'special_flag': 'jx3_beta'
-        },
-        {
-            'name': '门派选择',
-            'description': '你在剑网三中选择了自己喜欢的门派',
-            'age_range': (13, 18),
-            'effects': {'intelligence': 1, 'strength': 1},
-            'requires': ['jx3_player']
-        },
-        {
-            'name': '第一次JJC',
-            'description': '你第一次参加剑网三的竞技场比赛',
-            'age_range': (14, 18),
-            'effects': {'strength': 1, 'intelligence': 1},
-            'requires': ['jx3_player']
-        },
-        {
-            'name': '帮会生活',
-            'description': '你在剑网三中加入了帮会，体验了团队合作的乐趣',
-            'age_range': (15, 18),
-            'effects': {'appearance': 2, 'intelligence': 1},
-            'requires': ['jx3_player']
-        },
-        {
-            'name': '武学启蒙',
-            'description': '你开始学习真正的武术',
-            'age_range': (12, 18),
-            'effects': {'strength': 2, 'intelligence': 1},
-            'requires': ['martial_genius']
-        },
-        {
-            'name': '古风音乐',
-            'description': '你爱上了古风音乐，开始学习古典乐器',
-            'age_range': (13, 18),
-            'effects': {'appearance': 2, 'intelligence': 1},
-            'requires': ['scholar_artist']
-        },
-        {
-            'name': 'Cosplay初体验',
-            'description': '你第一次尝试Cosplay剑网三角色',
-            'age_range': (14, 18),
-            'effects': {'appearance': 2},
-            'requires': ['jx3_player', 'otaku']
-        }
+        {'name': '星探发现', 'description': '你被星探发现，进入娱乐圈', 'age_range': (15, 18), 'effects': {'appearance': 2}, 'requires': ['star_potential']}
     ],
     'adult': [
-        {'name': '大学毕业', 'description': '你顺利从大学毕业', 'age_range': (22, 22), 'effects': {'intelligence': 1}},
-        {'name': '找到工作', 'description': '你找到了一份不错的工作', 'age_range': (22, 25), 'effects': {'wealth': 2}},
-        {'name': '升职加薪', 'description': '你在工作中表现出色，获得升职', 'age_range': (25, 40), 'effects': {'wealth': 2}},
-        {'name': '结婚', 'description': '你与心爱的人步入婚姻殿堂', 'age_range': (25, 35), 'effects': {'appearance': 1}},
-        {'name': '生子', 'description': '你有了自己的孩子', 'age_range': (26, 40), 'effects': {'wealth': -1}},
-        {'name': '创业成功', 'description': '你的创业项目获得成功', 'age_range': (25, 45), 'effects': {'wealth': 3}},
-        {'name': '创业失败', 'description': '你的创业项目失败了', 'age_range': (25, 45), 'effects': {'wealth': -2}},
-        {'name': '中年危机', 'description': '你遭遇了中年危机', 'age_range': (35, 50), 'effects': {'appearance': -1, 'strength': -1}},
-        {'name': '科技巨头', 'description': '你创立了科技公司并成为巨头', 'age_range': (25, 40), 'effects': {'wealth': 5, 'intelligence': 2}, 'requires': ['programmer']},
-        {'name': '商业帝国', 'description': '你建立了庞大的商业帝国', 'age_range': (30, 50), 'effects': {'wealth': 6}, 'requires': ['business_genius']},
-        {'name': '国际巨星', 'description': '你成为了国际知名的超级巨星', 'age_range': (25, 40), 'effects': {'appearance': 4, 'wealth': 4}, 'requires': ['star_potential', 'acting_talent']},
-        {'name': '修仙大成', 'description': '你的修为大幅提升，已非凡人', 'age_range': (30, 50), 'effects': {'intelligence': 5, 'strength': 5}, 'requires': ['mystery_box']},
-        {'name': '异世界称王', 'description': '你在异世界建立了自己的王国', 'age_range': (25, 45), 'effects': {'intelligence': 3, 'strength': 3, 'wealth': 4}, 'requires': ['isekai']},
-        {'name': '神秘实验', 'description': '你参与了一项神秘实验，身体发生变异', 'age_range': (25, 40), 'effects': {'strength': -3, 'intelligence': -2}, 'special_flag': 'mutation'},
-        {'name': '美食节目', 'description': '你主持的美食节目大受欢迎', 'age_range': (25, 40), 'effects': {'appearance': 2, 'wealth': 3}, 'requires': ['gourmet', 'chef']},
-        {'name': '直播带货', 'description': '你通过直播带货赚得盆满钵满', 'age_range': (25, 35), 'effects': {'wealth': 4}, 'requires': ['streamer', 'influencer']},
-        {'name': '武林盟主', 'description': '你成为了武林盟主', 'age_range': (30, 45), 'effects': {'strength': 4, 'appearance': 2}, 'requires': ['martial_arts']},
-        {'name': '心理诊所', 'description': '你开设的心理诊所生意兴隆', 'age_range': (28, 50), 'effects': {'intelligence': 2, 'wealth': 3}, 'requires': ['psychologist']},
-        {'name': '发明改变世界', 'description': '你的发明改变了世界', 'age_range': (30, 50), 'effects': {'intelligence': 5, 'wealth': 6}, 'requires': ['inventor']},
-        {'name': '时空管理局', 'description': '你被时空管理局招募', 'age_range': (25, 40), 'effects': {'intelligence': 4, 'strength': 2}, 'requires': ['time_traveler'], 'special_flag': 'time_agent'},
-        {'name': '龙王传承', 'description': '你获得了完整的龙王传承', 'age_range': (30, 50), 'effects': {'strength': 6, 'intelligence': 3}, 'requires': ['dragon_blood'], 'special_flag': 'dragon_king'},
-        {'name': '系统融合', 'description': '你与系统完全融合，获得超凡力量', 'age_range': (35, 50), 'effects': {'intelligence': 4, 'strength': 4, 'appearance': 2, 'wealth': 2}, 'requires': ['system_host'], 'special_flag': 'system_fusion'},
-        {
-            'name': '剑网三主播',
-            'description': '你成为了知名的剑网三游戏主播',
-            'age_range': (20, 35),
-            'effects': {'appearance': 3, 'wealth': 3, 'intelligence': 1},
-            'requires': ['jx3_player', 'social_butterfly'],
-            'special_flag': 'jx3_streamer'
-        },
-        {
-            'name': '游戏策划',
-            'description': '你进入游戏公司成为了策划',
-            'age_range': (22, 40),
-            'effects': {'intelligence': 3, 'wealth': 2},
-            'requires': ['jx3_player', 'game_master']
-        },
-        {
-            'name': '武馆教练',
-            'description': '你开设了武馆，教授传统武术',
-            'age_range': (25, 45),
-            'effects': {'strength': 2, 'wealth': 2, 'appearance': 1},
-            'requires': ['martial_genius']
-        },
-        {
-            'name': '古风歌手',
-            'description': '你成为了知名的古风歌手',
-            'age_range': (22, 40),
-            'effects': {'appearance': 4, 'wealth': 3},
-            'requires': ['scholar_artist']
-        },
-        {
-            'name': '剑网三比赛冠军',
-            'description': '你在剑网三官方比赛中获得冠军',
-            'age_range': (20, 30),
-            'effects': {'intelligence': 2, 'wealth': 3, 'appearance': 2},
-            'requires': ['jx3_player'],
-            'special_flag': 'jx3_champion'
-        },
-        {
-            'name': '江湖聚会',
-            'description': '你组织了大型的剑网三玩家线下聚会',
-            'age_range': (25, 40),
-            'effects': {'appearance': 2, 'wealth': 1, 'intelligence': 1},
-            'requires': ['jx3_player', 'social_butterfly']
-        },
-        {
-            'name': '武侠小说作家',
-            'description': '你开始创作武侠小说，作品大受欢迎',
-            'age_range': (25, 45),
-            'effects': {'intelligence': 3, 'wealth': 3, 'appearance': 1},
-            'requires': ['scholar_artist', 'wuxia_dream']
-        },
-        {
-            'name': '古装影视制作',
-            'description': '你参与了古装影视剧的制作',
-            'age_range': (28, 50),
-            'effects': {'intelligence': 2, 'wealth': 4, 'appearance': 2},
-            'requires': ['scholar_artist']
-        }
+        {'name': '大学毕业', 'description': '你顺利从大学毕业', 'age_range': (22, 24), 'effects': {'intelligence': 1}},
+        {'name': '找到工作', 'description': '你找到了一份不错的工作', 'age_range': (22, 26), 'effects': {'wealth': 1}},
+        {'name': '结婚', 'description': '你与心爱的人结婚了', 'age_range': (25, 35), 'effects': {'appearance': 1}},
+        {'name': '生子', 'description': '你有了自己的孩子', 'age_range': (26, 40), 'effects': {'wealth': -1, 'appearance': 1}},
+        {'name': '升职加薪', 'description': '你在工作中表现出色，获得升职', 'age_range': (25, 50), 'effects': {'wealth': 2}},
+        {'name': '创业成功', 'description': '你的创业项目获得成功', 'age_range': (25, 40), 'effects': {'wealth': 3, 'intelligence': 1}},
+        
+        # SSR天赋专属事件
+        {'name': '修仙飞升', 'description': '你修炼有成，准备飞升仙界', 'age_range': (30, 50), 'effects': {'intelligence': 5, 'strength': 5}, 'requires': ['mystery_box'], 'special_flag': 'ascension'},
+        {'name': '异世界王者', 'description': '你在异世界成为了王者', 'age_range': (30, 50), 'effects': {'strength': 4, 'intelligence': 3, 'wealth': 4}, 'requires': ['system_host'], 'special_flag': 'isekai_king'},
+        {'name': '龙皇觉醒', 'description': '你觉醒了龙皇血脉', 'age_range': (35, 55), 'effects': {'strength': 6, 'appearance': 3}, 'requires': ['dragon_blood'], 'special_flag': 'dragon_emperor'},
+        {'name': '时空守护者', 'description': '你成为了时空的守护者', 'age_range': (40, 60), 'effects': {'intelligence': 5, 'strength': 3}, 'requires': ['time_traveler'], 'special_flag': 'time_guardian'},
+        
+        # 普通天赋修仙路线
+        {'name': '凡人飞升', 'description': '你通过不懈努力，终于突破凡人极限', 'age_range': (35, 55), 'effects': {'intelligence': 3, 'strength': 3}, 'requires_flag': ['basic_cultivation'], 'special_flag': 'mortal_ascension'},
+        {'name': '武林盟主', 'description': '你成为了武林盟主', 'age_range': (30, 50), 'effects': {'strength': 4, 'appearance': 2}, 'requires_flag': ['martial_training'], 'special_flag': 'martial_leader'},
+        {'name': '气功大师', 'description': '你的内力修为达到了大师级别', 'age_range': (35, 55), 'effects': {'strength': 3, 'intelligence': 2}, 'requires_flag': ['inner_power'], 'special_flag': 'qigong_master'},
+        
+        # 基础事件
+        {'name': '买房', 'description': '你买了人生中第一套房子', 'age_range': (25, 40), 'effects': {'wealth': 1}},
+        {'name': '投资理财', 'description': '你开始学习投资理财', 'age_range': (25, 50), 'effects': {'intelligence': 1, 'wealth': 1}},
+        {'name': '健身塑形', 'description': '你开始注重身体健康', 'age_range': (25, 45), 'effects': {'strength': 1, 'appearance': 1}}
     ],
     'elder': [
-        {'name': '退休', 'description': '你正式退休，开始享受晚年生活', 'age_range': (60, 65), 'effects': {'strength': -1}},
-        {'name': '含饴弄孙', 'description': '你享受着与孙辈的快乐时光', 'age_range': (55, 80), 'effects': {'appearance': 1}},
-        {'name': '身体不适', 'description': '年龄增长带来了健康问题', 'age_range': (50, 80), 'effects': {'strength': -2}},
-        {'name': '智慧长者', 'description': '你成为了备受尊敬的智慧长者', 'age_range': (60, 80), 'effects': {'intelligence': 1}},
-        {'name': '财富积累', 'description': '你的一生积累了不少财富', 'age_range': (55, 75), 'effects': {'wealth': 2}},
-        {'name': '修仙飞升', 'description': '你突破了人类极限，飞升成仙', 'age_range': (60, 80), 'effects': {'intelligence': 10, 'strength': 10}, 'requires': ['mystery_box'], 'special_flag': 'ascension'},
-        {'name': '世界首富', 'description': '你成为了世界首富，财富无人能及', 'age_range': (50, 70), 'effects': {'wealth': 10}, 'requires': ['business_genius'], 'special_flag': 'richest'},
-        {'name': '传奇巨星', 'description': '你成为了传奇级别的超级巨星', 'age_range': (50, 70), 'effects': {'appearance': 8}, 'requires': ['star_potential'], 'special_flag': 'legend_star'},
-        {'name': '时空守护者', 'description': '你成为了时空的守护者', 'age_range': (60, 80), 'effects': {'intelligence': 8}, 'requires': ['time_traveler'], 'special_flag': 'time_guardian'},
-        {'name': '龙族长老', 'description': '你成为了龙族的长老', 'age_range': (55, 75), 'effects': {'strength': 8, 'intelligence': 4}, 'requires': ['dragon_blood'], 'special_flag': 'dragon_elder'},
-        {'name': '系统创造者', 'description': '你成为了新系统的创造者', 'age_range': (50, 70), 'effects': {'intelligence': 10}, 'requires': ['system_host'], 'special_flag': 'system_creator'},
-        {
-            'name': '剑网三元老',
-            'description': '你成为了剑网三社区的元老级人物',
-            'age_range': (50, 70),
-            'effects': {'intelligence': 2, 'appearance': 3},
-            'requires': ['jx3_player'],
-            'special_flag': 'jx3_veteran'
-        },
-        {
-            'name': '武术宗师',
-            'description': '你成为了一代武术宗师',
-            'age_range': (55, 75),
-            'effects': {'strength': 4, 'intelligence': 3, 'appearance': 2},
-            'requires': ['martial_genius'],
-            'special_flag': 'martial_master'
-        },
-        {
-            'name': '文化传承者',
-            'description': '你致力于传承中华传统文化',
-            'age_range': (50, 80),
-            'effects': {'intelligence': 4, 'appearance': 2},
-            'requires': ['scholar_artist'],
-            'special_flag': 'culture_inheritor'
-        }
+        {'name': '退休', 'description': '你到了退休的年龄', 'age_range': (60, 65), 'effects': {'wealth': -1}},
+        {'name': '含饴弄孙', 'description': '你享受着天伦之乐', 'age_range': (55, 75), 'effects': {'appearance': 1}},
+        {'name': '身体衰老', 'description': '年龄让你的身体开始衰老', 'age_range': (65, 80), 'effects': {'strength': -1}},
+        {'name': '智慧长者', 'description': '你成为了受人尊敬的智慧长者', 'age_range': (65, 80), 'effects': {'intelligence': 1}},
+        {'name': '慈善事业', 'description': '你投身于慈善事业', 'age_range': (60, 80), 'effects': {'appearance': 2, 'wealth': -1}},
+        
+        # 特殊结局前置事件
+        {'name': '仙界使者', 'description': '仙界派使者来接你', 'age_range': (70, 90), 'effects': {}, 'requires_flag': ['ascension']},
+        {'name': '异世界召唤', 'description': '异世界再次召唤你', 'age_range': (70, 90), 'effects': {}, 'requires_flag': ['isekai_king']},
+        {'name': '龙族归宿', 'description': '龙族邀请你回归龙界', 'age_range': (70, 90), 'effects': {}, 'requires_flag': ['dragon_emperor']},
+        {'name': '时空使命', 'description': '你接到了新的时空守护使命', 'age_range': (70, 90), 'effects': {}, 'requires_flag': ['time_guardian']},
+        
+        # 普通修仙结局
+        {'name': '修仙大师', 'description': '你被尊为修仙界的大师', 'age_range': (70, 90), 'effects': {'intelligence': 2}, 'requires_flag': ['mortal_ascension']},
+        {'name': '武学传说', 'description': '你的武学成就成为传说', 'age_range': (70, 90), 'effects': {'strength': 2}, 'requires_flag': ['martial_leader']},
+        {'name': '气功宗师', 'description': '你成为了气功界的宗师', 'age_range': (70, 90), 'effects': {'strength': 1, 'intelligence': 1}, 'requires_flag': ['qigong_master']},
+        
+        # 基础事件
+        {'name': '回忆往昔', 'description': '你回忆起了年轻时的美好时光', 'age_range': (65, 80), 'effects': {'appearance': 1}},
+        {'name': '传授经验', 'description': '你向年轻人传授人生经验', 'age_range': (60, 80), 'effects': {'intelligence': 1}}
     ]
 }
 
@@ -580,271 +299,280 @@ LIFE_EVENTS = {
 SPECIAL_ENDINGS = {
     'ascension': {
         'name': '修仙飞升',
-        'description': '你突破了人类的极限，成功飞升成仙，获得了永恒的生命！',
-        'condition': lambda game: 'ascension' in game.special_flags and game.attributes['intelligence'] >= 15,
-        'score_bonus': 100
+        'description': '你修炼有成，成功飞升仙界，获得永生',
+        'requirements': {'special_flags': ['ascension'], 'intelligence': 15},
+        'score_bonus': 50
     },
     'isekai_king': {
         'name': '异世界王者',
-        'description': '你在异世界建立了强大的王国，成为了传说中的异世界王者！',
-        'condition': lambda game: 'isekai' in game.special_flags and game.attributes['intelligence'] >= 12 and game.attributes['strength'] >= 10,
-        'score_bonus': 80
-    },
-    'world_richest': {
-        'name': '世界首富',
-        'description': '你凭借卓越的商业头脑和智慧，成为了世界首富！',
-        'condition': lambda game: ('richest' in game.special_flags or game.attributes['wealth'] >= 20) and game.attributes['intelligence'] >= 12,
-        'score_bonus': 70
-    },
-    'super_star': {
-        'name': '超级巨星',
-        'description': '你凭借出众的颜值和演技，成为了享誉全球的超级巨星！',
-        'condition': lambda game: ('legend_star' in game.special_flags or game.attributes['appearance'] >= 18) and any('star_potential' in t.get('special', '') for t in game.talents),
-        'score_bonus': 60
-    },
-    'mutation_monster': {
-        'name': '变异怪物',
-        'description': '由于体质过低和神秘实验的影响，你变成了可怕的变异怪物...',
-        'condition': lambda game: 'mutation' in game.special_flags and game.attributes['strength'] <= 3,
-        'score_bonus': -20
-    },
-    'ordinary_life': {
-        'name': '平凡一生',
-        'description': '你度过了平凡而普通的一生，虽然没有什么特别的成就，但也算是圆满。',
-        'condition': lambda game: True,  # 默认结局
-        'score_bonus': 0
-    },
-    'time_master': {
-        'name': '时空主宰',
-        'description': '你掌控了时空的力量，成为了时空的主宰者！',
-        'condition': lambda game: 'time_guardian' in game.special_flags and game.attributes['intelligence'] >= 20,
-        'score_bonus': 120
+        'description': '你在异世界建立了强大的王国，成为传说中的王者',
+        'requirements': {'special_flags': ['isekai_king'], 'strength': 15},
+        'score_bonus': 45
     },
     'dragon_emperor': {
         'name': '龙皇',
-        'description': '你觉醒了完整的龙族血脉，成为了至高无上的龙皇！',
-        'condition': lambda game: 'dragon_elder' in game.special_flags and game.attributes['strength'] >= 20,
-        'score_bonus': 110
+        'description': '你觉醒了完整的龙皇血脉，统治龙族',
+        'requirements': {'special_flags': ['dragon_emperor'], 'strength': 18},
+        'score_bonus': 48
     },
-    'system_god': {
-        'name': '系统之神',
-        'description': '你超越了系统的限制，成为了创造系统的神！',
-        'condition': lambda game: 'system_creator' in game.special_flags and sum(game.attributes.values()) >= 50,
-        'score_bonus': 130
+    'time_guardian': {
+        'name': '时空主宰',
+        'description': '你成为了时空的主宰，守护着多元宇宙的平衡',
+        'requirements': {'special_flags': ['time_guardian'], 'intelligence': 20},
+        'score_bonus': 55
     },
-    'internet_legend': {
-        'name': '网络传奇',
-        'description': '你在网络世界中创造了无数传奇，成为了网络时代的象征！',
-        'condition': lambda game: any(talent.get('special') in ['influencer', 'streamer', 'gamer'] for talent in game.talents) and game.attributes['appearance'] >= 15 and game.attributes['wealth'] >= 15,
-        'score_bonus': 75
+    'mortal_ascension': {
+        'name': '凡人飞升',
+        'description': '你以凡人之身突破极限，证明了努力的力量',
+        'requirements': {'special_flags': ['mortal_ascension'], 'intelligence': 12},
+        'score_bonus': 35
     },
-    'culinary_master': {
-        'name': '料理之神',
-        'description': '你的厨艺达到了神的境界，被誉为料理之神！',
-        'condition': lambda game: any(talent.get('special') in ['gourmet', 'chef'] for talent in game.talents) and game.attributes['intelligence'] >= 15 and game.attributes['wealth'] >= 12,
-        'score_bonus': 65
+    'martial_leader': {
+        'name': '武林传说',
+        'description': '你成为了武林中的传奇人物，武学成就无人能及',
+        'requirements': {'special_flags': ['martial_leader'], 'strength': 15},
+        'score_bonus': 30
     },
-    'martial_saint': {
-        'name': '武道圣人',
-        'description': '你的武功达到了圣人境界，开创了新的武道流派！',
-        'condition': lambda game: any('martial_arts' in talent.get('special', '') for talent in game.talents) and game.attributes['strength'] >= 18,
-        'score_bonus': 85
+    'qigong_master': {
+        'name': '气功宗师',
+        'description': '你的气功修为达到了前无古人的高度',
+        'requirements': {'special_flags': ['qigong_master'], 'strength': 12, 'intelligence': 10},
+        'score_bonus': 28
     },
-    'music_deity': {
-        'name': '音乐之神',
-        'description': '你的音乐才华震撼世界，被誉为音乐之神！',
-        'condition': lambda game: any('music_genius' in talent.get('special', '') for talent in game.talents) and game.attributes['appearance'] >= 18 and game.attributes['intelligence'] >= 12,
-        'score_bonus': 80
+    'billionaire': {
+        'name': '世界首富',
+        'description': '你通过商业成就积累了巨额财富，成为世界首富',
+        'requirements': {'wealth': 20},
+        'score_bonus': 40
     },
-    'invention_genius': {
-        'name': '发明天才',
-        'description': '你的发明改变了人类文明的进程，成为了史上最伟大的发明家！',
-        'condition': lambda game: any('inventor' in talent.get('special', '') for talent in game.talents) and game.attributes['intelligence'] >= 20 and game.attributes['wealth'] >= 15,
-        'score_bonus': 90
+    'superstar': {
+        'name': '超级巨星',
+        'description': '你成为了享誉全球的超级巨星',
+        'requirements': {'appearance': 18},
+        'score_bonus': 35
     },
-    'failed_experiment': {
-        'name': '实验失败',
-        'description': '你在追求力量的过程中失败了，变成了不人不鬼的存在...',
-        'condition': lambda game: 'mutation' in game.special_flags and sum(game.attributes.values()) <= 15,
-        'score_bonus': -30
+    'genius': {
+        'name': '天才科学家',
+        'description': '你的智慧推动了人类文明的进步',
+        'requirements': {'intelligence': 22},
+        'score_bonus': 38
     },
-    'jx3_legend': {
-        'name': '剑网三传奇',
-        'description': '你在剑网三的世界中创造了无数传奇，成为了江湖中的不朽神话！',
-        'condition': lambda game: 'jx3_veteran' in game.special_flags and 'jx3_champion' in game.special_flags and game.attributes['intelligence'] >= 15,
-        'score_bonus': 95
-    },
-    'sword_saint': {
-        'name': '剑圣',
-        'description': '你的剑道修为达到了圣人境界，被誉为当世剑圣！',
-        'condition': lambda game: any('sword_master' in talent.get('special', '') for talent in game.talents) and game.attributes['strength'] >= 18 and game.attributes['intelligence'] >= 15,
-        'score_bonus': 100
-    },
-    'jianghu_overlord': {
-        'name': '江湖霸主',
-        'description': '你统一了江湖，成为了武林盟主，号令天下！',
-        'condition': lambda game: any('jianghu_legend' in talent.get('special', '') for talent in game.talents) and game.attributes['strength'] >= 16 and game.attributes['intelligence'] >= 14 and game.attributes['appearance'] >= 12,
-        'score_bonus': 105
-    },
-    'tiancefu_general': {
-        'name': '天策上将',
-        'description': '你继承了天策府的荣光，成为了一代名将！',
-        'condition': lambda game: any('tiancefuBloodline' in talent.get('special', '') for talent in game.talents) and game.attributes['strength'] >= 17 and game.attributes['intelligence'] >= 13,
-        'score_bonus': 90
-    },
-    'chunyang_immortal': {
-        'name': '纯阳真仙',
-        'description': '你修成了纯阳道体，得道成仙！',
-        'condition': lambda game: any('chunyang_dao' in talent.get('special', '') for talent in game.talents) and game.attributes['intelligence'] >= 20,
-        'score_bonus': 110
-    },
-    'wanhua_sage': {
-        'name': '万花医圣',
-        'description': '你的医术达到了圣人境界，救死扶伤，功德无量！',
-        'condition': lambda game: any('wanhua_doctor' in talent.get('special', '') for talent in game.talents) and game.attributes['intelligence'] >= 18 and game.attributes['wealth'] >= 12,
-        'score_bonus': 95
-    },
-    'gaming_emperor': {
-        'name': '游戏皇帝',
-        'description': '你在游戏界建立了自己的帝国，成为了游戏界的传奇人物！',
-        'condition': lambda game: any(talent.get('special') in ['jx3_player', 'game_master', 'gamer'] for talent in game.talents) and game.attributes['intelligence'] >= 16 and game.attributes['wealth'] >= 15,
-        'score_bonus': 85
-    },
-    'cultural_master': {
-        'name': '文化大师',
-        'description': '你在文化艺术领域取得了巨大成就，成为了一代文化大师！',
-        'condition': lambda game: 'culture_inheritor' in game.special_flags and game.attributes['intelligence'] >= 17 and game.attributes['appearance'] >= 14,
-        'score_bonus': 88
-    },
-    'martial_emperor': {
-        'name': '武道皇者',
-        'description': '你的武功达到了前无古人的境界，成为了武道皇者！',
-        'condition': lambda game: 'martial_master' in game.special_flags and game.attributes['strength'] >= 20 and game.attributes['intelligence'] >= 15,
-        'score_bonus': 115
-    },
-    'virtual_reality_pioneer': {
-        'name': '虚拟现实先驱',
-        'description': '你推动了虚拟现实技术的发展，让游戏世界与现实完美融合！',
-        'condition': lambda game: any(talent.get('special') in ['jx3_player', 'programmer', 'inventor'] for talent in game.talents) and game.attributes['intelligence'] >= 18 and game.attributes['wealth'] >= 16,
-        'score_bonus': 100
+    'ordinary': {
+        'name': '平凡一生',
+        'description': '你过着平凡而充实的一生，虽然普通但也很幸福',
+        'requirements': {},
+        'score_bonus': 10
     }
 }
 
 def get_random_talent():
     """根据稀有度随机获取天赋"""
     rand = random.random()
-    if rand < 0.005:  # 0.5% SSR
+    if rand < 0.005:  # 0.5%
         rarity = 'SSR'
-    elif rand < 0.05:  # 4.5% SR
+    elif rand < 0.05:  # 4.5%
         rarity = 'SR'
-    elif rand < 0.3:  # 25% R
+    elif rand < 0.3:  # 25%
         rarity = 'R'
-    else:  # 70% N
+    else:  # 70%
         rarity = 'N'
     
-    return random.choice(TALENTS[rarity]), rarity
+    return random.choice(TALENTS[rarity])
 
 def check_event_requirements(event, game):
-    """检查事件是否满足触发条件"""
-    if 'requires' not in event:
-        return True
+    """检查事件触发条件"""
+    # 检查天赋要求
+    if 'requires' in event:
+        talent_specials = {talent.get('special', '') for talent in game.talents}
+        required_specials = set(event['requires'])
+        if not required_specials.intersection(talent_specials):
+            return False
     
-    for requirement in event['requires']:
-        # 检查天赋要求
-        if not any(requirement in talent.get('special', '') for talent in game.talents):
-            # 检查特殊标记要求
-            if requirement not in game.special_flags:
-                return False
+    # 检查特殊标记要求
+    if 'requires_flag' in event:
+        required_flags = set(event['requires_flag'])
+        if not required_flags.intersection(game.special_flags):
+            return False
+    
     return True
 
 def determine_final_ending(game):
-    """确定最终结局"""
-    for ending_key, ending in SPECIAL_ENDINGS.items():
-        if ending_key != 'ordinary_life' and ending['condition'](game):
+    """确定最终结局（按优先级）"""
+    # 按优先级检查特殊结局
+    priority_endings = [
+        'time_guardian', 'ascension', 'dragon_emperor', 'isekai_king',
+        'mortal_ascension', 'martial_leader', 'qigong_master',
+        'genius', 'billionaire', 'superstar'
+    ]
+    
+    for ending_key in priority_endings:
+        ending = SPECIAL_ENDINGS[ending_key]
+        requirements = ending['requirements']
+        
+        # 检查特殊标记要求
+        if 'special_flags' in requirements:
+            required_flags = set(requirements['special_flags'])
+            if not required_flags.intersection(game.special_flags):
+                continue
+        
+        # 检查属性要求
+        meets_requirements = True
+        for attr, min_value in requirements.items():
+            if attr != 'special_flags' and game.attributes.get(attr, 0) < min_value:
+                meets_requirements = False
+                break
+        
+        if meets_requirements:
             return ending_key
-    return 'ordinary_life'
+    
+    return 'ordinary'
 
-# 注册命令
-start_life = on_regex(pattern=r"^人生重开$", priority=5)
+def generate_stage_events(game, stage_name, start_age, end_age):
+    """生成阶段事件"""
+    stage_events = []
+    available_events = LIFE_EVENTS.get(stage_name, []).copy()
+    
+    # 确保每个阶段有足够的事件
+    target_events = random.randint(3, 6)
+    special_events_count = 0
+    max_special_events = 2
+    
+    for _ in range(target_events):
+        if not available_events:
+            break
+        
+        # 分层筛选事件
+        valid_events = []
+        
+        # 1. 优先选择特殊天赋事件（限制数量）
+        if special_events_count < max_special_events:
+            special_events = [
+                e for e in available_events 
+                if (start_age <= e['age_range'][1] and end_age >= e['age_range'][0] 
+                    and ('requires' in e or 'requires_flag' in e) 
+                    and check_event_requirements(e, game))
+            ]
+            if special_events:
+                valid_events = special_events
+                special_events_count += 1
+        
+        # 2. 选择基础事件
+        if not valid_events:
+            basic_events = [
+                e for e in available_events 
+                if (start_age <= e['age_range'][1] and end_age >= e['age_range'][0] 
+                    and 'requires' not in e and 'requires_flag' not in e)
+            ]
+            if basic_events:
+                valid_events = basic_events
+        
+        # 3. 兜底：放宽年龄限制
+        if not valid_events:
+            fallback_events = [
+                e for e in available_events 
+                if ((start_age - 2) <= e['age_range'][1] and (end_age + 2) >= e['age_range'][0])
+            ]
+            if fallback_events:
+                valid_events = fallback_events
+        
+        if not valid_events:
+            continue
+        
+        # 选择事件并应用
+        event = random.choice(valid_events)
+        event_age = random.randint(
+            max(start_age, event['age_range'][0]), 
+            min(end_age, event['age_range'][1])
+        )
+        
+        # 应用事件效果
+        effects = event.get('effects', {})
+        for attr, change in effects.items():
+            game.attributes[attr] = max(0, game.attributes[attr] + change)
+        
+        # 添加特殊标记
+        if 'special_flag' in event:
+            game.special_flags.add(event['special_flag'])
+        
+        stage_events.append((event_age, event))
+        available_events.remove(event)
+    
+    # 确保最少事件数量
+    while len(stage_events) < 2 and available_events:
+        event = random.choice(available_events)
+        event_age = random.randint(start_age, end_age)
+        stage_events.append((event_age, event))
+        available_events.remove(event)
+    
+    return stage_events
+
+# 命令定义
+start_life = on_regex(pattern="^人生重开$", priority=5)
 allocate_points = on_regex(pattern=r"^分配属性\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)$", priority=5)
-start_simulation = on_regex(pattern=r"^开始模拟$", priority=5)
-life_summary = on_regex(pattern=r"^人生总结$", priority=5)
-# 添加查询剩余次数的命令
-check_remaining = on_regex(pattern=r'^人生次数$', priority=1)
-
-@check_remaining.handle()
-async def handle_check_remaining(bot: Bot, event: GroupMessageEvent):
-    user_id = str(event.user_id)
-    group_id = str(event.group_id)
-    game_key = f"{group_id}_{user_id}"
-    
-    today = str(date.today())
-    current_count = daily_game_count.get(today, {}).get(game_key, 0)
-    remaining = MAX_DAILY_GAMES - current_count
-    
-    await check_remaining.finish(f"🎮 今日剩余游戏次数：{remaining}/{MAX_DAILY_GAMES}")
+start_simulation = on_regex(pattern="^开始模拟$""", priority=5)
+life_summary = on_regex(pattern="^人生总结$""", priority=5)
 
 @start_life.handle()
 async def handle_start_life(bot: Bot, event: GroupMessageEvent):
     user_id = str(event.user_id)
     group_id = str(event.group_id)
     game_key = f"{group_id}_{user_id}"
-
-    # 检查每日游戏次数
-    today = str(date.today())
+    
+    # 检查每日游戏次数限制
+    today = date.today().isoformat()
     if today not in daily_game_count:
         daily_game_count[today] = {}
     
-    current_count = daily_game_count[today].get(game_key, 0)
-    if current_count >= MAX_DAILY_GAMES:
-        await start_life.finish(f"⚠️ 今日游戏次数已达上限（{MAX_DAILY_GAMES}次），请明天再来体验人生重开！")
+    user_today_count = daily_game_count[today].get(game_key, 0)
+    if user_today_count >= MAX_DAILY_GAMES:
+        await start_life.finish(f"今日游戏次数已达上限({MAX_DAILY_GAMES}次)，请明天再来！")
         return
-
-    # 游戏开始时增加计数
-    daily_game_count[today][game_key] = current_count + 1
     
-    # 获取用户昵称
-    try:
-        user_info = await bot.get_group_member_info(group_id=int(group_id), user_id=int(user_id))
-        nickname = user_info.get('nickname', f'用户{user_id}')
-    except:
-        nickname = f'用户{user_id}'
+    # 更新游戏次数
+    daily_game_count[today][game_key] = user_today_count + 1
     
-    # 初始化游戏
-    game_key = f"{group_id}_{user_id}"
-    games[game_key] = LifeRestartGame()
+    # 创建新游戏或重置现有游戏
+    if game_key in games:
+        games[game_key].reset_game()
+    else:
+        games[game_key] = LifeRestartGame()
+    
     game = games[game_key]
     game.user_id = user_id
     game.group_id = group_id
-    game.game_status = 'allocating'
     
     # 随机分配天赋
-    talent, rarity = get_random_talent()
-    game.talents.append(talent)
+    talent = get_random_talent()
+    game.talents = [talent]
     
     # 应用天赋效果
-    for attr, value in talent['effect'].items():
-        game.attributes[attr] += value
-        game.remaining_points -= value
+    for attr, bonus in talent.get('effect', {}).items():
+        game.attributes[attr] += bonus
     
-    # 稀有度显示
-    rarity_display = {
-        'SSR': '✨✨✨ SSR ✨✨✨',
-        'SR': '⭐⭐ SR ⭐⭐',
-        'R': '⭐ R ⭐',
-        'N': 'N'
-    }
+    # 添加天赋特殊标记
+    if 'special' in talent:
+        game.special_flags.add(talent['special'])
     
-    message = f"🎭 {nickname} 的人生重开模拟器\n\n"
-    message += f"🌟 获得天赋：{talent['name']} [{rarity_display[rarity]}]\n"
+    game.game_status = 'allocating'
+    
+    message = f"🎮 人生重开模拟器\n\n"
+    message += f"🌟 你的天赋：{talent['name']}\n"
     message += f"📝 {talent['description']}\n\n"
+    
+    if talent.get('effect'):
+        message += f"💫 天赋效果：\n"
+        for attr, bonus in talent['effect'].items():
+            attr_name = {'appearance': '颜值', 'intelligence': '智力', 'strength': '体质', 'wealth': '家境'}[attr]
+            message += f"   {attr_name} {'+' if bonus > 0 else ''}{bonus}\n"
+        message += "\n"
+    
     message += f"📊 当前属性：\n"
     message += f"👤 颜值：{game.attributes['appearance']}\n"
     message += f"🧠 智力：{game.attributes['intelligence']}\n"
     message += f"💪 体质：{game.attributes['strength']}\n"
     message += f"💰 家境：{game.attributes['wealth']}\n\n"
-    message += f"🎯 剩余属性点：{game.remaining_points}\n\n"
-    message += f"请使用【分配属性 颜值 智力 体质 家境】来分配剩余属性点\n"
+    message += f"🎯 你有{game.remaining_points}点属性可以分配\n"
+    message += f"请发送：分配属性 颜值 智力 体质 家境\n"
     message += f"例如：分配属性 2 3 1 4"
     
     await start_life.finish(message)
@@ -930,63 +658,21 @@ async def handle_start_simulation(bot: Bot, event: GroupMessageEvent):
     ]
     
     for stage_name, start_age, end_age in stages:
-        stage_events = []
-        
-        # 每个阶段随机发生2-5个事件
-        num_events = random.randint(2, 5)
-        available_events = LIFE_EVENTS.get(stage_name, [])
-        
-        for _ in range(num_events):
-            if not available_events:
-                break
-                
-            # 选择符合年龄范围和条件的事件
-            valid_events = [e for e in available_events 
-                          if start_age <= e['age_range'][1] and end_age >= e['age_range'][0] 
-                          and check_event_requirements(e, game)]
-            
-            if not valid_events:
-                # 如果没有特殊事件，从基础事件中选择
-                valid_events = [e for e in available_events 
-                              if start_age <= e['age_range'][1] and end_age >= e['age_range'][0] 
-                              and 'requires' not in e]
-            
-            if not valid_events:
-                continue
-                
-            event = random.choice(valid_events)
-            event_age = random.randint(max(start_age, event['age_range'][0]), min(end_age, event['age_range'][1]))
-            
-            # 应用事件效果
-            for attr, change in event['effects'].items():
-                game.attributes[attr] = max(0, game.attributes[attr] + change)
-            
-            # 添加特殊标记
-            if 'special_flag' in event:
-                game.special_flags.add(event['special_flag'])
-            
-            stage_events.append((event_age, event))
-            available_events.remove(event)  # 避免重复事件
-        
-        # 按年龄排序事件
-        stage_events.sort(key=lambda x: x[0])
-        
-        # 添加到人生事件列表
-        for age, event in stage_events:
-            game.life_events.append((age, event))
+        stage_events = generate_stage_events(game, stage_name, start_age, end_age)
+        game.life_events.extend(stage_events)
     
-    # 显示人生历程
+    # 按年龄排序所有事件
     game.life_events.sort(key=lambda x: x[0])
     
-    for age, event in game.life_events[:12]:  # 显示前12个重要事件
+    # 显示人生历程（前12个重要事件）
+    for age, event in game.life_events[:12]:
         message += f"📅 {age}岁：{event['description']}\n"
     
     if len(game.life_events) > 12:
         message += f"\n... 还有{len(game.life_events) - 12}个人生事件\n"
     
-    # 计算最终属性和年龄
+    # 计算最终年龄
     final_age = random.randint(70, 95)
-    # 长寿天赋效果
     if any('longevity' in talent.get('special', '') for talent in game.talents):
         final_age += random.randint(10, 20)
     
