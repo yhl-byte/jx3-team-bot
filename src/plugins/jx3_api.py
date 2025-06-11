@@ -21,7 +21,7 @@ from src.config import STATIC_PATH
 import os
 
 token ='v255c2a8b3e7c0098f'
-ticket = 'fa1ee09527674f2caae6eecfceaec64a:18231851515@163.com:kingsoft::VrhjwuryGxGN5+1Hk+CWww=='
+ticket = '1cf7637eaef344ff92add3b739463564:18231851515@163.com:kingsoft::mnTKaKUCXj8qduVypwuLHA=='
 base_url = 'https://www.jx3api.com'
 async_api = AsyncJX3API(token = token, ticket=ticket, base_url = base_url)
 api = JX3API(token = token, ticket=ticket, base_url = base_url)
