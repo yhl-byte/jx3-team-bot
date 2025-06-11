@@ -35,7 +35,7 @@ class GomokuPlayer:
 class GomokuGame:
     group_id: str
     players: Dict[str, GomokuPlayer]
-    board: List[List[str]]  # 15x15棋盘
+    board: List[List[str]]  # 9x9棋盘
     current_player_id: Optional[str]
     state: GomokuGameState
     round_count: int
@@ -45,7 +45,7 @@ class GomokuGame:
     
     def __post_init__(self):
         if not self.board:
-            self.board = [["⬜" for _ in range(15)] for _ in range(15)]
+            self.board = [["⬜" for _ in range(9)] for _ in range(9)]
 
 # 存储所有游戏实例
 games: Dict[str, GomokuGame] = {}
@@ -73,13 +73,13 @@ def check_winner(board: List[List[str]], row: int, col: int, piece: str) -> bool
         
         # 向一个方向检查
         r, c = row + dr, col + dc
-        while 0 <= r < 15 and 0 <= c < 15 and board[r][c] == piece:
+        while 0 <= r < 9 and 0 <= c < 9 and board[r][c] == piece:
             count += 1
             r, c = r + dr, c + dc
         
         # 向相反方向检查
         r, c = row - dr, col - dc
-        while 0 <= r < 15 and 0 <= c < 15 and board[r][c] == piece:
+        while 0 <= r < 9 and 0 <= c < 9 and board[r][c] == piece:
             count += 1
             r, c = r - dr, c - dc
         
@@ -92,14 +92,14 @@ def format_board(board: List[List[str]], last_move: Optional[Tuple[int, int]] = 
     """格式化棋盘显示"""
     result = "  "
     # 列标签 A-O
-    for i in range(15):
+    for i in range(9):
         result += chr(ord('A') + i) + " "
     result += "\n"
     
-    for i in range(15):
-        # 行标签 1-15
+    for i in range(9):
+        # 行标签 1-9
         result += f"{i+1:2d}"
-        for j in range(15):
+        for j in range(9):
             piece = board[i][j]
             # 标记最后一步棋
             if last_move and last_move == (i, j):
@@ -136,7 +136,7 @@ async def handle_start_gomoku(bot: Bot, event: GroupMessageEvent):
     game = GomokuGame(
         group_id=group_id,
         players={},
-        board=[["⬜" for _ in range(15)] for _ in range(15)],
+        board=[["⬜" for _ in range(9)] for _ in range(9)],
         current_player_id=None,
         state=GomokuGameState.SIGNUP,
         round_count=0,
@@ -351,7 +351,7 @@ async def handle_place_piece(bot: Bot, event: GroupMessageEvent):
     row = int(row_str) - 1
     
     # 检查位置是否有效
-    if not (0 <= row < 15 and 0 <= col < 15):
+    if not (0 <= row < 9 and 0 <= col < 9):
         await place_piece.finish("位置超出棋盘范围！")
     
     if game.board[row][col] != "⬜":
@@ -385,7 +385,7 @@ async def handle_place_piece(bot: Bot, event: GroupMessageEvent):
         await place_piece.finish(msg)
     
     # 检查是否平局（棋盘满了）
-    if all(game.board[i][j] != "⬜" for i in range(15) for j in range(15)):
+    if all(game.board[i][j] != "⬜" for i in range(9) for j in range(9)):
         game.state = GomokuGameState.FINISHED
         
         # 平局积分
@@ -504,9 +504,9 @@ async def handle_gomoku_help(bot: Bot, event: GroupMessageEvent):
 • 五子棋帮助 - 查看此说明
 
 📍 位置说明：
-• 列用字母A-O表示（共15列）
-• 行用数字1-15表示（共15行）
-• 如：A1是左上角，O15是右下角
+• 列用字母A-O表示（共9列）
+• 行用数字1-9表示（共9行）
+• 如：A1是左上角，O9是右下角
 
 🏆 积分规则：
 • 参与游戏：5分

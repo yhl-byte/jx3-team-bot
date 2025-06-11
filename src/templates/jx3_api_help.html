@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>剑网3 API 插件命令说明</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: #e74c3c;
+        }
+
+        .command-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .command-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border-left: 5px solid #3498db;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .command-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3498db, #9b59b6, #e74c3c, #f39c12);
+        }
+
+        .command-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .command-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .command-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.2em;
+            color: white;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .command-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .command-syntax {
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            margin: 10px 0;
+            font-size: 0.9em;
+            border-left: 4px solid #3498db;
+        }
+
+        .command-desc {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .command-example {
+            background: #e8f5e8;
+            border: 1px solid #27ae60;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .command-example strong {
+            color: #27ae60;
+        }
+
+        .note {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            border-left: 5px solid #f39c12;
+        }
+
+        .note h3 {
+            color: #856404;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .note h3::before {
+            content: '💡';
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        .note ul {
+            margin-left: 20px;
+            color: #856404;
+        }
+
+        .note li {
+            margin-bottom: 5px;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .command-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚔️ 剑网3 API 插件</h1>
+            <p>功能丰富的剑网3游戏数据查询工具</p>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2 class="section-title">🎮 服务器相关</h2>
+                <div class="command-grid">
+                    <div class="command-card">
+                        <div class="command-header">
+                            <div class="command-icon">🖥️</div>
+                            <div class="command-name">开服检测</div>
+                        </div>
+                        <div class="command-syntax">开服 [服务器名]</div>
+                        <div class="command-desc">检查指定服务器的开服状态，不指定服务器时默认查询"唯我独尊"服务器。</div>
+                        <div class="command-example">
+                            <strong>示例：</strong><br>
+                            开服<br>
+                            开服 幽月轮
+                        </div>
+                    </div>
+
+                    <div class="command-card">
+                        <div class="command-header">
+                            <div class="command-icon">📅</div>
+                            <div class="command-name">日常查询</div>
+                        </div>
+                        <div class="command-syntax">日常 [服务器名]</div>
+                        <div class="command-desc">查看指定服务器的日常活动安排，包括各种活动的开放时间。</div>
+                        <div class="command-example">
+                            <strong>示例：</strong><br>
+                            日常<br>
+                            日常 幽月轮
+                        </div>
+                    </div>
+
+                    <div class="command-card">
+                        <div class="command-header">
+                            <div class="command-icon">🗺️</div>
+                            <div class="command-name">服务器沙盘</div>
+                        </div>
+                        <div class="command-syntax">沙盘 [服务器名]</div>
+                        <div class="command-desc">查看服务器沙盘信息，包括阵营分布、势力对比等数据。</div>
+                        <div class="command-example">
+                            <strong>示例：</strong><br>
+                            沙盘<br>
+                            沙盘 幽月轮
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">👤 角色相关</h2>
+                <div class="command-grid">
+                    <div class="command-card">
+                        <div class="command-header">
+                            <div class="command-icon">ℹ️</div>
+                            <div class="command-name">角色信息</div>
+                        </div>
+                        <div class="command-syntax">角色 [服务器名] 角色名</div>
+                        <div class="command-desc">查询角色的基本信息，包括等级、门派、帮会等详细资料。</div>
+                        <div class="command-example">
+                            <strong>示例：</strong><br>
+                            角色 测试角色<br>
+                            角色 幽月轮 测试角色
+                        </div>
+                    </div>
+
+                    <div class="command-card">
+                        <div class="command-header">
+                            <div class="command-icon">📊</div>
+                            <div class="command-name">角色属性</div>
+                        </div>
+                        <div class="command-syntax">属性 [服务器名] 角色名</div>
+                        <div class="command-desc">查询角色的详细属性面板，包括装备、奇穴、面板属性等信息。</div>
+                        <div class="command-example">
+                            <strong>示例：</strong><br>
+                            属性 测试角色<br>
+                            属性 幽月轮 测试角色
+                        </div>
+                    </div>
+
+                    <div class="command-card">
+                        <div class="command-header">
+                            <div class="command-icon">🟢</div>
+                            <div class="command-name">在线状态</div>
+                        </div>
+                        <div class="command-syntax">在线 [服务器名] 角色名</div>
+                        <div class="command-desc">查询角色当前的在线状态，包括所在区服、阵营、帮会等信息。</div>
+                        <div class="command-example">
+                            <strong>示例：</strong><br>
+                            在线 测试角色<br>
+                            在线 幽月轮 测试角色
+                        </div>
+                    </div>
+
+                    <div class="command-card">
+                        <div class="command-header">
+                            <div class="command-icon">🏰</div>
+                            <div class="command-name">副本记录</div>
+                        </div>
+                        <div class="command-syntax">副本 [服务器名] 角色名</div>
+                        <div class="command-desc">查询角色的副本CD记录，显示各个副本的完成情况和冷却时间。</div>
+                        <div class="command-example">
+                            <strong>示例：</strong><br>
+                            副本 测试角色<br>
+                            副本 幽月轮 测试角色
+                        </div>
+                    </div>
+
+                    <div class="command-card">
+                        <div class="command-header">
+                            <div class="command-icon">🍀</div>
+                            <div class="command-name">奇遇查询</div>
+                        </div>
+                        <div class="command-syntax">查询 [服务器名] 角色名</div>
+                        <div class="command-desc">查询角色的奇遇记录，包括绝世奇遇、普通奇遇和宠物奇遇的获得情况。</div>
+                        <div class="command-example">
+                            <strong>示例：</strong><br>
+                            查询 测试角色<br>
+                            查询 幽月轮 测试角色
+                        </div>
+                    </div>
+
+                    <div class="command-card">
+                        <div class="command-header">
+                            <div class="command-icon">🎴</div>
+                            <div class="command-name">角色名片</div>
+                        </div>
+                        <div class="command-syntax">名片/QQ秀 [服务器名] 角色名</div>
+                        <div class="command-desc">获取角色的游戏内名片展示图片，支持多种触发词。</div>
+                        <div class="command-example">
+                            <strong>示例：</strong><br>
+                            名片 测试角色<br>
+                            QQ秀 幽月轮 测试角色
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note">
+                <h3>使用说明</h3>
+                <ul>
+                    <li>所有命令中的 [服务器名] 都是可选参数，不填写时默认使用"唯我独尊"服务器</li>
+                    <li>角色名必须是准确的游戏内角色名称</li>
+                    <li>部分功能需要角色数据公开才能查询</li>
+                    <li>图片生成功能可能需要稍等片刻</li>
+                    <li>如遇到接口调用失败，请稍后重试</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🎮 剑网3 API 插件 | 让游戏数据查询更简单</p>
+        </div>
+    </div>
+</body>
+</html>

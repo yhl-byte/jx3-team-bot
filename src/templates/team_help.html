@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>剑网三开团助手 - 命令说明</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+            line-height: 1.4;
+            color: #2c3e50;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .header .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 20px;
+            background: #fafbfc;
+        }
+
+        .command-section {
+            margin-bottom: 25px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e1e8ed;
+        }
+
+        .section-title {
+            padding: 15px 18px;
+            font-size: 1.1rem;
+            color: white;
+            font-weight: 600;
+            margin: 0;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title.basic {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        }
+
+        .section-title.team {
+            background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+        }
+
+        .section-title.signup {
+            background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+        }
+
+        .section-title.member {
+            background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
+        }
+
+        .section-title.fun {
+            background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+        }
+
+        .command-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .command-table th {
+            background: #f1f3f4;
+            color: #5f6368;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-bottom: 2px solid #e8eaed;
+        }
+
+        .command-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.85rem;
+            vertical-align: top;
+        }
+
+        .command-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .command-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .command-table tr:hover {
+            background: #e8f4fd;
+        }
+
+        .command-code {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .permission-admin {
+            background: linear-gradient(135deg, #e17055 0%, #d63031 100%);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .permission-all {
+            background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .notes-section {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            color: #2d3436;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #fdcb6e;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .notes-title {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: #2d3436;
+        }
+
+        .notes-list {
+            list-style: none;
+            font-size: 0.85rem;
+        }
+
+        .notes-list li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .notes-list li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #e17055;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .position-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            margin: 12px 0;
+            max-width: 220px;
+            width: 300px;
+            flex-shrink: 0;
+        }
+
+        .position-item {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+            padding: 6px;
+            text-align: center;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #636e72 0%, #2d3436 100%);
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .emoji {
+            font-style: normal;
+            margin-right: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><span class="emoji">⚔️</span>剑网三开团助手</h1>
+            <p class="subtitle"><span class="emoji">🎮</span>专业的团队管理机器人 | 让开团变得简单高效</p>
+        </div>
+
+        <div class="content">
+            <!-- 基础功能 -->
+            <div class="command-section">
+                <h2 class="section-title basic"><span class="emoji">🔧</span>基础功能</h2>
+                <table class="command-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 35%">命令</th>
+                            <th style="width: 15%">权限</th>
+                            <th style="width: 50%">说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="command-code">开团功能 开|关</span></td>
+                            <td><span class="permission-admin">管理员</span></td>
+                            <td>开启或关闭开团功能</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">开团帮助</span></td>
+                            <td><span class="permission-all">所有人</span></td>
+                            <td>显示命令帮助信息</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 团队管理 -->
+            <div class="command-section">
+                <h2 class="section-title team"><span class="emoji">🛡️</span>团队管理</h2>
+                <table class="command-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 35%">命令</th>
+                            <th style="width: 15%">权限</th>
+                            <th style="width: 50%">说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="command-code">创建团队|开团</span></td>
+                            <td><span class="permission-admin">管理员</span></td>
+                            <td>创建默认名称的新团队</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">创建团队|开团 团队名</span></td>
+                            <td><span class="permission-admin">管理员</span></td>
+                            <td>创建指定名称的新团队</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">修改团名 原团队名 新团队名</span></td>
+                            <td><span class="permission-admin">管理员</span></td>
+                            <td>修改现有团队的名称</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">默认团队 团队名/ID</span></td>
+                            <td><span class="permission-admin">管理员</span></td>
+                            <td>设置指定团队为默认团队</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">结束团队 [团队名/ID]</span></td>
+                            <td><span class="permission-admin">管理员</span></td>
+                            <td>结束指定团队或默认团队</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">结束全部团队</span></td>
+                            <td><span class="permission-admin">管理员</span></td>
+                            <td>结束当前群组的所有团队</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">团队列表</span></td>
+                            <td><span class="permission-all">所有人</span></td>
+                            <td>查看当前群组的所有团队</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">查看团队 [团队ID]</span></td>
+                            <td><span class="permission-all">所有人</span></td>
+                            <td>查看团队详细信息和成员列表</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 报名管理 -->
+            <div class="command-section">
+                <h2 class="section-title signup"><span class="emoji">📝</span>报名管理</h2>
+                <table class="command-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 35%">命令</th>
+                            <th style="width: 15%">权限</th>
+                            <th style="width: 50%">说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="command-code">设置报名格式 1|2</span></td>
+                            <td><span class="permission-admin">管理员</span></td>
+                            <td>设置报名时参数的顺序格式,模式：心法昵称 | 昵称心法，默认 1</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">查看报名格式</span></td>
+                            <td><span class="permission-all">所有人</span></td>
+                            <td>查看当前群组的报名格式设置</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">报名 心法 角色名 [团队ID]</span></td>
+                            <td><span class="permission-all">所有人</span></td>
+                            <td>报名加入团队（模式1:心法昵称）</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">报名 角色名 心法 [团队ID]</span></td>
+                            <td><span class="permission-all">所有人</span></td>
+                            <td>报名加入团队（模式2:昵称心法）</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">取消报名 [团队ID]</span></td>
+                            <td><span class="permission-all">所有人</span></td>
+                            <td>取消自己的报名</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">代报名 心法 角色名 [团队ID]</span></td>
+                            <td><span class="permission-all">所有人</span></td>
+                            <td>代替他人报名（模式1:心法昵称）</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">代报名 角色名 心法 [团队ID]</span></td>
+                            <td><span class="permission-all">所有人</span></td>
+                            <td>代替他人报名（模式2:昵称心法）</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">取消代报名 [编号] [团队ID]</span></td>
+                            <td><span class="permission-all">所有人</span></td>
+                            <td>取消指定编号的代报名，不填编号则取消最后一个</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 成员管理 -->
+            <div class="command-section">
+                <h2 class="section-title member"><span class="emoji">👥</span>成员管理</h2>
+                <table class="command-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 35%">命令</th>
+                            <th style="width: 15%">权限</th>
+                            <th style="width: 50%">说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="command-code">开除团员 角色名 [团队ID]</span></td>
+                            <td><span class="permission-admin">管理员</span></td>
+                            <td>将指定成员从团队中移除</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command-code">移动位置 原位置 新位置 [团队ID]</span></td>
+                            <td><span class="permission-admin">管理员</span></td>
+                            <td>调整团队成员的位置</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 趣味功能 -->
+            <div class="command-section">
+                <h2 class="section-title fun"><span class="emoji">🎲</span>趣味功能</h2>
+                <table class="command-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 35%">命令</th>
+                            <th style="width: 15%">权限</th>
+                            <th style="width: 50%">说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="command-code">随机黑本 [团队ID]</span></td>
+                            <td><span class="permission-all">所有人</span></td>
+                            <td>随机选择一名团队成员</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 注意事项 -->
+        <div class="notes-section">
+            <div>
+                <h3 class="notes-title"><span class="emoji">💡</span>使用说明</h3>
+                <ul class="notes-list">
+                    <li><strong>报名格式：</strong>支持两种模式，可通过"设置报名格式"命令切换</li>
+                    <li><strong>可选参数：</strong>带 [团队ID] 的命令表示该参数可选，不填则操作默认团队</li>
+                    <li><strong>权限说明：</strong>管理员命令需要群主或管理员权限才能执行</li>
+                    <li><strong>代报名编号：</strong>从1开始自动递增，用于区分不同的代报名记录</li>
+                    <li><strong>位置编号规则：</strong>👉🏻</li>
+                </ul>
+            </div>
+            <div class="position-grid">
+                <div class="position-item">11</div>
+                <div class="position-item">12</div>
+                <div class="position-item">13</div>
+                <div class="position-item">14</div>
+                <div class="position-item">15</div>
+                <div class="position-item">21</div>
+                <div class="position-item">22</div>
+                <div class="position-item">23</div>
+                <div class="position-item">24</div>
+                <div class="position-item">25</div>
+                <div class="position-item">31</div>
+                <div class="position-item">32</div>
+                <div class="position-item">33</div>
+                <div class="position-item">34</div>
+                <div class="position-item">35</div>
+                <div class="position-item">41</div>
+                <div class="position-item">42</div>
+                <div class="position-item">43</div>
+                <div class="position-item">44</div>
+                <div class="position-item">45</div>
+                <div class="position-item">51</div>
+                <div class="position-item">52</div>
+                <div class="position-item">53</div>
+                <div class="position-item">54</div>
+                <div class="position-item">55</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><span class="emoji">🎮</span>剑网三开团助手 - 专业团队管理机器人<span class="emoji">⚔️</span></p>
+        </div>
+    </div>
+</body>
+</html>

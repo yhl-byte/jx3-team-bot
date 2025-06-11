@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>年崽机器人插件总览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 30px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 50px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 50px;
+        }
+
+        .category {
+            margin-bottom: 50px;
+        }
+
+        .category-title {
+            font-size: 2.2em;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 4px solid #3498db;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .category-title::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 80px;
+            height: 4px;
+            background: #e74c3c;
+        }
+
+        .plugins-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 25px;
+        }
+
+        .plugin-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border-left: 6px solid #3498db;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .plugin-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #9b59b6, #e74c3c, #f39c12);
+        }
+
+        .plugin-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .plugin-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .plugin-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            font-size: 1.5em;
+            color: white;
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .plugin-name {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .plugin-desc {
+            color: #555;
+            line-height: 1.7;
+            margin-bottom: 15px;
+            font-size: 1.05em;
+        }
+
+        .command-list {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .command-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .command-item {
+            background: #e9ecef;
+            margin: 5px 0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            border-left: 3px solid #3498db;
+        }
+
+        .plugin-features {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .plugin-features li {
+            background: #e8f5e8;
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border-left: 3px solid #27ae60;
+            font-size: 0.95em;
+        }
+
+        .plugin-features li::before {
+            content: '✓';
+            color: #27ae60;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .jx3-category .plugin-card {
+            border-left-color: #e74c3c;
+        }
+
+        .jx3-category .plugin-icon {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        .game-category .plugin-card {
+            border-left-color: #f39c12;
+        }
+
+        .game-category .plugin-icon {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            box-shadow: 0 6px 20px rgba(243, 156, 18, 0.3);
+        }
+
+        .utility-category .plugin-card {
+            border-left-color: #9b59b6;
+        }
+
+        .utility-category .plugin-icon {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            box-shadow: 0 6px 20px rgba(155, 89, 182, 0.3);
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 768px) {
+            .plugins-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2.2em;
+            }
+            
+            .content {
+                padding: 30px;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 年崽机器人</h1>
+            <p>功能丰富的多用途QQ群聊机器人</p>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-number">15+</span>
+                    <span class="stat-label">插件模块</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">3</span>
+                    <span class="stat-label">功能分类</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">80+</span>
+                    <span class="stat-label">命令功能</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- 剑网3相关插件 -->
+            <div class="category jx3-category">
+                <h2 class="category-title">
+                    ⚔️ 剑网3相关插件
+                </h2>
+                <div class="plugins-grid">
+                    <div class="plugin-card">
+                        <div class="plugin-header">
+                            <div class="plugin-icon">🎮</div>
+                            <div class="plugin-name">JX3 API</div>
+                        </div>
+                        <div class="plugin-desc">提供剑网3游戏数据查询功能，包括角色信息、服务器状态等。</div>
+                        <div class="command-list">
+                            <div class="command-title">主要命令：</div>
+                            <div class="command-item">开服 [服务器名] - 检查服务器开服状态</div>
+                            <div class="command-item">日常 [服务器名] - 查看日常活动安排</div>
+                            <div class="command-item">角色 [服务器名] 角色名 - 查询角色基本信息</div>
+                            <div class="command-item">属性 [服务器名] 角色名 - 查询角色属性面板</div>
+                            <div class="command-item">在线 [服务器名] 角色名 - 查询角色在线状态</div>
+                            <div class="command-item">副本 [服务器名] 角色名 - 查询副本CD记录</div>
+                            <div class="command-item">查询 [服务器名] 角色名 - 查询奇遇记录</div>
+                            <div class="command-item">名片/QQ秀 [服务器名] 角色名 - 获取角色名片</div>
+                            <div class="command-item">沙盘 [服务器名] - 查看服务器沙盘信息</div>
+                        </div>
+                    </div>
+
+                    <div class="plugin-card">
+                        <div class="plugin-header">
+                            <div class="plugin-icon">👥</div>
+                            <div class="plugin-name">JX3 团队</div>
+                        </div>
+                        <div class="plugin-desc">完整的团队管理系统，支持开团、报名、成员管理等功能。</div>
+                        <div class="command-list">
+                            <div class="command-title">主要命令：</div>
+                            <div class="command-item">开团功能 开/关 - 开启或关闭开团功能</div>
+                            <div class="command-item">开团 团队名称 - 创建新团队</div>
+                            <div class="command-item">编辑团队 团队名称 新名称 - 修改团队名称</div>
+                            <div class="command-item">设置默认团队 团队名称 - 设置默认团队</div>
+                            <div class="command-item">报名 心法 昵称 [团队ID] - 报名参加团队</div>
+                            <div class="command-item">取消报名 [团队ID] - 取消报名</div>
+                            <div class="command-item">代报名 心法 昵称 [团队ID] - 代他人报名</div>
+                            <div class="command-item">取消代报名 昵称 [团队ID] - 取消代报名</div>
+                            <div class="command-item">团队信息 [团队ID] - 查看团队详情</div>
+                            <div class="command-item">团队列表 - 查看所有团队</div>
+                            <div class="command-item">关团 [团队ID] - 关闭团队</div>
+                            <div class="command-item">踢人 昵称 [团队ID] - 踢出成员</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 游戏娱乐插件 -->
+            <div class="category game-category">
+                <h2 class="category-title">
+                    🎯 游戏娱乐插件
+                </h2>
+                <div class="plugins-grid">
+                    <div class="plugin-card">
+                        <div class="plugin-header">
+                            <div class="plugin-icon">🕵️</div>
+                            <div class="plugin-name">谁是卧底</div>
+                        </div>
+                        <div class="plugin-desc">经典的社交推理游戏，考验观察力和表达能力。</div>
+                        <div class="command-list">
+                            <div class="command-title">主要命令：</div>
+                            <div class="command-item">谁是卧底 - 开始新游戏</div>
+                            <div class="command-item">加入卧底 - 加入游戏</div>
+                            <div class="command-item">开始卧底 - 开始游戏</div>
+                            <div class="command-item">投票 @用户 - 投票淘汰</div>
+                            <div class="command-item">结束卧底 - 结束游戏</div>
+                        </div>
+                    </div>
+
+                    <div class="plugin-card">
+                        <div class="plugin-header">
+                            <div class="plugin-icon">🎵</div>
+                            <div class="plugin-name">猜歌游戏</div>
+                        </div>
+                        <div class="plugin-desc">音乐猜歌游戏，支持歌名和歌手的猜测。</div>
+                        <div class="command-list">
+                            <div class="command-title">主要命令：</div>
+                            <div class="command-item">猜歌 - 开始新游戏</div>
+                            <div class="command-item">加入猜歌 - 加入游戏</div>
+                            <div class="command-item">开始猜歌 - 开始游戏</div>
+                            <div class="command-item">下一首 - 跳过当前歌曲</div>
+                            <div class="command-item">结束猜歌 - 结束游戏</div>
+                        </div>
+                    </div>
+
+                    <div class="plugin-card">
+                        <div class="plugin-header">
+                            <div class="plugin-icon">🃏</div>
+                            <div class="plugin-name">21点</div>
+                        </div>
+                        <div class="plugin-desc">经典的21点纸牌游戏，支持多人对战和庄家模式。</div>
+                        <div class="command-list">
+                            <div class="command-title">主要命令：</div>
+                            <div class="command-item">21点 - 开始新游戏</div>
+                            <div class="command-item">加入21点 - 加入游戏</div>
+                            <div class="command-item">当庄家 - 申请当庄家</div>
+                            <div class="command-item">要牌 - 要一张牌</div>
+                            <div class="command-item">停牌 - 停止要牌</div>
+                            <div class="command-item">结束21点 - 结束游戏</div>
+                        </div>
+                    </div>
+
+                    <div class="plugin-card">
+                        <div class="plugin-header">
+                            <div class="plugin-icon">🔫</div>
+                            <div class="plugin-name">俄罗斯轮盘</div>
+                        </div>
+                        <div class="plugin-desc">刺激的俄罗斯轮盘游戏，考验运气和勇气。</div>
+                        <div class="command-list">
+                            <div class="command-title">主要命令：</div>
+                            <div class="command-item">俄罗斯轮盘 - 开始新游戏</div>
+                            <div class="command-item">加入轮盘 - 加入游戏</div>
+                            <div class="command-item">开枪 - 扣动扳机</div>
+                            <div class="command-item">结束轮盘 - 结束游戏</div>
+                        </div>
+                    </div>
+
+                    <div class="plugin-card">
+                        <div class="plugin-header">
+                            <div class="plugin-icon">🎲</div>
+                            <div class="plugin-name">人生重开</div>
+                        </div>
+                        <div class="plugin-desc">模拟人生游戏，体验不同的人生轨迹。</div>
+                        <div class="command-list">
+                            <div class="command-title">主要命令：</div>
+                            <div class="command-item">人生重开 - 开始新的人生</div>
+                            <div class="command-item">分配属性 颜值 智力 体质 家境 - 分配初始属性</div>
+                            <div class="command-item">继续人生 - 继续当前人生</div>
+                            <div class="command-item">重新开始 - 重新开始人生</div>
+                        </div>
+                    </div>
+
+                    <div class="plugin-card">
+                        <div class="plugin-header">
+                            <div class="plugin-icon">🐢</div>
+                            <div class="plugin-name">海龟汤</div>
+                        </div>
+                        <div class="plugin-desc">经典推理游戏，通过提问和回答揭开谜题真相。</div>
+                        <div class="command-list">
+                            <div class="command-title">主要命令：</div>
+                            <div class="command-item">海龟汤 - 开始新游戏</div>
+                            <div class="command-item">加入海龟汤 - 加入游戏</div>
+                            <div class="command-item">当主持人 - 申请当主持人</div>
+                            <div class="command-item">确认题目 - 主持人确认题目</div>
+                            <div class="command-item">结束海龟汤 - 结束游戏</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 实用工具插件 -->
+            <div class="category utility-category">
+                <h2 class="category-title">
+                    🛠️ 实用工具插件
+                </h2>
+                <div class="plugins-grid">
+                    <div class="plugin-card">
+                        <div class="plugin-header">
+                            <div class="plugin-icon">🌤️</div>
+                            <div class="plugin-name">天气助手</div>
+                        </div>
+                        <div class="plugin-desc">提供实时天气查询和天气预报功能。</div>
+                        <div class="command-list">
+                            <div class="command-title">主要命令：</div>
+                            <div class="command-item">天气 城市名 - 查询实时天气</div>
+                            <div class="command-item">天气预报 城市名 - 查询3天天气预报</div>
+                            <div class="command-item">订阅天气 城市名 - 订阅每日天气推送</div>
+                            <div class="command-item">取消订阅 城市名 - 取消天气订阅</div>
+                            <div class="command-item">天气订阅列表 - 查看订阅列表</div>
+                            <div class="command-item">设置推送时间 HH:MM - 设置推送时间</div>
+                        </div>
+                    </div>
+
+                    <div class="plugin-card">
+                        <div class="plugin-header">
+                            <div class="plugin-icon">🎲</div>
+                            <div class="plugin-name">掷骰子</div>
+                        </div>
+                        <div class="plugin-desc">简单的掷骰子功能，支持多种骰子类型和记录查询。</div>
+                        <div class="command-list">
+                            <div class="command-title">主要命令：</div>
+                            <div class="command-item">掷骰子/roll - 掷一个6面骰子</div>
+                            <div class="command-item">掷骰子 数量 - 掷指定数量的6面骰子</div>
+                            <div class="command-item">掷骰子 数量d面数 - 掷指定数量和面数的骰子</div>
+                            <div class="command-item">骰子记录 - 查看掷骰子记录</div>
+                            <div class="command-item">清除骰子记录 - 清除掷骰子记录</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🤖 年崽机器人 | 让群聊更有趣，让管理更简单</p>
+        </div>
+    </div>
+</body>
+</html>

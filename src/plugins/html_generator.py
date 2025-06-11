@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:33:31
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-02 23:23:34
+LastEditTime: 2025-06-11 16:14:14
 FilePath: /team-bot/jx3-team-bot/src/plugins/html_generator.py
 '''
 # src/plugins/chat_plugin/html_generator.py
@@ -126,11 +126,11 @@ def render_game_help() -> str:
     )
     return html_content
 
-def render_help() -> str:
+def render_team_help() -> str:
     # 获取模板目录
     template_dir = TEMPLATE_PATH.parent
-    help_template = "help.html"
-    
+    help_template = "team_help.html"
+
     # 确保模板目录存在
     if not os.path.exists(template_dir):
         os.makedirs(template_dir)
@@ -144,6 +144,7 @@ def render_help() -> str:
         static_path=STATIC_PATH.absolute()
     )
     return html_content
+    
 
 def render_role_attribute(roleInfo) -> str:
     # 获取模板目录

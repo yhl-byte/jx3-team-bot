@@ -7,7 +7,7 @@ import random
 import asyncio
 import time
 
-# 俄罗斯转盘游戏状态管理
+# 俄罗斯轮盘游戏状态管理
 class RussianRouletteGame:
     def __init__(self):
         self.players = {}  # 玩家信息 {user_id: {"nickname": str, "qq": str}}
@@ -92,7 +92,7 @@ class RussianRouletteGame:
         
     def get_game_start_message(self):
         """获取游戏开始消息"""
-        message = "🎯 俄罗斯转盘游戏开始！\n"
+        message = "🎯 俄罗斯轮盘游戏开始！\n"
         message += f"📦 弹夹容量：{self.chamber_size}发（玩家数：{len(self.players)}人）\n"
         message += f"💥 子弹已装填（位置随机）\n\n"
         message += "🎲 玩家顺序：\n"
@@ -179,7 +179,7 @@ class RussianRouletteGame:
                 nickname = self.players[player_id]["nickname"]
                 message += f"   • {nickname} (+50积分)\n"
                 
-        message += "\n💡 发送'开始转盘'可以开始新游戏"
+        message += "\n💡 发送'开始轮盘'可以开始新游戏"
         return message
                 
     def get_game_end_message(self, loser_id: str, hit: bool):
@@ -197,7 +197,7 @@ class RussianRouletteGame:
                     nickname = self.players[player_id]["nickname"]
                     message += f"   • {nickname} (+50积分)\n"
                     
-            message += "\n💡 发送'开始转盘'可以开始新游戏"
+            message += "\n💡 发送'开始轮盘'可以开始新游戏"
             return message
         else:
             return "🎯 游戏异常结束"
@@ -215,33 +215,33 @@ class RussianRouletteGame:
         self.reset_game()
         
         if old_status == 'signup':
-            return True, "📝 转盘报名已强制结束"
+            return True, "📝 轮盘报名已强制结束"
         elif old_status == 'playing':
-            return True, "🎯 转盘游戏已强制结束，无积分变动"
+            return True, "🎯 轮盘游戏已强制结束，无积分变动"
         else:
             return True, "🎯 游戏已强制结束"
             
     def get_status_message(self):
         """获取当前状态消息"""
         if self.game_status == 'waiting':
-            return "🎯 当前没有进行中的俄罗斯转盘游戏\n💡 发送'开始转盘'开始新游戏"
+            return "🎯 当前没有进行中的俄罗斯轮盘游戏\n💡 发送'开始轮盘'开始新游戏"
         elif self.game_status == 'signup':
-            message = "📝 俄罗斯转盘报名中...\n\n"
+            message = "📝 俄罗斯轮盘报名中...\n\n"
             message += f"👥 当前报名人数：{len(self.players)}/8\n"
             if self.players:
                 message += "📋 报名列表：\n"
                 for i, (user_id, info) in enumerate(self.players.items(), 1):
                     message += f"{i}. {info['nickname']}\n"
             message += "\n💡 发送'biu'参与游戏\n"
-            message += "💡 发送'结束转盘报名'开始游戏\n"
-            message += "💡 发送'强制结束转盘'取消游戏"
+            message += "💡 发送'结束轮盘报名'开始游戏\n"
+            message += "💡 发送'强制结束轮盘'取消游戏"
             return message
         elif self.game_status == 'playing':
             current_player = self.players[self.player_order[self.current_player_index]]["nickname"]
             elapsed_time = int(time.time() - self.last_action_time)
             remaining_time = max(0, self.timeout_duration - elapsed_time)
             
-            message = f"🎯 俄罗斯转盘进行中...\n\n"
+            message = f"🎯 俄罗斯轮盘进行中...\n\n"
             message += f"🎲 当前轮到：{current_player}\n"
             message += f"📊 进度：{self.current_shot}/{self.chamber_size}\n"
             message += f"⏰ 剩余时间：{remaining_time}秒\n\n"
@@ -250,10 +250,10 @@ class RussianRouletteGame:
                 nickname = self.players[player_id]["nickname"]
                 status = "👉" if i == self.current_player_index else "  "
                 message += f"{status} {i+1}. {nickname}\n"
-            message += "\n💡 发送'强制结束转盘'取消游戏"
+            message += "\n💡 发送'强制结束轮盘'取消游戏"
             return message
         else:
-            return "🎯 游戏已结束\n💡 发送'开始转盘'开始新游戏"
+            return "🎯 游戏已结束\n💡 发送'开始轮盘'开始新游戏"
             
     def reset_game(self):
         """重置游戏"""
@@ -297,12 +297,12 @@ async def timeout_handler(group_id: str, bot: Bot):
                     # 更新积分
                     if "超时" in message:
                         # 扣除超时者积分
-                        await update_player_score(current_player_id, group_id, -100, "俄罗斯转盘", "超时中弹者", "失败")
+                        await update_player_score(current_player_id, group_id, -100, "俄罗斯轮盘", "超时中弹者", "失败")
                         
                         # 给幸存者加分
                         for player_id in game.players:
                             if player_id != current_player_id:
-                                await update_player_score(player_id, group_id, 50, "俄罗斯转盘", "幸存者", "胜利")
+                                await update_player_score(player_id, group_id, 50, "俄罗斯轮盘", "幸存者", "胜利")
                     
                     # 发送超时消息
                     from nonebot import get_bot
@@ -323,13 +323,13 @@ async def timeout_handler(group_id: str, bot: Bot):
         print(f"超时处理异常: {e}")
 
 # 命令处理器
-start_roulette = on_regex(pattern=r"^开始转盘$", priority=5)
+start_roulette = on_regex(pattern=r"^开始轮盘$", priority=5)
 signup_roulette = on_regex(pattern=r"^biu$", priority=5)
-end_signup = on_regex(pattern=r"^结束转盘报名$", priority=5)
+end_signup = on_regex(pattern=r"^结束轮盘报名$", priority=5)
 shoot_gun = on_regex(pattern=r"^砰$", priority=5)
-roulette_status = on_regex(pattern=r"^转盘状态$", priority=5)
-roulette_rules = on_regex(pattern=r"^转盘规则$", priority=5)
-force_end_roulette = on_regex(pattern=r"^强制结束转盘$", priority=5)
+roulette_status = on_regex(pattern=r"^轮盘状态$", priority=5)
+roulette_rules = on_regex(pattern=r"^轮盘规则$", priority=5)
+force_end_roulette = on_regex(pattern=r"^强制结束轮盘$", priority=5)
 
 @start_roulette.handle()
 async def handle_start_roulette(bot: Bot, event: GroupMessageEvent):
@@ -337,14 +337,14 @@ async def handle_start_roulette(bot: Bot, event: GroupMessageEvent):
     game = get_game(group_id)
     
     if game.game_status == 'signup':
-        await start_roulette.send("❌ 已有转盘游戏在报名中")
+        await start_roulette.send("❌ 已有轮盘游戏在报名中")
         return
     elif game.game_status == 'playing':
-        await start_roulette.send("❌ 已有转盘游戏在进行中")
+        await start_roulette.send("❌ 已有轮盘游戏在进行中")
         return
         
     game.start_signup(group_id)
-    message = "🎯 俄罗斯转盘游戏开始报名！\n\n"
+    message = "🎯 俄罗斯轮盘游戏开始报名！\n\n"
     message += "🎮 游戏规则：\n"
     message += "• 弹夹容量6发，其中1发是实弹\n"
     message += "• 玩家轮流开枪，中弹者游戏结束\n"
@@ -352,9 +352,9 @@ async def handle_start_roulette(bot: Bot, event: GroupMessageEvent):
     message += "• 幸存者每人获得50积分\n"
     message += f"• ⏰ 开枪超时{game.timeout_duration}秒自动中弹\n\n"
     message += "📝 发送'biu'参与游戏\n"
-    message += "📝 发送'结束转盘报名'开始游戏\n"
-    message += "📝 发送'转盘状态'查看当前状态\n"
-    message += "📝 发送'强制结束转盘'取消游戏"
+    message += "📝 发送'结束轮盘报名'开始游戏\n"
+    message += "📝 发送'轮盘状态'查看当前状态\n"
+    message += "📝 发送'强制结束轮盘'取消游戏"
     
     await start_roulette.send(message)
 
@@ -402,12 +402,12 @@ async def handle_shoot_gun(bot: Bot, event: GroupMessageEvent):
             # 有人中弹
             loser_id = user_id
             # 扣除中弹者积分
-            await update_player_score(loser_id, group_id, -100, "俄罗斯转盘", "中弹者", "失败")
+            await update_player_score(loser_id, group_id, -100, "俄罗斯轮盘", "中弹者", "失败")
             
             # 给幸存者加分
             for player_id in game.players:
                 if player_id != loser_id:
-                    await update_player_score(player_id, group_id, 50, "俄罗斯转盘", "幸存者", "胜利")
+                    await update_player_score(player_id, group_id, 50, "俄罗斯轮盘", "幸存者", "胜利")
         
         await shoot_gun.send(message)
         game.reset_game()
@@ -446,11 +446,11 @@ async def handle_roulette_status(bot: Bot, event: GroupMessageEvent):
 
 @roulette_rules.handle()
 async def handle_roulette_rules(bot: Bot, event: GroupMessageEvent):
-    message = "🎯 俄罗斯转盘游戏规则\n\n"
+    message = "🎯 俄罗斯轮盘游戏规则\n\n"
     message += "📋 游戏流程：\n"
-    message += "1. 发送'开始转盘'开始报名\n"
+    message += "1. 发送'开始轮盘'开始报名\n"
     message += "2. 发送'biu'参与游戏\n"
-    message += "3. 发送'结束转盘报名'开始游戏\n"
+    message += "3. 发送'结束轮盘报名'开始游戏\n"
     message += "4. 按顺序发送'砰'进行游戏\n\n"
     message += "🎮 游戏规则：\n"
     message += "• 弹夹容量6发，其中1发是实弹\n"
@@ -462,8 +462,8 @@ async def handle_roulette_rules(bot: Bot, event: GroupMessageEvent):
     message += "• 超时中弹者：-100积分\n"
     message += "• 幸存者：+50积分\n\n"
     message += "💡 其他命令：\n"
-    message += "• '转盘状态' - 查看当前游戏状态\n"
-    message += "• '转盘规则' - 查看游戏规则\n"
-    message += "• '强制结束转盘' - 强制结束当前游戏"
+    message += "• '轮盘状态' - 查看当前游戏状态\n"
+    message += "• '轮盘规则' - 查看游戏规则\n"
+    message += "• '强制结束轮盘' - 强制结束当前游戏"
     
     await roulette_rules.send(message)
