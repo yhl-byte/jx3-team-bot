@@ -1,0 +1,314 @@
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玄晶榜单</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Noto Serif SC', serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(255, 193, 7, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 152, 0, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, transparent 24%, rgba(255, 193, 7, 0.03) 25%, rgba(255, 193, 7, 0.03) 26%, transparent 27%, transparent 74%, rgba(255, 193, 7, 0.03) 75%, rgba(255, 193, 7, 0.03) 76%, transparent 77%),
+                linear-gradient(-45deg, transparent 24%, rgba(255, 152, 0, 0.03) 25%, rgba(255, 152, 0, 0.03) 26%, transparent 27%, transparent 74%, rgba(255, 152, 0, 0.03) 75%, rgba(255, 152, 0, 0.03) 76%, transparent 77%);
+            background-size: 100% 100%, 100% 100%, 20px 20px, 20px 20px;
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ffd700, #ffb347, #ffa500, #ff8c00, #ff7f50);
+            background-size: 300% 100%;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255, 255, 255, 0.1) 10px, rgba(255, 255, 255, 0.1) 20px);
+            pointer-events: none;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header-subtitle {
+            margin: 10px 0 0 0;
+            font-size: 1.1em;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+            font-style: italic;
+        }
+        
+        .sort-info {
+            background: linear-gradient(135deg, #fff8dc 0%, #ffeaa7 100%);
+            padding: 20px 30px;
+            border-bottom: 2px solid #ddd;
+            font-size: 1.1em;
+            color: #8b4513;
+            position: relative;
+        }
+        
+        .sort-info::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, #ffd700, #ffb347);
+            border-radius: 2px;
+        }
+        
+        .sort-info span {
+            margin-left: 20px;
+            font-weight: 600;
+        }
+        
+        .motivational-quote {
+            background: linear-gradient(135deg, #f8f9fa 0%, #fff8dc 100%);
+            padding: 15px 30px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-bottom: 1px solid #e9ecef;
+            position: relative;
+        }
+        
+        .motivational-quote::before {
+            content: '"';
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2em;
+            color: #ffd700;
+            font-family: serif;
+        }
+        
+        .motivational-quote::after {
+            content: '"';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2em;
+            color: #ffd700;
+            font-family: serif;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            position: relative;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #fff8dc 0%, #ffeaa7 100%);
+            color: #8b4513;
+            padding: 18px 15px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1em;
+            border-bottom: 3px solid #ddd;
+            position: relative;
+        }
+        
+        th::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 3px;
+            background: linear-gradient(90deg, #ffd700, #ffb347);
+            border-radius: 1.5px;
+        }
+        
+        td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #f1f3f4;
+            position: relative;
+        }
+        
+        tr:nth-child(even) {
+            background: linear-gradient(135deg, #fafbfc 0%, #fff8dc 100%);
+        }
+        
+        tr:hover {
+            background: linear-gradient(135deg, #fff8dc 0%, #ffeaa7 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .rank {
+            font-weight: 700;
+            font-size: 1.2em;
+            color: #2c3e50;
+            background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .participants {
+            color: #e74c3c;
+            font-weight: 600;
+            max-width: 200px;
+            word-wrap: break-word;
+        }
+        
+        .price {
+            color: #27ae60;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+        
+        .remark {
+            color: #6c757d;
+            font-style: italic;
+            max-width: 150px;
+            word-wrap: break-word;
+        }
+        
+        .date {
+            color: #495057;
+            font-size: 0.9em;
+        }
+        
+        .footer-note {
+            background: linear-gradient(135deg, #f8f9fa 0%, #fff8dc 100%);
+            padding: 20px 30px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9em;
+            border-top: 1px solid #e9ecef;
+            position: relative;
+        }
+        
+        .footer-note::before {
+            content: '✦';
+            position: absolute;
+            left: 50%;
+            top: -8px;
+            transform: translateX(-50%);
+            background: #fff;
+            padding: 0 10px;
+            color: #ffd700;
+            font-size: 1.2em;
+        }
+        
+        /* 装饰性元素 */
+        .header::after {
+            content: '◆ 玄晶至尊 ◆';
+            position: absolute;
+            top: 15px;
+            right: 30px;
+            font-size: 1em;
+            color: rgba(255, 255, 255, 0.8);
+            z-index: 1;
+            font-weight: 400;
+        }
+        
+        .decorative-corner {
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.5em;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="decorative-corner">❋</div>
+            <h1>{{ title }}</h1>
+            <div class="header-subtitle">— 财富传奇，荣耀见证 —</div>
+        </div>
+        <div class="motivational-quote">
+            玄晶如星辰，照亮勇者前路；财富似江河，汇聚智者心田
+        </div>
+        <div class="sort-info">
+            <span>{{ sort_info }}</span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>排名</th>
+                    <th>日期</th>
+                    <th>参与人员</th>
+                    <th>价格</th>
+                    <th>备注</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td class="rank">{{ loop.index }}</td>
+                    <td class="date">{{ record.date }}</td>
+                    <td class="participants">{{ record.participants }}</td>
+                    <td class="price">{{ record.price }}</td>
+                    <td class="remark">{{ record.remark }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="footer-note">
+            每一次交易都是传奇的开始，每一枚玄晶都承载着无尽的可能
+        </div>
+    </div>
+</body>
+</html>

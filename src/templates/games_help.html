@@ -114,6 +114,14 @@
             border-left-color: #2ecc71;
         }
 
+        .game-card.werewolf {
+            border-left-color: #8e44ad;
+        }
+
+        .game-card.dice {
+            border-left-color: #f39c12;
+        }
+
 
         .game-title {
             font-size: 1.5em;
@@ -504,6 +512,48 @@
                             <li class="command-item"><code>查看棋盘</code> - 查看当前棋盘状态</li>
                             <li class="command-item"><code>退出五子棋</code> - 退出游戏或认输</li>
                             <li class="command-item"><code>五子棋帮助</code> - 查看游戏说明</li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- 狼人杀 -->
+                <div class="game-card werewolf">
+                    <div class="game-title">[推理] 狼人杀</div>
+                    <div class="game-description">
+                        经典的推理游戏，村民与狼人的智慧对决。夜晚各角色秘密行动，白天讨论投票，考验逻辑推理和心理博弈能力！
+                    </div>
+                    <div class="commands-section">
+                        <div class="commands-title">游戏命令</div>
+                        <ul class="command-list">
+                            <li class="command-item"><code>开始狼人杀</code> - 创建狼人杀游戏并开始报名</li>
+                            <li class="command-item"><code>报名狼人杀</code> - 参与狼人杀游戏报名</li>
+                            <li class="command-item"><code>结束狼人杀报名</code> - 结束报名并开始游戏</li>
+                            <li class="command-item"><code>查询角色</code> - 私聊查询自己的角色信息</li>
+                            <li class="command-item"><code>杀害 [玩家编号]</code> - 狼人夜晚行动（私聊）</li>
+                            <li class="command-item"><code>查验 [玩家编号]</code> - 预言家夜晚行动（私聊）</li>
+                            <li class="command-item"><code>救人|毒杀 [玩家编号]</code> - 女巫夜晚行动（私聊）</li>
+                            <li class="command-item"><code>守护 [玩家编号]</code> - 守卫夜晚行动（私聊）</li>
+                            <li class="command-item"><code>开枪 [玩家编号]</code> - 猎人技能</li>
+                            <li class="command-item"><code>观点 [内容]</code> - 白天发言发表观点</li>
+                            <li class="command-item"><code>票 [玩家编号]</code> - 白天投票阶段</li>
+                            <li class="command-item"><code>强制结束狼人杀</code> - 强制结束当前游戏</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 掷骰子 -->
+                <div class="game-card dice">
+                    <div class="game-title">[休闲] 掷骰子</div>
+                    <div class="game-description">
+                        简单有趣的掷骰子游戏，支持多种骰子配置。可以掷多个骰子，自定义面数，记录保存方便查看历史！
+                    </div>
+                    <div class="commands-section">
+                        <div class="commands-title">游戏命令</div>
+                        <ul class="command-list">
+                            <li class="command-item"><code>掷骰子|roll|投骰子</code> - 掷一个6面骰子</li>
+                            <li class="command-item"><code>掷骰子 [数量]</code> - 掷指定数量的6面骰子（如：掷骰子 3）</li>
+                            <li class="command-item"><code>掷骰子 [数量]d[面数]</code> - 掷指定骰子（如：掷骰子 2d20）</li>
+                            <li class="command-item"><code>骰子记录|掷骰子记录|roll记录</code> - 查看最近的掷骰子记录</li>
+                            <li class="command-item"><code>清除骰子记录</code> - 清除群内骰子记录（管理员）</li>
                         </ul>
                     </div>
                 </div>

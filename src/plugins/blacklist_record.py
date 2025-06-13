@@ -1,7 +1,7 @@
 '''
 Date: 2025-01-20 00:00:00
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-13 17:36:46
+LastEditTime: 2025-06-13 22:26:36
 FilePath: /team-bot/jx3-team-bot/src/plugins/blacklist_record.py
 '''
 # 黑本榜单记录插件
@@ -25,7 +25,7 @@ db.init_db()  # 确保数据库表已创建
 # 黑本榜单相关命令
 blacklist_template = on_regex(pattern=r'^黑本模板$', priority=1)
 blacklist_add = on_regex(pattern=r'^黑本录入\s+([\s\S]+)$', priority=1)
-blacklist_list = on_regex(pattern=r'^查看黑本(?:\s+(.+))?$', priority=1)
+blacklist_list = on_regex(pattern=r'^黑本榜(?:\s+(.+))?$', priority=1)
 delete_blacklist = on_regex(pattern=r'^删除黑本\s+(\d+)$', priority=1)
 
 @blacklist_template.handle()
@@ -33,19 +33,19 @@ async def handle_blacklist_template(bot: Bot, event: GroupMessageEvent, state: T
     """获取黑本录入模板"""
     template = """黑本录入模板：
 
-    使用方法：
-    黑本录入 日期：2025-01-20
-    游戏ID：余年
-    副本：25英雄太极宫
-    关键掉落：玄晶
-    工资：500z
-    备注：拿了装备就跑路
+使用方法：
+黑本录入 日期：2025-01-20
+游戏ID：余年
+副本：25英雄太极宫
+关键掉落：玄晶
+工资：500z
+备注：拿了装备就跑路
 
-    注意：
-    - 工资单位：1z = 10000j，可以用z或j作单位
-    - 每个字段占一行，格式为：字段名：内容
-    - 日期格式：YYYY-MM-DD
-    - 必填字段：日期、游戏ID、副本、工资"""
+注意：
+- 工资单位：1z = 10000j，可以用z或j作单位
+- 每个字段占一行，格式为：字段名：内容
+- 日期格式：YYYY-MM-DD
+- 必填字段：日期、游戏ID、副本、工资"""
     
     await blacklist_template.finish(template)
 
@@ -107,11 +107,11 @@ def is_dungeon_name(text: str) -> bool:
 async def handle_blacklist_list(bot: Bot, event: GroupMessageEvent, state: T_State):
     """查看黑本榜单"""
     # 使用正则表达式匹配消息内容
-    pattern = r'^查看黑本(?:\s+(.+))?$'
+    pattern = r'^黑本榜单(?:\s+(.+))?$'
     match = re.match(pattern, event.get_plaintext())
     
     if not match:
-        await blacklist_list.finish("命令格式不正确，请使用：查看黑本 [游戏ID/副本] [副本/游戏ID]")
+        await blacklist_list.finish("命令格式不正确，请使用：黑本榜单 [游戏ID/副本] [副本/游戏ID]")
     
     # 解析参数
     args_str = match.group(1)
@@ -147,7 +147,7 @@ async def handle_blacklist_list(bot: Bot, event: GroupMessageEvent, state: T_Sta
                 game_id = arg1
                 dungeon_name = arg2
         else:
-            await blacklist_list.finish("参数过多，请使用：查看黑本 [游戏ID/副本] [副本/游戏ID]")
+            await blacklist_list.finish("参数过多，请使用：黑本榜单 [游戏ID/副本] [副本/游戏ID]")
 
     try:
         # 发送处理提示

@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:33:31
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-13 16:15:48
+LastEditTime: 2025-06-13 22:02:17
 FilePath: /team-bot/jx3-team-bot/src/plugins/html_generator.py
 '''
 # src/plugins/chat_plugin/html_generator.py
@@ -271,3 +271,38 @@ def render_blacklist_html(records) -> str:
         current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     )
     return html_content
+
+def render_xuanjing_html(records):
+    """渲染玄晶榜单HTML"""
+     # 获取模板目录
+    template_dir = TEMPLATE_PATH.parent
+    xuanjing_template = "xuanjing.html"
+
+    # 确保模板目录存在
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+        
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template(xuanjing_template)
+    
+    # 准备数据
+    title = "玄晶榜单"
+    sort_info = f"按价格降序排列 · 共 {len(records)} 条记录"
+    
+    # 格式化记录数据
+    formatted_records = []
+    for record in records:
+        formatted_record = {
+            'date': record['date'],
+            'participants': record['participants'],
+            'price': record['price_display'],
+            'remark': record.get('remark', ''),
+            'id': record['id']
+        }
+        formatted_records.append(formatted_record)
+    
+    return template.render(
+        title=title,
+        sort_info=sort_info,
+        records=formatted_records
+    )

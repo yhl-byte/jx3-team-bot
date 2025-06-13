@@ -1,7 +1,7 @@
 '''
 Date: 2025-05-30 16:17:02
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-06 21:01:23
+LastEditTime: 2025-06-13 22:34:11
 FilePath: /team-bot/jx3-team-bot/src/plugins/game_score.py
 '''
 from .database import TeamRecordDB
@@ -137,6 +137,12 @@ async def handle_score_rules(bot: Bot, event: GroupMessageEvent):
     rules += "   - 获胜：额外获得25分\n"
     rules += "   - 平局：获得10分\n"
     rules += "   - 对手认输：获得30分\n\n"
+    rules += "14. 狼人杀：\n"
+    rules += "   - 参与游戏：获得5分\n"
+    rules += "   - 村民阵营获胜：每位村民额外获得15分\n"
+    rules += "   - 狼人阵营获胜：每位狼人额外获得20分\n"
+    rules += "   - 存活到游戏结束：额外获得5分\n"
+    rules += "   - 预言家/女巫/猎人/守卫成功使用技能：额外获得3分\n\n"
     rules += "💡 提示：积分可通过【查询积分】和【积分排行】查看"
     
     
