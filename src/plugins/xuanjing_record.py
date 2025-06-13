@@ -81,11 +81,11 @@ async def handle_xuanjing_add(bot: Bot, event: GroupMessageEvent, state: T_State
 async def handle_xuanjing_list(bot: Bot, event: GroupMessageEvent, state: T_State):
     """查看玄晶榜单"""
     # 使用正则表达式匹配消息内容
-    pattern = r'^查看玄晶(?:\s+(.+))?$'
+    pattern = r'^玄晶榜(?:\s+(.+))?$'
     match = re.match(pattern, event.get_plaintext())
     
     if not match:
-        await xuanjing_list.finish("命令格式不正确，请使用：查看玄晶 [参与人员]")
+        await xuanjing_list.finish("命令格式不正确，请使用：玄晶榜 [参与人员]")
     
     # 解析参数
     args_str = match.group(1)
