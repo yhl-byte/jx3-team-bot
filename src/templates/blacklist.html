@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>剑网3黑本榜单</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: #e0e6ed;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(15, 15, 35, 0.9);
+            border-radius: 20px;
+            border: 2px solid #4a9eff;
+            box-shadow: 0 0 30px rgba(74, 158, 255, 0.3), inset 0 0 20px rgba(74, 158, 255, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            border-bottom: 3px solid #4a9eff;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%234a9eff" stroke-width="0.5" opacity="0.3"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>') repeat;
+            opacity: 0.1;
+        }
+        
+        .title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #4a9eff;
+            text-shadow: 0 0 20px rgba(74, 158, 255, 0.8);
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            color: #a0c4ff;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .sort-info {
+            background: rgba(74, 158, 255, 0.1);
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid rgba(74, 158, 255, 0.3);
+            font-size: 14px;
+            color: #4a9eff;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            padding: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(15, 15, 35, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        th {
+            background: linear-gradient(90deg, #2a5298 0%, #1e3c72 100%);
+            color: #4a9eff;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            border-bottom: 2px solid #4a9eff;
+            text-shadow: 0 0 10px rgba(74, 158, 255, 0.5);
+        }
+        
+        td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid rgba(74, 158, 255, 0.2);
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+        
+        tr:hover {
+            background: rgba(74, 158, 255, 0.1);
+            transform: scale(1.01);
+        }
+        
+        .rank {
+            font-weight: 700;
+            font-size: 16px;
+        }
+        
+        .rank-1 { color: #ffd700; text-shadow: 0 0 10px #ffd700; }
+        .rank-2 { color: #c0c0c0; text-shadow: 0 0 10px #c0c0c0; }
+        .rank-3 { color: #cd7f32; text-shadow: 0 0 10px #cd7f32; }
+        
+        .game-id {
+            color: #ff6b6b;
+            font-weight: 600;
+        }
+        
+        .dungeon {
+            color: #4ecdc4;
+            font-weight: 500;
+        }
+        
+        .salary {
+            color: #ffd93d;
+            font-weight: 700;
+            text-shadow: 0 0 5px rgba(255, 217, 61, 0.5);
+        }
+        
+        .high-salary {
+            color: #ff4757;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .jiaogong-yes {
+            color: #2ed573;
+            font-weight: 600;
+        }
+        
+        .jiaogong-no {
+            color: #ff4757;
+            font-weight: 600;
+        }
+        
+        .remark {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #a0c4ff;
+        }
+
+        .key-drop {
+            max-width: 300px;
+            word-wrap: break-word;
+            word-break: break-all;
+            white-space: normal;
+            color: #95e1d3;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        
+        
+        .footer {
+            padding: 20px;
+            text-align: center;
+            color: #6c7b7f;
+            font-size: 12px;
+            border-top: 1px solid rgba(74, 158, 255, 0.3);
+        }
+        
+        .cyber-border {
+            position: relative;
+        }
+        
+        .cyber-border::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #4a9eff, #2a5298, #4a9eff);
+            border-radius: 12px;
+            z-index: -1;
+            animation: borderGlow 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes borderGlow {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container cyber-border">
+        <div class="header">
+            <h1 class="title">⚔️ 剑网3黑本榜单 ⚔️</h1>
+            <p class="subtitle">江湖险恶，小心为上</p>
+        </div>
+        
+        <div class="sort-info">
+            📊 当前榜单共{{ records|length }}条记录
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>排名</th>
+                        <th>日期</th>
+                        <th>游戏ID</th>
+                        <th>副本名称</th>
+                        <th>关键掉落</th>
+                        <th>工资</th>
+                        <th>备注</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td class="rank {% if loop.index <= 3 %}rank-{{ loop.index }}{% endif %}">{{ loop.index }}</td>
+                        <td>{{ record.date }}</td>
+                        <td class="game-id">{{ record.role_name }}</td>
+                        <td class="dungeon">{{ record.dungeon_name }}</td>
+                        <td class="key-drop">{{ record.key_drop or '-' }}</td>
+                        <td class="salary {% if record.salary_j >= 100000 %}high-salary{% endif %}">{{ record.salary_display }}</td>
+                        <td class="remark" title="{{ record.remark or '' }}">{{ record.remark or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="footer">
+            <p>🤖 数据更新时间：{{ current_time }} | 江湖路远，且行且珍惜</p>
+        </div>
+    </div>
+</body>
+</html>

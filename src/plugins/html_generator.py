@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:33:31
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-11 16:14:14
+LastEditTime: 2025-06-13 16:15:48
 FilePath: /team-bot/jx3-team-bot/src/plugins/html_generator.py
 '''
 # src/plugins/chat_plugin/html_generator.py
@@ -247,5 +247,27 @@ def render_sandbox_html(info, template_name="sand_box.html") -> str:
         static_path=STATIC_PATH.absolute(),
         img_to_base64=img_to_base64,
         str=str 
+    )
+    return html_content
+
+
+def render_blacklist_html(records) -> str:
+    # 获取模板目录
+    template_dir = TEMPLATE_PATH.parent
+    help_template = "blacklist.html"
+
+    # 确保模板目录存在
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+    
+    # 加载模板
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template(help_template)
+    
+    # 渲染数据
+    html_content = template.render(
+        static_path=STATIC_PATH.absolute(),
+        records=records,
+        current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     )
     return html_content

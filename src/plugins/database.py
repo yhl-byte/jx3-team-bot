@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:32:40
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-30 16:16:59
+LastEditTime: 2025-06-13 15:27:34
 FilePath: /team-bot/jx3-team-bot/src/plugins/database.py
 '''
 # src/plugins/chat_plugin/database.py
@@ -92,6 +92,24 @@ class TeamRecordDB:
                 game_role TEXT,
                 game_result TEXT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
+            # 创建黑本记录表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS blacklist_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                group_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                user_name TEXT NOT NULL,
+                date TEXT NOT NULL,
+                role_name TEXT NOT NULL,
+                dungeon_name TEXT NOT NULL,
+                key_drop TEXT,
+                salary_j INTEGER NOT NULL,
+                salary_display TEXT NOT NULL,
+                remark TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME
             )
             ''')
             conn.commit()     

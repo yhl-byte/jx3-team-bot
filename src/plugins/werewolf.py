@@ -513,7 +513,7 @@ async def start_day_phase(bot: Bot, group_id: int):
     
     await bot.send_group_msg(
         group_id=group_id, 
-        message=f"现在是白天发言阶段，请按顺序发言讨论。\n\n发言顺序：\n{order_text}\n\n请使用「发言 内容」格式发言，每人限时60秒。"
+        message=f"现在是白天发言阶段，请按顺序发言讨论。\n\n发言顺序：\n{order_text}\n\n请使用「观点 内容」格式发言，每人限时60秒。"
     )
     
     # 开始第一个玩家发言
@@ -535,7 +535,7 @@ async def start_next_speaker(bot: Bot, group_id: int):
     
     await bot.send_group_msg(
         group_id=group_id,
-        message=f"请 {current_speaker['code']}号 {current_speaker['nickname']} 发言，限时60秒。\n发送「发言 内容」或「跳过发言」"
+        message=f"请 {current_speaker['code']}号 {current_speaker['nickname']} 发言，限时60秒。\n发送「观点 内容」或「跳过发言」"
     )
     
     # 设置60秒计时器
@@ -562,7 +562,7 @@ async def speaking_timer(bot: Bot, group_id: int):
         await start_next_speaker(bot, group_id)
 
 # 发言命令
-Speech = on_regex(pattern=r'^发言\s+(.+)$', priority=1)
+Speech = on_regex(pattern=r'^观点\s+(.+)$', priority=1)
 @Speech.handle()
 async def handle_speech(bot: Bot, event: GroupMessageEvent, state: T_State):
     group_id = event.group_id
@@ -669,7 +669,7 @@ async def start_voting_phase(bot: Bot, group_id: int):
     alive_players = [pinfo for pinfo in game.players.values() if pinfo["alive"]]
     alive_list = "、".join([f"{p['code']}号 {p['nickname']}" for p in alive_players])
     
-    vote_msg = f"{speech_summary}存活玩家：{alive_list}\n\n请所有存活玩家在120秒内发送「投票 玩家编号」进行投票"
+    vote_msg = f"{speech_summary}存活玩家：{alive_list}\n\n请所有存活玩家在120秒内发送「票 玩家编号」进行投票"
     await bot.send_group_msg(group_id=group_id, message=vote_msg)
     
     # 设置投票计时器
@@ -904,7 +904,7 @@ async def handle_guard_protect(bot: Bot, event: PrivateMessageEvent, state: T_St
     await GuardProtect.finish(message=f"已选择守护 {target_code}号 {target_name}")
 
 # 投票命令
-WerewolfVote = on_regex(pattern=r'^投票\s+(\d+)$', priority=1)
+WerewolfVote = on_regex(pattern=r'^票\s+(\d+)$', priority=1)
 @WerewolfVote.handle()
 async def handle_werewolf_vote(bot: Bot, event: GroupMessageEvent, state: T_State):
     group_id = event.group_id
@@ -1224,8 +1224,8 @@ async def handle_werewolf_help(bot: Bot, event: GroupMessageEvent, state: T_Stat
 1. 开始狼人杀 - 开始一局新游戏并进入报名阶段
 2. 报名狼人杀 - 报名参加游戏
 3. 结束狼人杀报名 - 提前结束报名阶段并开始游戏
-4. 投票 玩家编号 - 在投票阶段投票淘汰可疑玩家
-4. 发言 内容 - 在白天轮流发言
+4. 票 玩家编号 - 在投票阶段投票淘汰可疑玩家
+4. 观点 内容 - 在白天轮流发言
 4. 跳过发言 - 玩家选择跳过发言
 5. 开枪 玩家编号 - 猎人死亡后开枪带走一名玩家
 6. 狼人杀状态 - 查看当前游戏状态
