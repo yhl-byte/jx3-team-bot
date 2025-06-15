@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-11 16:15:27
+LastEditTime: 2025-06-15 14:22:21
 FilePath: /team-bot/jx3-team-bot/src/plugins/jx3_team.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -18,14 +18,31 @@ from ..utils.jx3_profession import JX3PROFESSION
 from ..utils.permission import require_admin_permission
 from src.config import STATIC_PATH
 import os
+from .database import TeamRecordDB  # 添加数据库导入
 
-# 用于存储每个群的状态
-COMMAND_ENABLED = {}
+# 添加数据库实例
+db = TeamRecordDB()
+db.init_db()
+
+# # 用于存储每个群的状态
+# COMMAND_ENABLED = {}
 # 用于存储每个群的报名格式设置 (True: 心法+昵称, False: 昵称+心法)
 SIGNUP_FORMAT = {}
 
+# 修改检查函数
+async def check_command_enabled(bot: Bot, event: GroupMessageEvent, command_name: str = None) -> bool:
+    """检查开团功能是否启用"""
+    group_id = event.group_id
+    enabled = db.get_plugin_status("jx3_team", group_id)
+    
+    if not enabled:
+        # await bot.send(event=event, message="开团功能已关闭，请联系管理员开启")
+        return False
+    return True
+
+
 # 添加开关命令处理器
-ToggleCommands = on_regex(pattern=r'^开团功能\s+(开|关)?$', priority=1)
+ToggleCommands = on_regex(pattern=r'^开团功能\s+(开启|关闭|状态)?$', priority=1)
 # 修改开关命令处理器
 @ToggleCommands.handle()
 async def handle_toggle_commands(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -33,24 +50,38 @@ async def handle_toggle_commands(bot: Bot, event: GroupMessageEvent, state: T_St
     if not await require_admin_permission(bot, event.group_id, event.user_id, ToggleCommands):
         return
     
-    group_id = event.group_id
     matched = state["_matched"]
-    # 获取当前群的状态，默认为开启
-    current_status = COMMAND_ENABLED.get(group_id, True)
-    status = matched.group(1) if matched.group(1) else ("关" if current_status else "开")
-    
-    COMMAND_ENABLED[group_id] = status == "开"
-    msg = f"开团功能已{'开启！' if COMMAND_ENABLED[group_id] else '关闭！'}"
-    await ToggleCommands.finish(message=Message(msg))
+    if matched:
+        action = matched.group(1)  # "开" 或 "关"
+        group_id = event.group_id
+        
+        if action == "开启":
+            success = db.set_plugin_status("jx3_team", group_id, True)
+            if success:
+                msg = "开团功能已开启"
+            else:
+                msg = "开启开团功能失败，请稍后重试"
+        elif action == "关闭":
+            success = db.set_plugin_status("jx3_team", group_id, False)
+            if success:
+                msg = "开团功能已关闭"
+            else:
+                msg = "关闭开团功能失败，请稍后重试"
+        else:
+            # 查询状态
+            enabled = db.get_plugin_status("jx3_team", group_id)
+            status = "开启" if enabled else "关闭"
+            msg = f"当前开团功能状态：{status}"
+        
+        await ToggleCommands.finish(message=Message(msg))
+    else:
+        # 查询状态
+        enabled = db.get_plugin_status("jx3_team", group_id)
+        status = "开启" if enabled else "关闭"
+        msg = f"当前开团功能状态：{status}"
+        await ToggleCommands.finish(message=Message(msg))
 
-# 修改检查命令状态的函数
-async def check_command_enabled(bot: Bot, event: GroupMessageEvent, command: str) -> bool:
-    group_id = event.group_id
-    if not COMMAND_ENABLED.get(group_id, True):  # 默认为开启状态
-        msg = "开团已关闭，请联系管理员开启"
-        await bot.send(event=event, message=Message(msg))
-        return False
-    return True
+
 
 # # 开团|创建团队 - 消息处理器
 CreatTeam = on_regex(pattern=r'^(创建团队|开团)$',priority=1)

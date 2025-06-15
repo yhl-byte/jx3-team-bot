@@ -16,6 +16,7 @@ from jx3api import JX3API,AsyncJX3API
 from ..utils.index import format_daily_data,format_role_data,path_to_base64,render_team_template,darken_color
 from .html_generator import render_role_attribute,img_to_base64,render_role_cd_record,render_role_luck,render_sandbox_html,render_trade_records_html,render_role_achievement_html,render_diary_achievement_html,render_member_recruit_html,render_auction_html,render_black_book_html
 from .render_image import generate_html_screenshot
+from ..utils.permission import require_admin_permission
 from src.config import STATIC_PATH
 from jx3api.exception import APIError  # 添加导入
 import os
@@ -41,11 +42,15 @@ PLUGIN_NAME = "jx3_api"
 
 # 状态检查装饰器
 def check_plugin_enabled(func):
+    """检查插件是否启用的装饰器"""
     async def wrapper(bot: Bot, event: GroupMessageEvent, state: T_State):
-        group_id = str(event.group_id)
-        if not db.get_plugin_status(PLUGIN_NAME, group_id):
-            # await bot.send(event=event, message="剑网3 API插件已关闭，请联系管理员开启")
+        group_id = event.group_id
+        enabled = db.get_plugin_status("jx3_api", group_id)
+        
+        if not enabled:
+            # await bot.send(event=event, message="剑三助手功能已关闭，请联系管理员开启")
             return
+        
         return await func(bot, event, state)
     return wrapper
 
@@ -53,25 +58,33 @@ def check_plugin_enabled(func):
 JX3PluginControl = on_regex(pattern=r'^剑三助手\s*(开启|关闭|状态)$', priority=1)
 @JX3PluginControl.handle()
 async def handle_plugin_control(bot: Bot, event: GroupMessageEvent, state: T_State):
-    # 检查是否为管理员或群主
-    user_info = await bot.get_group_member_info(group_id=event.group_id, user_id=event.user_id)
-    if user_info['role'] not in ['admin', 'owner']:
-        await JX3PluginControl.finish(message="只有管理员或群主可以控制插件开关")
+    # 检查管理员权限
+    if not await require_admin_permission(bot, event.group_id, event.user_id, JX3PluginControl):
         return
     
-    action = state['_matched'].group(1)
-    group_id = str(event.group_id)
-    
-    if action == "状态":
-        status = db.get_plugin_status(PLUGIN_NAME, group_id)
-        status_text = "已开启" if status else "已关闭"
-        await JX3PluginControl.finish(message=f"剑三助手当前状态：{status_text}")
-    elif action == "开启":
-        db.set_plugin_status(PLUGIN_NAME, group_id, True)
-        await JX3PluginControl.finish(message="剑三助手已开启")
-    elif action == "关闭":
-        db.set_plugin_status(PLUGIN_NAME, group_id, False)
-        await JX3PluginControl.finish(message="剑三助手已关闭")
+    matched = state["_matched"]
+    if matched:
+        action = matched.group(1)  # "开启"、"关闭" 或 "状态"
+        group_id = event.group_id
+        
+        if action == "开启":
+            success = db.set_plugin_status("jx3_api", group_id, True)
+            if success:
+                msg = "剑三助手功能已开启"
+            else:
+                msg = "开启剑三助手功能失败，请稍后重试"
+        elif action == "关闭":
+            success = db.set_plugin_status("jx3_api", group_id, False)
+            if success:
+                msg = "剑三助手功能已关闭"
+            else:
+                msg = "关闭剑三助手功能失败，请稍后重试"
+        else:  # 状态
+            enabled = db.get_plugin_status("jx3_api", group_id)
+            status = "开启" if enabled else "关闭"
+            msg = f"当前剑三助手功能状态：{status}"
+        
+        await JX3PluginControl.finish(message=Message(msg))
 
 
 # 开服检测

@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:32:40
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-15 11:37:26
+LastEditTime: 2025-06-15 14:26:05
 FilePath: /team-bot/jx3-team-bot/src/plugins/database.py
 '''
 # src/plugins/chat_plugin/database.py
@@ -132,11 +132,12 @@ class TeamRecordDB:
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS plugin_config (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                plugin_name TEXT NOT NULL UNIQUE,
-                group_id TEXT NOT NULL,
-                enabled BOOLEAN DEFAULT 1,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                plugin_name TEXT NOT NULL,
+                group_id INTEGER NOT NULL,
+                enabled INTEGER DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(plugin_name, group_id)
             )
             ''')
             conn.commit()     
@@ -268,6 +269,7 @@ class TeamRecordDB:
             return bool(result['enabled'])
         # 如果没有记录，默认启用
         return True
+
     
     def set_plugin_status(self, plugin_name: str, group_id: str, enabled: bool) -> bool:
         """设置插件启用状态"""
@@ -285,4 +287,10 @@ class TeamRecordDB:
                 'enabled': enabled
             })
         return True
+    
+    def get_all_plugin_status(self, group_id: int) -> dict:
+        """获取指定群组所有插件的状态"""
+        results = self.fetch_all('plugin_config', f'group_id = {group_id}')
+        
+        return {row['plugin_name']: bool(row['enabled']) for row in results}
             
