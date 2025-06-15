@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ data.name }} - 交易记录</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
@@ -400,13 +399,7 @@
             {% endfor %}
         </div>
        
-        <!-- 价格趋势图放到最后 -->
-        <!-- <div class="price-chart">
-            <div class="chart-title">价格趋势图</div>
-            <div class="chart-container">
-                <canvas id="priceChart"></canvas>
-            </div>
-        </div> -->
+       
         <footer class="footer">
             <div class="footer-bottom">
                 <div class="footer-wave"></div>
@@ -417,96 +410,6 @@
         </footer>
     </div>
     
-    <!-- <script>
-        // 生成价格趋势图
-        const ctx = document.getElementById('priceChart').getContext('2d');
-        
-        // 从交易记录中提取价格数据
-        const priceData = [];
-        const labels = [];
-        
-        {% for zone_records in data.list %}
-            {% if zone_records %}
-                {% for record in zone_records %}
-                    priceData.push({{ record.value }});
-                    labels.push('{{ record.date }}');
-                {% endfor %}
-            {% endif %}
-        {% endfor %}
-        
-        // 如果没有数据，生成示例数据
-        if (priceData.length === 0) {
-            const sampleDates = ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05', '2024-01-06', '2024-01-07'];
-            const samplePrices = [1200, 1350, 1180, 1420, 1380, 1500, 1450];
-            labels.push(...sampleDates);
-            priceData.push(...samplePrices);
-        }
-        
-        // 按日期排序并去重
-        const dataPoints = labels.map((label, index) => ({ date: label, price: priceData[index] }));
-        dataPoints.sort((a, b) => new Date(a.date) - new Date(b.date));
-        
-        // 取最近的10个数据点
-        const recentData = dataPoints.slice(-10);
-        const chartLabels = recentData.map(point => point.date);
-        const chartPrices = recentData.map(point => point.price);
-        
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: chartLabels,
-                datasets: [{
-                    label: '价格趋势',
-                    data: chartPrices,
-                    borderColor: '#4a90e2',
-                    backgroundColor: 'rgba(74, 144, 226, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#4a90e2',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return value.toLocaleString() + ' ';
-                            }
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                        }
-                    }
-                },
-                elements: {
-                    point: {
-                        hoverBackgroundColor: '#ffffff'
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                }
-            }
-        });
-    </script> -->
+   
 </body>
 </html>
