@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ boss_data.dungeon_name }} - 副本掉落统计</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 1920px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        
+        .stats-bar {
+            background: #f8fafc;
+            padding: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .boss-section {
+            margin-bottom: 40px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .boss-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .boss-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        .boss-intro {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            font-weight: 300;
+            max-width: 400px;
+        }
+        
+        .drops-grid {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .drop-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .drop-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .item-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .item-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            border: 2px solid;
+            object-fit: cover;
+            background: #f1f5f9;
+        }
+        
+        .item-info {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+        
+        .item-details {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        
+        .quality-1 { border-color: #9CA3AF; }
+        .quality-2 { border-color: #10B981; }
+        .quality-3 { border-color: #3B82F6; }
+        .quality-4 { border-color: #8B5CF6; }
+        .quality-5 { border-color: #F59E0B; }
+        .quality-6 { border-color: #EF4444; }
+        
+        .quality-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: white;
+        }
+        
+        .no-drops {
+            text-align: center;
+            padding: 60px 30px;
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+        
+        .footer {
+            background: #f1f5f9;
+            padding: 25px;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.9rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 12px;
+            }
+            
+            .header {
+                padding: 25px 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                padding: 20px;
+            }
+            
+            .drops-grid {
+                grid-template-columns: 1fr;
+                padding: 20px;
+                gap: 15px;
+            }
+            
+            .boss-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>{{ boss_data.dungeon_name }}</h1>
+            <div class="subtitle">{{ boss_data.difficulty }} - 副本掉落统计</div>
+        </div>
+        
+        
+        <!-- 内容区域 -->
+        <div class="content">
+            {% for boss in boss_data.boss_drops %}
+            <div class="boss-section">
+                <div class="boss-header">
+                    <div class="boss-name">{{ boss.boss_name }}</div>
+                </div>
+                
+                {% if boss.drops %}
+                <div class="drops-grid">
+                    {% for item in boss.drops %}
+                    <div class="drop-item quality-{{ item.ItemQuality }}">
+                        <div class="item-header">
+                            <img src="https://icon.jx3box.com/icon/{{ item.ItemIconID }}.png" 
+                                 alt="{{ item.ItemName }}" 
+                                 class="item-icon"
+                                 onerror="this.src='https://icon.jx3box.com/icon/0.png'">
+                            <div class="item-info">
+                                <div class="item-name" style="color: {{ quality_color(item.ItemQuality) }}">
+                                    {{ item.ItemName }}
+                                </div>
+                                <div class="item-details">
+                                    <span class="quality-badge" style="background-color: {{ quality_color(item.ItemQuality) }}">
+                                        {{ quality_name(item.ItemQuality) }}
+                                    </span>
+                                    <span>{{ item_type_name(item.ItemType) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="no-drops">
+                    <p>该Boss暂无掉落记录</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- 页脚 -->
+        <div class="footer">
+        </div>
+    </div>
+</body>
+</html>

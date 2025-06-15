@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ data.keyword }} - 交易行</title>
+    <style>
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+            margin: 0;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(45deg, #4a90e2, #7b68ee);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="%23ffffff" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
+            pointer-events: none;
+        }
+        .title {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        .content {
+            padding: 20px;
+        }
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(74, 144, 226, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+        .items-grid {
+            display: grid;
+            gap: 20px;
+        }
+        .item-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .item-header {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            padding: 15px 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+        }
+        .item-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 15px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        .item-details {
+            flex: 1;
+        }
+        .item-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .item-info {
+            font-size: 14px;
+            color: #666;
+        }
+        .auction-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .auction-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .auction-table td {
+            padding: 10px 12px;
+            text-align: center;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        .auction-table tr:hover {
+            background: rgba(74, 144, 226, 0.05);
+        }
+        .price {
+            font-weight: bold;
+            color: #e67e22;
+        }
+        .sample {
+            color: #27ae60;
+        }
+        .timestamp {
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 12px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">{{ data.keyword }} · 交易行</div>
+            <div class="subtitle">{{ data.server }}</div>
+        </div>
+        
+        <div class="content">
+            {% if data.auction_data %}
+                {% if data.stats_data %}
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <div class="stat-label">📊 近30日最低</div>
+                        <div class="stat-value">{{ format_price_currency(data.stats_data.min_price) }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">📊 近30日均价</div>
+                        <div class="stat-value">{{ format_price_currency(data.stats_data.avg_price) }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">📊 近30日最高</div>
+                        <div class="stat-value">{{ format_price_currency(data.stats_data.max_price) }}</div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <div class="stat-label">📊 近30日最低</div>
+                        <div class="stat-value">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">📊 近30日均价</div>
+                        <div class="stat-value">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">📊 近30日最高</div>
+                        <div class="stat-value">-</div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="items-grid">
+                    {% for item_data in data.auction_data %}
+                    <div class="item-section">
+                        <div class="item-header">
+                            <img src="https://icon.jx3box.com/icon/{{ item_data.item.icon_id }}.png" 
+                                 alt="{{ item_data.item.name }}" class="item-icon">
+                            <div class="item-details">
+                                <div class="item-name">{{ item_data.item.name }}</div>
+                                <!-- <div class="item-info">物品ID: {{ item_data.item.id }}</div> -->
+                            </div>
+                        </div>
+                        
+                        {% if item_data.auction_data %}
+                        <table class="auction-table">
+                            <thead>
+                                <tr>
+                                    <th>图标</th>
+                                    <th>名称</th>
+                                    <th>价格</th>
+                                    <th>数量</th>
+                                    <th>更新</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for auction in item_data.auction_data %}
+                                <tr>
+                                    <td>
+                                        <img src="https://icon.jx3box.com/icon/{{ item_data.item.icon_id }}.png" 
+                                             alt="{{ item_data.item.name }}" style="width: 24px; height: 24px;">
+                                    </td>
+                                    <td>{{ item_data.item.name }}</td>
+                                    <td class="price">{{ format_price_currency(auction.price)  }}</td>
+                                    <td class="sample">{{ auction.sample }}</td>
+                                    <td class="timestamp">{{ timestamp_to_datetime(auction.timestamp) }}（{{ timestamp_to_relative_time(auction.timestamp) }}）</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <div class="no-data">暂无交易数据</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-data">
+                    <h3>未找到相关物品</h3>
+                    <p>当名称精确时，会显示该物品的近期均价域</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="footer">
+            物是人非事事休，欲语泪先流。
+        </div>
+    </div>
+</body>
+</html>

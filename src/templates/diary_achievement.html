@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ data.roleName }} - 成就日记</title>
+    <style>
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="%23ffffff" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
+            pointer-events: none;
+        }
+        .role-info {
+            position: relative;
+            z-index: 1;
+        }
+        .role-name {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .server-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .info-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 2px;
+        }
+        .info-value {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .achievement-title {
+            font-size: 24px;
+            color: #ffd700;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            margin-top: 15px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .category-section {
+            margin-bottom: 40px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .category-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .achievement-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .achievement-table th {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 12px 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .achievement-table td {
+            padding: 10px 15px;
+            text-align: center;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+        .achievement-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+        .achievement-table tr:hover {
+            background: #f5f5f5;
+        }
+        .subcategory-name {
+            font-weight: bold;
+            color: #333;
+            text-align: left;
+            padding-left: 20px;
+            max-width: 200px;
+        }
+        .progress-container {
+            width: 150px;
+            margin: 0 auto;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 18px;
+            background: #e0e0e0;
+            border-radius: 9px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ee5a24);
+            border-radius: 9px;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            z-index: 2;
+        }
+        .summary-row {
+            background: linear-gradient(45deg, #667eea, #764ba2) !important;
+            color: white;
+            font-weight: bold;
+        }
+        .summary-row td {
+            border-bottom: none;
+        }
+        .footer {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .footer-text {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .empty-category {
+            color: #999;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 0 10px;
+            }
+            .achievement-table {
+                font-size: 12px;
+            }
+            .achievement-table th,
+            .achievement-table td {
+                padding: 6px 4px;
+            }
+            .progress-container {
+                width: 120px;
+            }
+            .subcategory-name {
+                max-width: 120px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="role-info">
+                <div class="role-name">{{ data.roleName }}</div>
+                <div class="server-info">
+                    <div class="info-item">
+                        <div class="info-label">区服</div>
+                        <div class="info-value">{{ data.zoneName }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">服务器</div>
+                        <div class="info-value">{{ data.serverName }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">门派</div>
+                        <div class="info-value">{{ data.forceName }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">体型</div>
+                        <div class="info-value">{{ data.bodyName }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">帮会</div>
+                        <div class="info-value">{{ data.tongName }}</div>
+                    </div>
+                </div>
+                <div class="achievement-title">✨ 成就日记 ✨</div>
+            </div>
+        </div>
+        
+        <div class="content">
+            {% if data.data and data.data.total %}
+            {% for main_category, subcategories in data.data.total.items() %}
+            {% if main_category != "" %}
+            <div class="category-section">
+                <div class="category-header">{{ main_category }}</div>
+                <table class="achievement-table">
+                    <thead>
+                        <tr>
+                            <th>子类目</th>
+                            <th>成就完成</th>
+                            <th>资历获得</th>
+                            <th>完成进度</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subcategory, stats in subcategories.items() %}
+                        <tr>
+                            <td class="subcategory-name">
+                                {% if subcategory == "" %}
+                                    <span class="empty-category">基础</span>
+                                {% else %}
+                                    {{ subcategory }}
+                                {% endif %}
+                            </td>
+                            <td>{{ stats.pieces.speed }} / {{ stats.pieces.total }}</td>
+                            <td>{{ stats.seniority.speed }} / {{ stats.seniority.total }}</td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        {% set progress_percent = (stats.pieces.speed / stats.pieces.total * 100) if stats.pieces.total > 0 else 0 %}
+                                        <div class="progress-fill" style="width: {{ progress_percent }}%"></div>
+                                        <div class="progress-text">{{ "%.1f"|format(progress_percent) }}%</div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+            {% endfor %}
+            
+            <!-- 总计统计 -->
+            {% if data.data.total[""] %}
+            <div class="category-section">
+                <div class="category-header">📊 总计统计</div>
+                <table class="achievement-table">
+                    <tbody>
+                        <tr class="summary-row">
+                            <td class="subcategory-name">全部成就</td>
+                            <td>{{ data.data.total[""].pieces.speed }} / {{ data.data.total[""].pieces.total }}</td>
+                            <td>{{ data.data.total[""].seniority.speed }} / {{ data.data.total[""].seniority.total }}</td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        {% set total_progress = (data.data.total[""].pieces.speed / data.data.total[""].pieces.total * 100) if data.data.total[""].pieces.total > 0 else 0 %}
+                                        <div class="progress-fill" style="width: {{ total_progress }}%"></div>
+                                        <div class="progress-text">{{ "%.1f"|format(total_progress) }}%</div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+            {% else %}
+            <div style="text-align: center; padding: 60px 20px; color: #666;">
+                <div style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;">📊</div>
+                <h3>暂无成就日记数据</h3>
+                <p>该角色暂时没有相关成就日记信息</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="footer">
+            <div class="footer-text">✨ 每一份努力都值得被记录 ✨</div>
+        </div>
+    </div>
+</body>
+</html>

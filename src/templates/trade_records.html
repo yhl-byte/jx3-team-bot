@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ data.name }} - 交易记录</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+            margin: 0;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1920px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(45deg, #4a90e2, #7b68ee);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="%23ffffff" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
+            pointer-events: none;
+        }
+        .header-main {
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .item-name {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
+        }
+        .item-alias {
+            font-size: 18px;
+            opacity: 0.9;
+            font-style: italic;
+            color: #e8f4fd;
+        }
+        .header-info {
+            position: relative;
+            z-index: 1;
+        }
+        .info-row {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .info-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .price-item {
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        .price-value {
+            color: #ffd700;
+            font-size: 20px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        .item-desc {
+            font-size: 14px;
+            opacity: 0.9;
+            line-height: 1.5;
+            width: fit-content;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+        .image-section {
+            height: 33vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+        }
+        .item-preview {
+            height: 100%;
+            width: 100%;
+            border-radius: 15px;
+            border: 4px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            object-fit: contain;
+        }
+        .content {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 20px;
+        }
+        .zone-section {
+            margin-bottom: 25px;
+        }
+        .zone-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #4a90e2;
+            display: flex;
+            align-items: center;
+        }
+        .zone-icon {
+            width: 25px;
+            height: 25px;
+            margin-right: 10px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .telecom { background: #ff6b6b; }
+        .dual-line { background: #4ecdc4; }
+        .borderless { background: #a29bfe; }
+        .publicity { background: #f9ca24; }
+        .selling { background: #6c5ce7; }
+        .records-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 12px;
+            max-height: 300px;
+            overflow: hidden;
+        }
+        .record-card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            border-left: 3px solid #4a90e2;
+            transition: transform 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .record-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .server-name {
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+        }
+        .record-date {
+            font-size: 10px;
+            color: #666;
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .record-price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #e74c3c;
+            text-align: center;
+            margin: 8px 0;
+        }
+        .record-price::after {
+            content: ' ';
+            font-size: 11px;
+            color: #666;
+        }
+        .record-status {
+            text-align: center;
+            padding: 4px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+        }
+        .status-1 { background: #e74c3c; } /* 出售 */
+        .status-2 { background: #3498db; } /* 收购 */
+        .status-3 { background: #f39c12; } /* 想出 */
+        .status-4 { background: #9b59b6; } /* 想收 */
+        .status-5 { background: #27ae60; } /* 成交 */
+        .status-6 { background: #34495e; } /* 正出 */
+        .status-7 { background: #2c3e50; } /* 公示 */
+        .no-records {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .price-chart {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        .chart-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        /* Footer样式 */
+        .footer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-top: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="stars" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="1" fill="%23ffffff" opacity="0.3"/><circle cx="80" cy="40" r="0.5" fill="%23ffffff" opacity="0.4"/><circle cx="40" cy="80" r="1.5" fill="%23ffffff" opacity="0.2"/><circle cx="90" cy="90" r="0.8" fill="%23ffffff" opacity="0.3"/></pattern></defs><rect width="100" height="100" fill="url(%23stars)"/></svg>') repeat;
+            pointer-events: none;
+        }
+        .footer-bottom {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .footer-wave {
+            position: absolute;
+            top: -10px;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" fill="%23ffffff"></path><path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" fill="%23ffffff"></path><path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="%23ffffff"></path></svg>') no-repeat;
+            background-size: cover;
+        }
+        .footer-copyright {
+            font-size: 14px;
+            color: #e8f4fd;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .footer-content {
+                flex-direction: column;
+                gap: 30px;
+            }
+            .footer-divider {
+                width: 60px;
+                height: 1px;
+                margin: 0;
+            }
+            .footer-section {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-main">
+                <div class="item-name">
+                    {{ data.name }}
+                    {% if data.alias %}
+                    <span class="item-alias">（{{ data.alias }}）</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="header-info">
+                <div class="info-row">
+                    <div class="info-item">
+                        <span class="info-label">分类</span>
+                        <span class="info-value">{{ data.class }} - {{ data.subclass }}</span>
+                    </div>
+                    <div class="info-item price-item">
+                        <span class="info-label">官方售价</span>
+                        <span class="info-value price-value">{{ data.cost }} 元</span>
+                    </div>
+                </div>
+                {% if data.desc %}
+                <div class="item-desc">{{ data.desc }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- 图片单独占一行，占整个HTML的三分之一 -->
+        {% if data.view %}
+        <div class="image-section">
+            <img src="{{ data.view }}" alt="{{ data.name }}" class="item-preview" onerror="this.style.display='none'">
+        </div>
+        {% endif %}
+        
+        <div class="content">
+            <!-- 交易记录 -->
+            {% set zone_names = ['电信区', '双线区', '无界区', '公示期', '正售中'] %}
+            {% for zone_records in data.list %}
+                {% set zone_index = loop.index0 %}
+                {% if zone_records %}
+                <div class="zone-section">
+                    <div class="zone-title">
+                        <div class="zone-icon {{ ['telecom', 'dual-line', 'borderless', 'publicity', 'selling'][zone_index] }}">
+                            {{ zone_index + 1 }}
+                        </div>
+                        {{ zone_names[zone_index] if zone_index < zone_names|length else '本服' }}
+                        <span style="margin-left: auto; font-size: 12px; color: #666;">
+                            <!-- 共 {{ zone_records|length }} 条记录 -->
+                        </span>
+                    </div>
+                    
+                    <!-- 两行显示，每行三个 -->
+                    <div class="records-grid">
+                        {% for record in zone_records[:6] %}
+                        <div class="record-card">
+                            <div class="record-header">
+                                <div class="server-name">{{ record.server }}</div>
+                                <div class="record-date">{{ record.date }}</div>
+                            </div>
+                            
+                            <div class="record-price">{{ "{:,}".format(record.value) }}</div>
+                            
+                            <div class="record-status status-{{ record.sale }}">
+                                {% set status_map = {
+                                    1: '出售',
+                                    2: '收购', 
+                                    3: '想出',
+                                    4: '想收',
+                                    5: '成交',
+                                    6: '正出',
+                                    7: '公示',
+                                } %}
+                                {{ status_map.get(record.sale, '未知') }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="no-records">
+                    暂无交易记录
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+       
+        <!-- 价格趋势图放到最后 -->
+        <!-- <div class="price-chart">
+            <div class="chart-title">价格趋势图</div>
+            <div class="chart-container">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div> -->
+        <footer class="footer">
+            <div class="footer-bottom">
+                <div class="footer-wave"></div>
+                <div class="footer-copyright">
+                    <span>✨ 愿你的每一次交易都能收获满满 ✨</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- <script>
+        // 生成价格趋势图
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        
+        // 从交易记录中提取价格数据
+        const priceData = [];
+        const labels = [];
+        
+        {% for zone_records in data.list %}
+            {% if zone_records %}
+                {% for record in zone_records %}
+                    priceData.push({{ record.value }});
+                    labels.push('{{ record.date }}');
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+        
+        // 如果没有数据，生成示例数据
+        if (priceData.length === 0) {
+            const sampleDates = ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05', '2024-01-06', '2024-01-07'];
+            const samplePrices = [1200, 1350, 1180, 1420, 1380, 1500, 1450];
+            labels.push(...sampleDates);
+            priceData.push(...samplePrices);
+        }
+        
+        // 按日期排序并去重
+        const dataPoints = labels.map((label, index) => ({ date: label, price: priceData[index] }));
+        dataPoints.sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        // 取最近的10个数据点
+        const recentData = dataPoints.slice(-10);
+        const chartLabels = recentData.map(point => point.date);
+        const chartPrices = recentData.map(point => point.price);
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: '价格趋势',
+                    data: chartPrices,
+                    borderColor: '#4a90e2',
+                    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#4a90e2',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString() + ' ';
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    }
+                },
+                elements: {
+                    point: {
+                        hoverBackgroundColor: '#ffffff'
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    </script> -->
+</body>
+</html>

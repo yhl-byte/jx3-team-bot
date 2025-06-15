@@ -1,13 +1,14 @@
 '''
 Date: 2025-02-18 13:33:31
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-13 22:02:17
+LastEditTime: 2025-06-15 09:41:50
 FilePath: /team-bot/jx3-team-bot/src/plugins/html_generator.py
 '''
 # src/plugins/chat_plugin/html_generator.py
 from jinja2 import Environment, FileSystemLoader
 from src.config import TEMPLATE_PATH, STATIC_PATH
 from datetime import datetime
+import time
 import base64
 import json
 from pathlib import Path
@@ -80,6 +81,110 @@ def format_date_month(time_str):
     except:
         # 如果解析失败，返回原始字符串
         return time_str
+
+
+
+def timestamp_to_relative_time(timestamp):
+    """
+    将时间戳转换为距离当前时间的描述性时间。
+    
+    参数:
+        timestamp (int): 时间戳（单位：秒）
+    
+    返回:
+        str: 距离当前时间的描述性时间，如“22秒前”、“1分钟前”等
+    """
+    # 获取当前时间的时间戳
+    current_timestamp = int(time.time())
+    
+    # 计算时间差
+    time_diff = current_timestamp - timestamp
+    
+    # 根据时间差返回不同的描述
+    if time_diff < 60:  # 小于1分钟
+        return f"{time_diff}秒前"
+    elif time_diff < 3600:  # 小于1小时
+        minutes = time_diff // 60
+        return f"{minutes}分钟前"
+    elif time_diff < 86400:  # 小于1天
+        hours = time_diff // 3600
+        return f"{hours}小时前"
+    else:
+        days = time_diff // 86400
+        return f"{days}天前"
+
+def timestamp_to_datetime(timestamp):
+        """将时间戳转换为日期时间格式"""
+        try:
+            if isinstance(timestamp, (int, float)):
+                dt = datetime.fromtimestamp(timestamp)
+                return dt.strftime('%Y-%m-%d %H:%M:%S')
+            elif isinstance(timestamp, str) and timestamp.isdigit():
+                dt = datetime.fromtimestamp(int(timestamp))
+                return dt.strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                return timestamp
+        except:
+            return timestamp
+
+    # 添加价格格式化过滤器
+def format_price_currency(price):
+    if price == 0:
+        return "0铜"
+    
+    gold = price // 10000
+    silver = (price % 10000) // 100
+    copper = price % 100
+    
+    result = []
+    if gold > 0:
+        result.append(f"{gold}金")
+    if silver > 0:
+        result.append(f"{silver}银")
+    if copper > 0:
+        result.append(f"{copper}铜")
+    
+    return "".join(result) if result else "0铜"
+
+def item_type_name(item_type):
+    """物品类型名称映射"""
+    type_map = {
+        1: "武器",
+        2: "防具", 
+        3: "饰品",
+        4: "药品",
+        5: "材料",
+        6: "武器",
+        7: "装备",
+        8: "饰品",
+        9: "宝石",
+        10: "其他"
+    }
+    return type_map.get(item_type, "未知")
+
+def quality_color(quality):
+    """品质颜色映射"""
+    color_map = {
+        1: "#9CA3AF",  # 灰色
+        2: "#10B981",  # 绿色
+        3: "#3B82F6",  # 蓝色
+        4: "#8B5CF6",  # 紫色
+        5: "#F59E0B",  # 橙色
+        6: "#EF4444"   # 红色
+    }
+    return color_map.get(quality, "#6B7280")
+
+def quality_name(quality):
+    """品质名称映射"""
+    name_map = {
+        1: "破损",
+        2: "普通",
+        3: "优秀",
+        4: "精良",
+        5: "卓越",
+        6: "完美"
+    }
+    return name_map.get(quality, "未知")
 
 def render_html(team_box, template_name="team.html") -> str:
     # 获取模板目录
@@ -281,7 +386,7 @@ def render_xuanjing_html(records):
     # 确保模板目录存在
     if not os.path.exists(template_dir):
         os.makedirs(template_dir)
-        
+
     env = Environment(loader=FileSystemLoader(template_dir))
     template = env.get_template(xuanjing_template)
     
@@ -306,3 +411,129 @@ def render_xuanjing_html(records):
         sort_info=sort_info,
         records=formatted_records
     )
+
+
+def render_trade_records_html(record):
+    """渲染物价查询HTML"""
+     # 获取模板目录
+    template_dir = TEMPLATE_PATH.parent
+    html_template = "trade_records.html"
+
+    # 确保模板目录存在
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+        
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template(html_template)
+
+    # 渲染数据
+    html_content = template.render(
+         data=record,
+    )
+    return html_content
+
+def render_role_achievement_html(record):
+    """渲染成就查询HTML"""
+    # 获取模板目录
+    template_dir = TEMPLATE_PATH.parent
+    html_template = "role_achievement.html"
+
+    # 确保模板目录存在
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+        
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template(html_template)
+
+    # 渲染数据
+    html_content = template.render(
+         data=record,
+    )
+    return html_content
+
+
+def render_diary_achievement_html(record):
+    """渲染资历分布HTML"""
+    # 获取模板目录
+    template_dir = TEMPLATE_PATH.parent
+    html_template = "diary_achievement.html"
+
+    # 确保模板目录存在
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+        
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template(html_template)
+
+    # 渲染数据
+    html_content = template.render(
+         data=record,
+    )
+    return html_content
+
+def render_member_recruit_html(record):
+    """渲染招募信息HTML"""
+    # 获取模板目录
+    template_dir = TEMPLATE_PATH.parent
+    html_template = "member_recruit.html"
+
+    # 确保模板目录存在
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+        
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template(html_template)
+
+    # 渲染数据
+    html_content = template.render(
+         data=record,
+         timestamp_to_datetime=timestamp_to_datetime,
+         timestamp_to_relative_time=timestamp_to_relative_time,
+    )
+    return html_content
+
+def render_auction_html(record):
+    """渲染交易行HTML"""
+    # 获取模板目录
+    template_dir = TEMPLATE_PATH.parent
+    html_template = "auction.html"
+
+    # 确保模板目录存在
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template(html_template)
+
+    # 渲染数据
+    html_content = template.render(
+         data=record,
+         timestamp_to_datetime=timestamp_to_datetime,
+         timestamp_to_relative_time=timestamp_to_relative_time,
+         format_price_currency=format_price_currency,
+    )
+    return html_content
+
+def render_black_book_html(record):
+    """
+    渲染副本掉落HTML
+    """
+    # 获取模板目录
+    template_dir = TEMPLATE_PATH.parent
+    html_template = "black_book.html"
+
+    # 确保模板目录存在
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template(html_template)
+
+    # 渲染数据
+    html_content = template.render(
+        boss_data=record,
+        item_type_name=item_type_name,
+        quality_color=quality_color,
+        quality_name=quality_name,
+    )
+    return html_content

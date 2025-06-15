@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ data.roleName }} - 成就查询</title>
+    <style>
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh
+        }
+        .container {
+            width: 1600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(45deg, #4a90e2, #7b68ee);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="%23ffffff" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
+            pointer-events: none;
+        }
+        .role-info {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 20px;
+        }
+        .role-name {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .server-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .info-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 2px;
+        }
+        .info-value {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .achievement-title {
+            font-size: 24px;
+            color: #ffd700;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            text-align: center;
+        }
+        .stat-title {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-detail {
+            font-size: 12px;
+            opacity: 0.8;
+            display: flex;
+            justify-content: space-between;
+        }
+        .stat-points .stat-value {
+            color: #ffd700;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        .stat-achievements .stat-value {
+            color: #87ceeb;
+        }
+        .content {
+            padding: 30px;
+        }
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .achievement-grid.single-item {
+            grid-template-columns: 1fr;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .achievement-grid.few-items {
+            justify-content: center;
+        }
+        .achievement-card {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .achievement-card.completed {
+            border-color: #4CAF50;
+            background: linear-gradient(145deg, #e8f5e8, #f0f8f0);
+        }
+        .achievement-card.incomplete {
+            border-color: #ff9800;
+            background: linear-gradient(145deg, #fff3e0, #fef7f0);
+        }
+        .achievement-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+        }
+        .achievement-card.incomplete::before {
+            background: linear-gradient(90deg, #ff9800, #ffc107);
+        }
+        .achievement-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .achievement-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            margin-right: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .achievement-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+            line-height: 1.2;
+        }
+        .achievement-class {
+            font-size: 12px;
+            color: #666;
+            background: rgba(74, 144, 226, 0.1);
+            padding: 2px 8px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        .achievement-desc {
+            color: #555;
+            line-height: 1.4;
+            margin: 15px 0;
+            font-size: 13px;
+        }
+        .achievement-progress {
+            margin: 15px 0;
+        }
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        .progress-fill.incomplete {
+            background: linear-gradient(90deg, #ff9800, #ffc107);
+        }
+        .progress-text {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+        .achievement-reward {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .reward-points {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #333;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+        }
+        .achievement-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-completed {
+            background: #4CAF50;
+            color: white;
+        }
+        .status-incomplete {
+            background: #ff9800;
+            color: white;
+        }
+        .likes-count {
+            display: flex;
+            align-items: center;
+            color: #666;
+            font-size: 11px;
+        }
+        .likes-count::before {
+            content: '👍';
+            margin-right: 4px;
+        }
+        .no-achievements {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .no-achievements-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        .footer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-top: 30px;
+        }
+        .footer-text {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .achievement-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+        }
+        @media (max-width: 768px) {
+            .container {
+                max-width: 100%;
+                margin: 0 10px;
+            }
+            .server-info {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .achievement-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="role-info">
+                <div class="role-name">{{ data.roleName }}</div>
+                <div class="server-info">
+                    <div class="info-item">
+                        <div class="info-label">区服</div>
+                        <div class="info-value">{{ data.zoneName }} · {{ data.serverName }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">门派</div>
+                        <div class="info-value">{{ data.forceName }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">体型</div>
+                        <div class="info-value">{{ data.bodyName }}</div>
+                    </div>
+                    {% if data.tongName %}
+                    <div class="info-item">
+                        <div class="info-label">帮会</div>
+                        <div class="info-value">{{ data.tongName }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="achievement-title">成就查询结果</div>
+            
+            <!-- 统计信息 -->
+            {% if data.data and data.data|length > 0 %}
+            {% set total_achievements = data.data|length %}
+            {% set completed_achievements = data.data|selectattr('isFinished')|list|length %}
+            {% set incomplete_achievements = total_achievements - completed_achievements %}
+            {% set total_points = data.data|sum(attribute='rewardPoint') %}
+            {% set earned_points = data.data|selectattr('isFinished')|sum(attribute='rewardPoint') %}
+            {% set remaining_points = total_points - earned_points %}
+            
+            <div class="stats-container">
+                <div class="stat-card stat-points">
+                    <div class="stat-title">资历统计</div>
+                    <div class="stat-value">{{ earned_points }}/{{ total_points }}</div>
+                    <div class="stat-detail">
+                        <span>已获得: {{ earned_points }}</span>
+                        <span>未获得: {{ remaining_points }}</span>
+                    </div>
+                </div>
+                <div class="stat-card stat-achievements">
+                    <div class="stat-title">成就统计</div>
+                    <div class="stat-value">{{ completed_achievements }}/{{ total_achievements }}</div>
+                    <div class="stat-detail">
+                        <span>已完成: {{ completed_achievements }}</span>
+                        <span>未完成: {{ incomplete_achievements }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="content">
+            {% if data.data and data.data|length > 0 %}
+            {% set sorted_achievements = data.data|sort(attribute='isFinished') %}
+            <div class="achievement-grid {% if data.data|length == 1 %}single-item{% elif data.data|length <= 3 %}few-items{% endif %}">
+                {% for achievement in sorted_achievements %}
+                <div class="achievement-card {% if achievement.isFinished %}completed{% else %}incomplete{% endif %}">
+                    <div class="achievement-header">
+                        <img src="{{ achievement.icon }}" alt="{{ achievement.name }}" class="achievement-icon" onerror="this.style.display='none'">
+                        <div>
+                            <div class="achievement-name">{{ achievement.name }}</div>
+                            <div class="achievement-class">{{ achievement.class }} - {{ achievement.subClass }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="achievement-desc">{{ achievement.desc }}</div>
+                    
+                    {% if achievement.type != 'simple' %}
+                    <div class="achievement-progress">
+                        <div class="progress-bar">
+                            {% set progress_percent = (achievement.currentValue / achievement.triggerValue * 100) if achievement.triggerValue > 0 else 0 %}
+                            <div class="progress-fill {% if not achievement.isFinished %}incomplete{% endif %}" style="width: {{ progress_percent }}%"></div>
+                        </div>
+                        <div class="progress-text">{{ achievement.currentValue }} / {{ achievement.triggerValue }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="achievement-reward">
+                        <div class="reward-points">{{ achievement.rewardPoint }} 资历</div>
+                        <div class="achievement-status {% if achievement.isFinished %}status-completed{% else %}status-incomplete{% endif %}">
+                            {% if achievement.isFinished %}已完成{% else %}未完成{% endif %}
+                        </div>
+                        <div class="likes-count">{{ achievement.likes }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-achievements">
+                <div class="no-achievements-icon">🏆</div>
+                <h3>暂无成就数据</h3>
+                <p>该角色暂时没有相关成就信息</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="footer">
+            <div class="footer-text">✨ 每一个成就都是江湖路上的足迹 ✨</div>
+        </div>
+    </div>
+</body>
+</html>

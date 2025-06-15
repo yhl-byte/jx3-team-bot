@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:32:40
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-13 21:57:39
+LastEditTime: 2025-06-15 11:37:26
 FilePath: /team-bot/jx3-team-bot/src/plugins/database.py
 '''
 # src/plugins/chat_plugin/database.py
@@ -128,6 +128,17 @@ class TeamRecordDB:
                 updated_at DATETIME
             )
             ''')
+            # 创建插件配置表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS plugin_config (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plugin_name TEXT NOT NULL UNIQUE,
+                group_id TEXT NOT NULL,
+                enabled BOOLEAN DEFAULT 1,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
             conn.commit()     
 
     def insert(self, table_name: str, data: Dict[str, Any]):
@@ -249,4 +260,29 @@ class TeamRecordDB:
                 return -1
             finally:
                 conn.close()
+    
+    def get_plugin_status(self, plugin_name: str, group_id: str) -> bool:
+        """获取插件启用状态"""
+        result = self.fetch_one('plugin_config', 'plugin_name = ? AND group_id = ?', (plugin_name, group_id))
+        if result:
+            return bool(result['enabled'])
+        # 如果没有记录，默认启用
+        return True
+    
+    def set_plugin_status(self, plugin_name: str, group_id: str, enabled: bool) -> bool:
+        """设置插件启用状态"""
+        existing = self.fetch_one('plugin_config', 'plugin_name = ? AND group_id = ?', (plugin_name, group_id))
+        if existing:
+            # 更新现有记录
+            self.update('plugin_config', 
+                       {'enabled': enabled, 'updated_at': 'CURRENT_TIMESTAMP'}, 
+                       f'plugin_name = "{plugin_name}" AND group_id = "{group_id}"')
+        else:
+            # 插入新记录
+            self.insert('plugin_config', {
+                'plugin_name': plugin_name,
+                'group_id': group_id,
+                'enabled': enabled
+            })
+        return True
             
