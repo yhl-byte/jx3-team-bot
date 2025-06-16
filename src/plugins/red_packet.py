@@ -1,7 +1,7 @@
 '''
 Date: 2025-01-XX XX:XX:XX
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-16 15:31:49
+LastEditTime: 2025-06-16 15:41:51
 FilePath: /team-bot/jx3-team-bot/src/plugins/red_packet.py
 '''
 from nonebot import on_regex, get_driver
@@ -25,6 +25,8 @@ send_gift = on_regex(pattern=r"^发礼包\s+(\d+)\s+(\d+)$", priority=5)
 grab_gift = on_regex(pattern=r"^抢礼包\s+(\w+)$", priority=5)
 # 查看礼包详情
 check_gift = on_regex(pattern=r"^礼包详情\s+(\w+)$", priority=5)
+# 查看未领礼包
+list_active_gifts = on_regex(pattern=r"^未领礼包$", priority=5)
 # 礼包帮助
 gift_help = on_regex(pattern=r"^礼包帮助$", priority=5)
 
@@ -100,12 +102,12 @@ async def handle_send_gift(bot: Bot, event: GroupMessageEvent):
     user_id = str(event.user_id)
     
 
-    # 替换为你的实际user_id和group_id
-    user_id1 = "939225853"  # 例如："123456789"
-    group_id1 = "1034970817"  # 例如："987654321"
+    # # 替换为你的实际user_id和group_id
+    # user_id1 = "939225853"  # 例如："123456789"
+    # group_id1 = "1034970817"  # 例如："987654321"
 
-    # 添加10000积分
-    await update_player_score(user_id1, group_id1, 10000, "开发者奖励", "开发者", "系统奖励")
+    # # 添加10000积分
+    # await update_player_score(user_id1, group_id1, 10000, "开发者奖励", "开发者", "系统奖励")
 
     # 获取用户昵称
     try:
@@ -324,6 +326,43 @@ async def handle_check_gift(bot: Bot, event: GroupMessageEvent):
     
     await check_gift.finish(msg)
 
+@list_active_gifts.handle()
+async def handle_list_active_gifts(bot: Bot, event: GroupMessageEvent):
+    group_id = str(event.group_id)
+    
+    # 查询当前群所有未完成的礼包
+    active_packets = db.fetch_all('score_gift_packets', f'group_id = "{group_id}" AND status = 0 ORDER BY created_at DESC')
+    
+    if not active_packets:
+        await list_active_gifts.finish("当前群没有未领完的礼包！")
+        return
+    
+    msg = "🎁 当前群未领完的礼包：\n"
+    
+    for i, packet in enumerate(active_packets, 1):
+        packet_id = packet['packet_id']
+        
+        # 获取已领取记录
+        grabs = db.fetch_all('score_gift_grabs', f'packet_id = "{packet_id}"')
+        grabbed_count = len(grabs)
+        total_count = packet['packet_count']
+        remaining_count = total_count - grabbed_count
+        
+        # 计算剩余积分
+        amounts = json.loads(packet['amounts'])
+        grabbed_amounts = [grab['amount'] for grab in grabs]
+        remaining_amounts = amounts.copy()
+        for grabbed_amount in grabbed_amounts:
+            if grabbed_amount in remaining_amounts:
+                remaining_amounts.remove(grabbed_amount)
+        remaining_total = sum(remaining_amounts)
+        
+        msg += f"{i}. 🆔 {packet_id}  💰 剩余积分：{remaining_total} 分 📦 剩余个数：{remaining_count}/{total_count} 个\n"
+    
+    msg += "💡 发送【抢礼包 id】来领取"
+    
+    await list_active_gifts.finish(msg)
+
 @gift_help.handle()
 async def handle_gift_help(bot: Bot, event: GroupMessageEvent):
     help_msg = "🎁 积分礼包使用说明\n\n"
@@ -331,6 +370,7 @@ async def handle_gift_help(bot: Bot, event: GroupMessageEvent):
     help_msg += "• 发礼包 [总积分] [礼包个数] - 发送拼手气礼包\n"
     help_msg += "• 抢礼包 [礼包ID] - 领取指定礼包\n"
     help_msg += "• 礼包详情 [礼包ID] - 查看礼包详情\n"
+    help_msg += "• 未领礼包 - 查看当前群未领完的礼包\n"  
     help_msg += "• 礼包帮助 - 显示此帮助信息\n\n"
     
     help_msg += "📋 使用规则：\n"
@@ -348,6 +388,8 @@ async def handle_gift_help(bot: Bot, event: GroupMessageEvent):
     help_msg += "• 礼包详情 gp1234567890001 - 查看礼包详情"
     
     await gift_help.finish(help_msg)
+
+
 
 # 定期清理过期礼包
 async def cleanup_expired_packets():
