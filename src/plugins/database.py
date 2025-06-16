@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:32:40
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-16 08:54:14
+LastEditTime: 2025-06-16 15:18:00
 FilePath: /team-bot/jx3-team-bot/src/plugins/database.py
 '''
 # src/plugins/chat_plugin/database.py
@@ -148,6 +148,35 @@ class TeamRecordDB:
                 is_xf_first INTEGER DEFAULT 1,  -- 1: 心法+昵称, 0: 昵称+心法
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
+             # 创建积分礼包表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS score_gift_packets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                packet_id TEXT NOT NULL UNIQUE,
+                group_id TEXT NOT NULL,
+                sender_id TEXT NOT NULL,
+                sender_name TEXT NOT NULL,
+                total_amount INTEGER NOT NULL,
+                packet_count INTEGER NOT NULL,
+                amounts TEXT NOT NULL,  -- JSON格式存储金额数组
+                status INTEGER DEFAULT 0,  -- 0: 进行中, 1: 已完成, 2: 已过期
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                expired_at DATETIME
+            )
+            ''')
+            
+            # 创建积分礼包领取记录表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS score_gift_grabs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                packet_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                user_name TEXT NOT NULL,
+                amount INTEGER NOT NULL,
+                grabbed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (packet_id) REFERENCES score_gift_packets(packet_id)
             )
             ''')
             conn.commit()     
