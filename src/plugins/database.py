@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:32:40
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-15 14:26:05
+LastEditTime: 2025-06-16 08:54:14
 FilePath: /team-bot/jx3-team-bot/src/plugins/database.py
 '''
 # src/plugins/chat_plugin/database.py
@@ -138,6 +138,16 @@ class TeamRecordDB:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(plugin_name, group_id)
+            )
+            ''')
+             # 创建报名格式配置表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS signup_format_config (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                group_id TEXT NOT NULL UNIQUE,
+                is_xf_first INTEGER DEFAULT 1,  -- 1: 心法+昵称, 0: 昵称+心法
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             ''')
             conn.commit()     
@@ -293,4 +303,59 @@ class TeamRecordDB:
         results = self.fetch_all('plugin_config', f'group_id = {group_id}')
         
         return {row['plugin_name']: bool(row['enabled']) for row in results}
+
+    def get_signup_format(self, group_id: str) -> bool:
+        """
+        获取群组的报名格式设置
+        
+        Args:
+            group_id: 群组ID
+        
+        Returns:
+            True: 心法+昵称格式, False: 昵称+心法格式
+        """
+        result = self.fetch_one('signup_format_config', 'group_id = ?', (group_id,))
+        if result:
+            return bool(result['is_xf_first'])
+        # 如果没有记录，默认为心法在前
+        return True
+    
+    def set_signup_format(self, group_id: str, is_xf_first: bool) -> bool:
+        """
+        设置群组的报名格式
+        
+        Args:
+            group_id: 群组ID
+            is_xf_first: True为心法+昵称格式，False为昵称+心法格式
+        
+        Returns:
+            操作是否成功
+        """
+        try:
+            existing = self.fetch_one('signup_format_config', 'group_id = ?', (group_id,))
+            if existing:
+                # 更新现有记录
+                self.update('signup_format_config', 
+                           {'is_xf_first': int(is_xf_first), 'updated_at': 'CURRENT_TIMESTAMP'}, 
+                           f'group_id = "{group_id}"')
+            else:
+                # 插入新记录
+                self.insert('signup_format_config', {
+                    'group_id': group_id,
+                    'is_xf_first': int(is_xf_first)
+                })
+            return True
+        except Exception as e:
+            print(f"设置报名格式失败: {e}")
+            return False
+    
+    def get_all_signup_formats(self) -> dict:
+        """
+        获取所有群组的报名格式设置
+        
+        Returns:
+            {group_id: is_xf_first} 格式的字典
+        """
+        results = self.fetch_all('signup_format_config')
+        return {row['group_id']: bool(row['is_xf_first']) for row in results}
             

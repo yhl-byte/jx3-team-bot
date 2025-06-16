@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-15 14:22:21
+LastEditTime: 2025-06-16 08:58:22
 FilePath: /team-bot/jx3-team-bot/src/plugins/jx3_team.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -27,7 +27,7 @@ db.init_db()
 # # 用于存储每个群的状态
 # COMMAND_ENABLED = {}
 # 用于存储每个群的报名格式设置 (True: 心法+昵称, False: 昵称+心法)
-SIGNUP_FORMAT = {}
+# SIGNUP_FORMAT = {}
 
 # 修改检查函数
 async def check_command_enabled(bot: Bot, event: GroupMessageEvent, command_name: str = None) -> bool:
@@ -339,14 +339,20 @@ async def handle_set_signup_format(bot: Bot, event: GroupMessageEvent, state: T_
     matched = state["_matched"]
     if matched:
         format_type = matched.group(1)
-        group_id = event.group_id
+        group_id = str(event.group_id)
         
-        if format_type == "心法昵称":
-            SIGNUP_FORMAT[group_id] = True
-            msg = "报名格式已设置为：心法 + 昵称（ID）\n示例：报名 花间 余年"
-        else:  # 昵称心法
-            SIGNUP_FORMAT[group_id] = False
-            msg = "报名格式已设置为：昵称（ID）+ 心法\n示例：报名 余年 花间"
+        if format_type == "1":
+            success = db.set_signup_format(group_id, True)
+            if success:
+                msg = "报名格式已设置为：心法 + 昵称（ID）\n示例：报名 花间 余年"
+            else:
+                msg = "设置报名格式失败，请稍后重试"
+        else:  # format_type == "2"
+            success = db.set_signup_format(group_id, False)
+            if success:
+                msg = "报名格式已设置为：昵称（ID）+ 心法\n示例：报名 余年 花间"
+            else:
+                msg = "设置报名格式失败，请稍后重试"
         
         await SetSignupFormat.finish(message=Message(msg))
     else:
@@ -359,8 +365,8 @@ async def handle_view_signup_format(bot: Bot, event: GroupMessageEvent, state: T
     if not await check_command_enabled(bot, event, "查看报名格式"):
         return
     
-    group_id = event.group_id
-    is_xf_first = SIGNUP_FORMAT.get(group_id, True)  # 默认为心法在前
+    group_id = str(event.group_id)
+    is_xf_first = db.get_signup_format(group_id)  # 从数据库获取
     
     if is_xf_first:
         msg = "当前报名格式：心法 + 昵称（ID）\n示例：报名 花间 余年"
@@ -380,9 +386,9 @@ async def handle_sign_up(bot: Bot, event: GroupMessageEvent, state: T_State):
     team_id = matched.group(3)
     team = find_default_team(teamList) if not team_id else team_info_by_id(team_id)
 
-    # 获取当前群的报名格式设置
-    group_id = event.group_id
-    is_xf_first = SIGNUP_FORMAT.get(group_id, True)  # 默认为心法在前
+   # 获取当前群的报名格式设置（从数据库）
+    group_id = str(event.group_id)
+    is_xf_first = db.get_signup_format(group_id)  # 从数据库获取
 
     if is_xf_first:
         # 心法 + 昵称格式
@@ -459,7 +465,7 @@ async def handle_cancel(bot: Bot, event: GroupMessageEvent, state: T_State):
 # # 代报名 - 团队成员
 AgentSignUp = on_regex(pattern=r'^代报名\s+(\S+)\s+(\S+)(?:\s+(\d+))?$',priority=1)
 @AgentSignUp.handle()
-async def handle_sign_up(bot: Bot, event: GroupMessageEvent, state: T_State):
+async def handle_agent_sign_up(bot: Bot, event: GroupMessageEvent, state: T_State):
     if not await check_command_enabled(bot, event, "代报名"):
         return
     teamList = team_list(event.group_id)
@@ -467,9 +473,9 @@ async def handle_sign_up(bot: Bot, event: GroupMessageEvent, state: T_State):
     team_id = matched.group(3)
     team = find_default_team(teamList) if not team_id else team_info_by_id(team_id)
 
-    # 获取当前群的报名格式设置
-    group_id = event.group_id
-    is_xf_first = SIGNUP_FORMAT.get(group_id, True)  # 默认为心法在前
+    # 获取当前群的报名格式设置（从数据库）
+    group_id = str(event.group_id)
+    is_xf_first = db.get_signup_format(group_id)  # 从数据库获取
     
     if is_xf_first:
         # 心法 + 昵称格式
