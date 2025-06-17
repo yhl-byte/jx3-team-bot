@@ -1,7 +1,7 @@
 '''
 Date: 2025-01-20 00:00:00
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-17 10:12:23
+LastEditTime: 2025-06-17 10:30:00
 FilePath: /team-bot/jx3-team-bot/src/plugins/blacklist_record.py
 '''
 # 黑本榜单记录插件
@@ -260,7 +260,7 @@ async def get_group_blacklist(group_id: str,  game_id: str = None, dungeon_name:
     if dungeon_name is not None:
         condition += f" AND dungeon_name LIKE '%{dungeon_name}%'"
     
-    condition += f" ORDER BY salary_j DESC LIMIT {limit}"
+    condition += f" ORDER BY date DESC LIMIT {limit}"
     
     # 查询团队中的全部成员
     records = db.fetch_all('blacklist_records', condition)

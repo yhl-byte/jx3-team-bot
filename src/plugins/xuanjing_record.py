@@ -194,7 +194,7 @@ async def get_group_xuanjing(group_id: str, participant: str = None, limit: int 
     if participant is not None:
         condition += f" AND participants LIKE '%{participant}%'"
     
-    condition += f" ORDER BY price_j DESC LIMIT {limit}"
+    condition += f" ORDER BY date DESC LIMIT {limit}"
     
     # 查询玄晶记录
     records = db.fetch_all('xuanjing_records', condition)
