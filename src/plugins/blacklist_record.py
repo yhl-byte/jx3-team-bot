@@ -1,7 +1,7 @@
 '''
 Date: 2025-01-20 00:00:00
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-13 22:26:36
+LastEditTime: 2025-06-17 10:12:23
 FilePath: /team-bot/jx3-team-bot/src/plugins/blacklist_record.py
 '''
 # 黑本榜单记录插件
@@ -107,11 +107,11 @@ def is_dungeon_name(text: str) -> bool:
 async def handle_blacklist_list(bot: Bot, event: GroupMessageEvent, state: T_State):
     """查看黑本榜单"""
     # 使用正则表达式匹配消息内容
-    pattern = r'^黑本榜单(?:\s+(.+))?$'
+    pattern = r'^黑本榜(?:\s+(.+))?$'
     match = re.match(pattern, event.get_plaintext())
     
     if not match:
-        await blacklist_list.finish("命令格式不正确，请使用：黑本榜单 [游戏ID/副本] [副本/游戏ID]")
+        await blacklist_list.finish("命令格式不正确，请使用：黑本榜 [游戏ID/副本] [副本/游戏ID]")
     
     # 解析参数
     args_str = match.group(1)
@@ -147,7 +147,7 @@ async def handle_blacklist_list(bot: Bot, event: GroupMessageEvent, state: T_Sta
                 game_id = arg1
                 dungeon_name = arg2
         else:
-            await blacklist_list.finish("参数过多，请使用：黑本榜单 [游戏ID/副本] [副本/游戏ID]")
+            await blacklist_list.finish("参数过多，请使用：黑本榜 [游戏ID/副本] [副本/游戏ID]")
 
     try:
         # 发送处理提示
