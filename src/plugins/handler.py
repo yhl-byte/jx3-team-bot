@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-15 14:24:44
+LastEditTime: 2025-06-17 11:26:04
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -44,7 +44,8 @@ GAME_PLUGINS = {
     "blacklist_record": "黑本记录",
     "weather_helper": "天气助手",
     "game_score": "积分系统",
-    "simple_dice": "掷骰子"
+    "simple_dice": "掷骰子",
+    "deepseek_ai": "AI对话助手"
 }
 
 # 插件管理命令

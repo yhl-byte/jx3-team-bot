@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:32:40
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-16 15:18:00
+LastEditTime: 2025-06-17 11:25:37
 FilePath: /team-bot/jx3-team-bot/src/plugins/database.py
 '''
 # src/plugins/chat_plugin/database.py
@@ -177,6 +177,31 @@ class TeamRecordDB:
                 amount INTEGER NOT NULL,
                 grabbed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (packet_id) REFERENCES score_gift_packets(packet_id)
+            )
+            ''')
+            # 创建AI对话记录表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS ai_conversations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                conversation_id TEXT NOT NULL,
+                role TEXT NOT NULL,  -- 'user' 或 'assistant'
+                content TEXT NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
+            
+            # 创建AI对话会话表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS ai_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                conversation_id TEXT NOT NULL UNIQUE,
+                session_name TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
             ''')
             conn.commit()     
