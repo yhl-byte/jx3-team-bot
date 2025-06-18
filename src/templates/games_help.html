@@ -14,7 +14,7 @@
         body {
             font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            /* min-height: 100vh; */
             padding: 20px;
             line-height: 1.6;
         }
@@ -120,6 +120,18 @@
 
         .game-card.dice {
             border-left-color: #f39c12;
+        }
+
+        .game-card.zhajinhua {
+            border-left-color: #e74c3c;
+        }
+
+        .game-card.doudizhu {
+            border-left-color: #f39c12;
+        }
+
+        .game-card.sichuanmajiang {
+            border-left-color: #27ae60;
         }
 
 
@@ -541,7 +553,7 @@
                 </div>
 
                 <!-- 掷骰子 -->
-                <div class="game-card dice">
+                <!-- <div class="game-card dice">
                     <div class="game-title">[休闲] 掷骰子</div>
                     <div class="game-description">
                         简单有趣的掷骰子游戏，支持多种骰子配置。可以掷多个骰子，自定义面数，记录保存方便查看历史！
@@ -554,6 +566,76 @@
                             <li class="command-item"><code>掷骰子 [数量]d[面数]</code> - 掷指定骰子（如：掷骰子 2d20）</li>
                             <li class="command-item"><code>骰子记录|掷骰子记录|roll记录</code> - 查看最近的掷骰子记录</li>
                             <li class="command-item"><code>清除骰子记录</code> - 清除群内骰子记录（管理员）</li>
+                        </ul>
+                    </div>
+                </div> -->
+
+                <!-- 炸金花 -->
+                <div class="game-card zhajinhua">
+                    <div class="game-title">[纸牌] 炸金花</div>
+                    <div class="game-description">
+                        经典的炸金花游戏！每人发3张牌，比较牌型大小。支持看牌、跟注、加注、弃牌等操作，考验运气与心理博弈！
+                    </div>
+                    <div class="commands-section">
+                        <div class="commands-title">游戏命令</div>
+                        <ul class="command-list">
+                            <li class="command-item"><code>开始炸金花</code> - 开始游戏报名</li>
+                            <li class="command-item"><code>报名炸金花</code> - 加入游戏（最多6人）</li>
+                            <li class="command-item"><code>结束炸金花报名</code> - 结束报名，开始游戏</li>
+                            <li class="command-item"><code>看牌</code> - 查看自己的手牌</li>
+                            <li class="command-item"><code>跟注</code> - 跟上当前注额</li>
+                            <li class="command-item"><code>加注 [金额]</code> - 增加注额</li>
+                            <li class="command-item"><code>弃牌</code> - 放弃当前回合</li>
+                            <li class="command-item"><code>比牌 [@玩家]</code> - 与指定玩家比牌</li>
+                            <li class="command-item"><code>强制结束炸金花</code> - 强制结束游戏</li>
+                            <li class="command-item"><code>炸金花帮助</code> - 查看游戏帮助</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 斗地主 -->
+                <div class="game-card doudizhu">
+                    <div class="game-title">[纸牌] 斗地主</div>
+                    <div class="game-description">
+                        经典的斗地主游戏！三人对战，一人当地主对抗两名农民。支持叫地主、出牌、过牌等操作，考验策略和配合！
+                    </div>
+                    <div class="commands-section">
+                        <div class="commands-title">游戏命令</div>
+                        <ul class="command-list">
+                            <li class="command-item"><code>开始斗地主</code> - 开始游戏报名</li>
+                            <li class="command-item"><code>报名斗地主</code> - 加入游戏（需要3人）</li>
+                            <li class="command-item"><code>叫地主</code> - 竞选地主</li>
+                            <li class="command-item"><code>不叫</code> - 不竞选地主</li>
+                            <li class="command-item"><code>出牌 [牌型]</code> - 出牌（如：出牌 3 4 5）</li>
+                            <li class="command-item"><code>过</code> - 不出牌</li>
+                            <li class="command-item"><code>查看手牌</code> - 查看自己的手牌</li>
+                            <li class="command-item"><code>强制结束斗地主</code> - 强制结束游戏</li>
+                            <li class="command-item"><code>斗地主帮助</code> - 查看游戏帮助</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 四川麻将血流成河 -->
+                <div class="game-card sichuanmajiang">
+                    <div class="game-title">[麻将] 四川麻将血流成河</div>
+                    <div class="game-description">
+                        正宗四川麻将血流成河玩法！胡牌后继续游戏，支持碰、杠、胡等操作。缺门、听牌等特色规则，考验技巧和运气！
+                    </div>
+                    <div class="commands-section">
+                        <div class="commands-title">游戏命令</div>
+                        <ul class="command-list">
+                            <li class="command-item"><code>开始四川麻将</code> - 开始游戏报名</li>
+                            <li class="command-item"><code>报名麻将</code> - 加入游戏（需要4人）</li>
+                            <li class="command-item"><code>定缺 [万/条/筒]</code> - 选择缺门花色</li>
+                            <li class="command-item"><code>出牌 [牌]</code> - 出牌（如：出牌 1万）</li>
+                            <li class="command-item"><code>碰牌</code> - 碰牌</li>
+                            <li class="command-item"><code>杠牌</code> - 明杠</li>
+                            <li class="command-item"><code>暗杠 [牌]</code> - 暗杠</li>
+                            <li class="command-item"><code>胡牌</code> - 胡牌</li>
+                            <li class="command-item"><code>过</code> - 过牌</li>
+                            <li class="command-item"><code>查看牌局</code> - 查看当前牌局状态</li>
+                            <li class="command-item"><code>强制结束麻将</code> - 强制结束游戏</li>
+                            <li class="command-item"><code>麻将帮助</code> - 查看游戏帮助</li>
                         </ul>
                     </div>
                 </div>

@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:33:56
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-11 16:15:54
+LastEditTime: 2025-06-18 15:52:02
 FilePath: /team-bot/jx3-team-bot/src/plugins/render_image.py
 '''
 from playwright.async_api import async_playwright
@@ -50,7 +50,24 @@ async def generate_html_screenshot(html_content: str, width: int = 800,) -> str:
         # await page.set_viewport_size({"width": width, "height": 800})
         
         # 获取页面实际高度
-        page_height = await page.evaluate('document.documentElement.scrollHeight')
+        # page_height = await page.evaluate('document.documentElement.scrollHeight')
+        # 获取页面实际内容高度（更准确的方法）
+        page_height = await page.evaluate('''
+            () => {
+                // 获取body的实际高度
+                const body = document.body;
+                const html = document.documentElement;
+                
+                // 取最小的有效高度
+                return Math.min(
+                    body.scrollHeight,
+                    body.offsetHeight,
+                    html.clientHeight,
+                    html.scrollHeight,
+                    html.offsetHeight
+                );
+            }
+        ''')
 
         # 调整视口高度为实际高度
         await page.set_viewport_size({"width": width, "height": page_height})
