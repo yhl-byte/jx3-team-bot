@@ -5,12 +5,13 @@ from typing import Dict, List
 from .game_score import update_player_score
 import random
 import asyncio
+import re
 
 # 游戏状态管理
 class ZhajinhuaGame:
     def __init__(self):
         self.deck = []  # 牌组
-        self.players = {}  # 玩家手牌 {user_id: {"cards": [], "number": int, "bet": int, "folded": bool, "looked": bool}}
+        self.players = {}  # 玩家手牌 {user_id: {"cards": [], "number": int, "bet": int, "folded": bool, "looked": bool, "total_bet": int}}
         self.current_player = None  # 当前操作的玩家
         self.game_status = 'waiting_signup'  # 游戏状态：waiting_signup, playing, finished
         self.timer = None  # 用于计时的变量
@@ -20,6 +21,8 @@ class ZhajinhuaGame:
         self.current_bet = 1  # 当前下注额
         self.round_count = 0  # 轮次计数
         self.max_rounds = 10  # 最大轮次
+        self.max_pot = 200  # 池底封顶
+        self.max_single_bet = 20  # 最大单注
 
     def init_deck(self):
         suits = ['♠', '♥', '♣', '♦']
@@ -176,12 +179,13 @@ async def handle_signup(bot: Bot, event: GroupMessageEvent):
         "number": game.player_count, 
         "bet": 0, 
         "folded": False, 
-        "looked": False
+        "looked": False,
+        "total_bet": 0  # 新增：记录总下注额
     }
     game.player_order.append(user_id)
     user_info = await bot.get_group_member_info(group_id=group_id, user_id=user_id)
-    # 添加参与游戏基础分
-    await update_player_score(str(user_id), str(group_id), 5, 'zhajinhua', None, 'participation')
+    # # 添加参与游戏五分的入场费
+    # await update_player_score(str(user_id), str(group_id), -5, 'zhajinhua', None, 'participation')
     msg = (
         MessageSegment.at(user_id) + '\n' + 
         Message(f"【{user_info['nickname']}】报名成功！您的编号是 {game.player_count}")
@@ -216,10 +220,13 @@ async def handle_end_signup(bot: Bot, event: GroupMessageEvent):
     
     # 每人先下1分底注
     for user_id in game.player_order:
-        game.players[user_id]['bet'] = 1
-        game.pot += 1
+        game.players[user_id]['bet'] = 5
+        game.players[user_id]['total_bet'] = 5  # 记录总下注
+        game.pot += 5
+        # 扣除底注积分
+        await update_player_score(str(user_id), str(group_id), -5, 'zhajinhua', None, 'bet')
     
-    await bot.send_group_msg(group_id=group_id, message=f"发牌完成！每人已下1分底注，当前底池：{game.pot}分\n\n⚠️ 本游戏仅供娱乐，严禁用于赌博等违法活动！")
+    await bot.send_group_msg(group_id=group_id, message=f"发牌完成！每人已下5分底注，当前底池：{game.pot}分\n\n⚠️ 本游戏仅供娱乐，严禁用于赌博等违法活动！")
     
     # 开始第一轮
     game.current_player = game.player_order[0]
@@ -258,16 +265,26 @@ async def show_current_turn(bot: Bot, group_id: int):
         msg += "\n"
     
     if game.players[user_id]['looked']:
-        msg += "您已看牌，请选择：【跟注】【加注】【开牌 编号】【弃牌】"
+        # 检查是否可以加注
+        can_raise = game.current_bet < game.max_single_bet
+        if can_raise:
+            msg += "您已看牌，请选择：【跟注】【加注 数字】【开牌 编号】【弃牌】"
+        else:
+            msg += "您已看牌，请选择：【跟注】【开牌 编号】【弃牌】"
     else:
-        msg += "您未看牌，请选择：【看牌】【闷跟】【闷加】【弃牌】"
+        # 检查是否可以闷加
+        can_blind_raise = game.current_bet < game.max_single_bet
+        if can_blind_raise:
+            msg += "您未看牌，请选择：【看牌】【闷跟】【闷加 数字】【弃牌】"
+        else:
+            msg += "您未看牌，请选择：【看牌】【闷跟】【弃牌】"
     
-    msg += "\n(20秒内未操作将自动弃牌)"
+    msg += "\n(30秒内未操作将自动弃牌)"
     
     await bot.send_group_msg(group_id=group_id, message=msg)
     
     # 设置超时
-    game.timer = asyncio.create_task(handle_timeout(bot, group_id, user_id, 20))
+    game.timer = asyncio.create_task(handle_timeout(bot, group_id, user_id, 30))
 
 # 看牌命令
 look_cards = on_regex(pattern=r"^看牌$", priority=5)
@@ -330,14 +347,28 @@ async def handle_call_bet(bot: Bot, event: GroupMessageEvent):
         game.timer.cancel()
     
     bet_amount = game.current_bet
+    # 检查池底是否会超过封顶
+    if game.pot + bet_amount > game.max_pot:
+        bet_amount = game.max_pot - game.pot
+
     game.players[user_id]['bet'] += bet_amount
+    game.players[user_id]['total_bet'] += bet_amount
     game.pot += bet_amount
+
+    # 扣除玩家下注积分
+    await update_player_score(str(user_id), str(group_id), -bet_amount, 'zhajinhua', None, 'bet')
     
     user_info = await bot.get_group_member_info(group_id=group_id, user_id=user_id)
     await bot.send_group_msg(
         group_id=group_id,
         message=f"玩家 {user_info['nickname']} 跟注 {bet_amount}分，当前底池：{game.pot}分"
     )
+
+    # 检查是否达到池底封顶
+    if game.pot >= game.max_pot:
+        await bot.send_group_msg(group_id=group_id, message="池底已达封顶，强制开牌！")
+        await end_game(bot, group_id)
+        return
     
     await next_player(bot, group_id)
 
@@ -363,23 +394,35 @@ async def handle_blind_call(bot: Bot, event: GroupMessageEvent):
     if game.timer and not game.timer.done():
         game.timer.cancel()
     
-    bet_amount = game.current_bet // 2  # 闷跟只需要一半
-    if bet_amount < 1:
-        bet_amount = 1
+    bet_amount = max(game.current_bet // 2, 1)  # 闷跟只需要一半，最少1分
+
+    # 检查池底是否会超过封顶
+    if game.pot + bet_amount > game.max_pot:
+        bet_amount = game.max_pot - game.pot
     
     game.players[user_id]['bet'] += bet_amount
+    game.players[user_id]['total_bet'] += bet_amount
     game.pot += bet_amount
     
+    # 扣除玩家积分
+    await update_player_score(str(user_id), str(group_id), -bet_amount, 'zhajinhua', None, 'bet')
+
     user_info = await bot.get_group_member_info(group_id=group_id, user_id=user_id)
     await bot.send_group_msg(
         group_id=group_id,
         message=f"玩家 {user_info['nickname']} 闷跟 {bet_amount}分，当前底池：{game.pot}分"
     )
+
+    # 检查是否达到池底封顶
+    if game.pot >= game.max_pot:
+        await bot.send_group_msg(group_id=group_id, message="池底已达封顶，强制开牌！")
+        await end_game(bot, group_id)
+        return
     
     await next_player(bot, group_id)
 
 # 加注命令
-raise_bet = on_regex(pattern=r"^加注$", priority=5)
+raise_bet = on_regex(pattern=r"^加注\s+(\d+)$", priority=5)
 @raise_bet.handle()
 async def handle_raise_bet(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
@@ -395,26 +438,58 @@ async def handle_raise_bet(bot: Bot, event: GroupMessageEvent):
     if not game.players[user_id]['looked']:
         await raise_bet.finish("您还没看牌，请先【看牌】或选择【闷加】！")
         return
+
+    # 解析加注数字
+    match = re.match(r"^加注\s+(\d+)$", event.get_plaintext())
+    if not match:
+        await raise_bet.finish("请使用正确格式：加注 [数字]")
+        return
+    
+    new_bet = int(match.group(1))
+    
+    # 检查加注是否合法
+    if new_bet <= game.current_bet:
+        await raise_bet.finish(f"加注数字必须大于当前下注额 {game.current_bet}分！")
+        return
+    
+    if new_bet > game.max_single_bet:
+        await raise_bet.finish(f"加注数字不能超过最大单注 {game.max_single_bet}分！")
+        return
     
     # 取消超时计时器
     if game.timer and not game.timer.done():
         game.timer.cancel()
     
-    new_bet = game.current_bet * 2
-    game.players[user_id]['bet'] += new_bet
-    game.pot += new_bet
+    bet_amount = new_bet
+    # 检查池底是否会超过封顶
+    if game.pot + bet_amount > game.max_pot:
+        bet_amount = game.max_pot - game.pot
+        new_bet = bet_amount
+
+    game.players[user_id]['bet'] += bet_amount
+    game.players[user_id]['total_bet'] += bet_amount
+    game.pot += bet_amount
     game.current_bet = new_bet
+
+    # 扣除玩家积分
+    await update_player_score(str(user_id), str(group_id), -bet_amount, 'zhajinhua', None, 'bet')
     
     user_info = await bot.get_group_member_info(group_id=group_id, user_id=user_id)
     await bot.send_group_msg(
         group_id=group_id,
         message=f"玩家 {user_info['nickname']} 加注到 {new_bet}分，当前底池：{game.pot}分"
     )
+
+    # 检查是否达到池底封顶
+    if game.pot >= game.max_pot:
+        await bot.send_group_msg(group_id=group_id, message="池底已达封顶，强制开牌！")
+        await end_game(bot, group_id)
+        return
     
     await next_player(bot, group_id)
 
 # 闷加命令
-blind_raise = on_regex(pattern=r"^闷加$", priority=5)
+blind_raise = on_regex(pattern=r"^闷加\s+(\d+)$", priority=5)
 @blind_raise.handle()
 async def handle_blind_raise(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
@@ -430,27 +505,56 @@ async def handle_blind_raise(bot: Bot, event: GroupMessageEvent):
     if game.players[user_id]['looked']:
         await blind_raise.finish("您已经看过牌了，请选择【加注】！")
         return
+
+    # 解析闷加数字
+    match = re.match(r"^闷加\s+(\d+)$", event.get_plaintext())
+    if not match:
+        await blind_raise.finish("请使用正确格式：闷加 [数字]")
+        return
+    
+    new_bet = int(match.group(1))
+    
+    # 检查闷加是否合法
+    if new_bet <= game.current_bet:
+        await blind_raise.finish(f"闷加数字必须大于当前下注额 {game.current_bet}分！")
+        return
+    
+    if new_bet > game.max_single_bet:
+        await blind_raise.finish(f"闷加数字不能超过最大单注 {game.max_single_bet}分！")
+        return
     
     # 取消超时计时器
     if game.timer and not game.timer.done():
         game.timer.cancel()
     
-    # new_bet = game.current_bet
-    # game.players[user_id]['bet'] += new_bet
-    # game.pot += new_bet
-    # game.current_bet = new_bet
 
-    bet_amount = game.current_bet
-    new_bet = game.current_bet * 2  # 加注后的新下注额
+    # 闷加时支付当前下注额的一半
+    bet_amount = max(game.current_bet // 2, 1)
+    
+    # 检查池底是否会超过封顶
+    if game.pot + bet_amount > game.max_pot:
+        bet_amount = game.max_pot - game.pot
+        new_bet = min(new_bet, bet_amount)
+    
     game.players[user_id]['bet'] += bet_amount
+    game.players[user_id]['total_bet'] += bet_amount
     game.pot += bet_amount
     game.current_bet = new_bet  # 更新当前下注额
+
+    # 扣除玩家积分
+    await update_player_score(str(user_id), str(group_id), -bet_amount, 'zhajinhua', None, 'bet')
     
     user_info = await bot.get_group_member_info(group_id=group_id, user_id=user_id)
     await bot.send_group_msg(
         group_id=group_id,
         message=f"玩家 {user_info['nickname']} 闷加到 {new_bet}分，当前底池：{game.pot}分"
     )
+
+    # 检查是否达到池底封顶
+    if game.pot >= game.max_pot:
+        await bot.send_group_msg(group_id=group_id, message="池底已达封顶，强制开牌！")
+        await end_game(bot, group_id)
+        return
     
     await next_player(bot, group_id)
 
@@ -506,7 +610,6 @@ async def handle_compare_cards(bot: Bot, event: GroupMessageEvent):
         return
     
     # 解析目标玩家编号
-    import re
     match = re.match(r"^开牌\s*(\d+)$", event.get_plaintext())
     if not match:
         await compare_cards.finish("请使用正确格式：开牌 [编号]")
@@ -535,9 +638,17 @@ async def handle_compare_cards(bot: Bot, event: GroupMessageEvent):
     
     # 开牌需要支付当前下注额
     bet_amount = game.current_bet
-    game.players[user_id]['bet'] += bet_amount
-    game.pot += bet_amount
+    # 检查池底是否会超过封顶
+    if game.pot + bet_amount > game.max_pot:
+        bet_amount = game.max_pot - game.pot
     
+    game.players[user_id]['bet'] += bet_amount
+    game.players[user_id]['total_bet'] += bet_amount
+    game.pot += bet_amount
+
+    # 扣除玩家积分
+    await update_player_score(str(user_id), str(group_id), -bet_amount, 'zhajinhua', None, 'bet')
+
     # 执行比牌
     await execute_compare(bot, group_id, user_id, target_user_id)
 
@@ -688,17 +799,26 @@ async def end_game(bot: Bot, group_id: int):
     game.game_status = 'finished'
     
     active_players = game.get_active_players()
+
+    # 统计所有玩家的下注情况
+    bet_summary = "\n💰 本局下注统计：\n"
+    for user_id in game.player_order:
+        user_info = await bot.get_group_member_info(group_id=group_id, user_id=user_id)
+        total_bet = game.players[user_id]['total_bet']
+        bet_summary += f"{user_info['nickname']} (编号 {game.players[user_id]['number']}): {total_bet}分\n"
     
     if len(active_players) == 1:
         # 只剩一个玩家，直接获胜
         winner_id = active_players[0]
         winner_info = await bot.get_group_member_info(group_id=group_id, user_id=winner_id)
         
-        # 获胜者获得积分
-        await update_player_score(str(winner_id), str(group_id), 20, 'zhajinhua', None, 'win')
+        # 获胜者获得池底所有积分
+        pot_amount = min(game.pot, game.max_pot)
+        await update_player_score(str(winner_id), str(group_id), pot_amount, 'zhajinhua', None, 'win')
         
         msg = f"游戏结束！\n获胜者：{winner_info['nickname']} (编号 {game.players[winner_id]['number']})\n"
-        msg += f"获得底池：{game.pot}分"
+        msg += f"获得底池：{pot_amount}分"
+        msg += bet_summary
         
     else:
         # 多个玩家比牌
@@ -730,11 +850,13 @@ async def end_game(bot: Bot, group_id: int):
             msg += f"{i+1}. {player['nickname']} (编号 {player['number']}): "
             msg += f"{game.format_cards(player['cards'])} ({player['hand_name']})\n"
         
-        # 获胜者获得积分
+        # 获胜者获得池底所有积分
         winner = player_hands[0]
-        await update_player_score(str(winner['user_id']), str(group_id), 20, 'zhajinhua', None, 'win')
+        pot_amount = min(game.pot, game.max_pot)
+        await update_player_score(str(winner['user_id']), str(group_id), pot_amount, 'zhajinhua', None, 'win')
         
-        msg += f"\n🎉 获胜者：{winner['nickname']} 获得底池 {game.pot}分！"
+        msg += f"\n🎉 获胜者：{winner['nickname']} 获得底池 {pot_amount}分！"
+        msg += bet_summary
     
     await bot.send_group_msg(group_id=group_id, message=msg)
     del games[group_id]
@@ -770,8 +892,8 @@ async def handle_zhajinhua_help(bot: Bot, event: GroupMessageEvent):
 4. 【看牌】：查看自己的手牌
 5. 【跟注】：跟上当前下注额（看牌后）
 6. 【闷跟】：跟注一半金额（未看牌）
-7. 【加注】：将下注额翻倍（看牌后）
-8. 【闷加】：加注（未看牌）
+7. 【加注 数字】：加注到指定数字（看牌后，数字需大于当前注数且≤20）
+8. 【闷加 数字】：闷加到指定数字（未看牌，数字需大于当前注数且≤20）
 9. 【开牌 编号】：与指定编号玩家比牌（需看牌）
 10. 【弃牌】：放弃本局游戏
 11. 【强制结束炸金花】：管理员可强制结束当前游戏
@@ -785,16 +907,20 @@ async def handle_zhajinhua_help(bot: Bot, event: GroupMessageEvent):
 6. 单牌：普通牌型
 
 📋 游戏规则：
-1. 每人发3张牌，先下1分底注
+1. 每人发3张牌，先下5分底注
 2. 未看牌时下注金额减半
 3. 可以选择看牌或闷牌进行游戏
 4. 最后剩余玩家比牌决定胜负
 5. 超过10轮自动开牌
 6. 20秒内未操作自动弃牌
+7. 池底封顶200分，达到后强制开牌
+8. 最大单注20分
+9. 当达到最大单注时，不再显示加注选项
 
 🏆 积分规则：
-- 参与游戏：+5分
-- 获胜：+20分
+- 底注：-5分
+- 下注：扣除对应积分
+- 获胜：获得池底所有积分
 
 ⚠️ 重要提醒：本游戏仅供娱乐，严禁用于赌博等违法活动！
     """
