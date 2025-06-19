@@ -268,14 +268,20 @@ async def show_current_turn(bot: Bot, group_id: int):
         # 检查是否可以加注
         can_raise = game.current_bet < game.max_single_bet
         if can_raise:
-            msg += "您已看牌，请选择：【跟注】【加注 数字】【开牌 编号】【弃牌】"
+            min_raise = game.current_bet + 1
+            max_raise = game.max_single_bet
+            msg += f"您已看牌，请选择：【跟注】【加注 数字】【开牌 编号】【弃牌】\n"
+            msg += f"💡 加注范围：{min_raise}-{max_raise}分"
         else:
             msg += "您已看牌，请选择：【跟注】【开牌 编号】【弃牌】"
     else:
         # 检查是否可以闷加
         can_blind_raise = game.current_bet < game.max_single_bet
         if can_blind_raise:
-            msg += "您未看牌，请选择：【看牌】【闷跟】【闷加 数字】【弃牌】"
+            min_raise = game.current_bet + 1
+            max_raise = game.max_single_bet
+            msg += f"您未看牌，请选择：【看牌】【闷跟】【闷加 数字】【弃牌】\n"
+            msg += f"💡 闷加范围：{min_raise}-{max_raise}分"
         else:
             msg += "您未看牌，请选择：【看牌】【闷跟】【弃牌】"
     
