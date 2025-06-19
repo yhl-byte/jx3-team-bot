@@ -17,17 +17,17 @@ from ..utils.index import format_daily_data,format_role_data,path_to_base64,rend
 from .html_generator import render_role_attribute,img_to_base64,render_role_cd_record,render_role_luck,render_sandbox_html,render_trade_records_html,render_role_achievement_html,render_diary_achievement_html,render_member_recruit_html,render_auction_html,render_black_book_html
 from .render_image import generate_html_screenshot
 from ..utils.permission import require_admin_permission
-from src.config import STATIC_PATH
 from jx3api.exception import APIError  # 添加导入
 import os
 from .database import TeamRecordDB  # 添加数据库导入
+from src.config import STATIC_PATH,JX3_AUTHORIZATION, JX3_COOKIES, JX3_TOKEN, JX3_TICKET
 
 
-AUTHORIZATION = "Basic ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SjFhV1FpT2pJNU5qQTVOeXdpYm1GdFpTSTZJdVdCbXVTN2dPUzVpT2FpcHVXUm9pSXNJbWR5YjNWd0lqb3hMQ0p6YVdkdUlqb2lNakEyTURKak5EVmlZMkU1WVRGbVpXSXpNMlE1WWpSaE1qWTROV1kwWVdRaUxDSnBZWFFpT2pFM05EazBNams0TXpNc0ltVjRjQ0k2TVRjMU1qQXlNVGd6TTMwLk1RTTJScndrSVhOdUFEcllJSHJLMXk5dm9jYmZmVkc4T0NpVkRCMUJGMVU6bm9kZSBjb21tb24gcmVxdWVzdA=="  # 请替换为实际的authorization
-COOKIES = "Hm_lvt_8661e9bde42eb87b91ee7b8525cc93eb=1748219930,1748829732; HMACCOUNT=26A628DEBFF22275; token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjI5NjA5NywibmFtZSI6IuWBmuS7gOS5iOaipuWRoiIsImdyb3VwIjoxLCJzaWduIjoiMjA2MDJjNDViY2E5YTFmZWIzM2Q5YjRhMjY4NWY0YWQiLCJpYXQiOjE3NDk0Mjk4MzMsImV4cCI6MTc1MjAyMTgzM30.MQM2RrwkIXNuADrYIHrK1y9vocbffVG8OCiVDB1BF1U; season_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjI5NjA5NywibmFtZSI6IuWBmuS7gOS5iOaipuWRoiIsImdyb3VwIjoxLCJzaWduIjoiMjA2MDJjNDViY2E5YTFmZWIzM2Q5YjRhMjY4NWY0YWQiLCJpYXQiOjE3NDk0Mjk4MzMsImV4cCI6MTc1MjAyMTgzM30.Vd0CYD0TtVHTD3iAobgHwBSCKTV6i9lvTZ6-ujI83CM; Hm_lpvt_8661e9bde42eb87b91ee7b8525cc93eb=1749910225"  # 请替换为实际的cookies
-
-token ='v255c2a8b3e7c0098f'
-ticket = '1cf7637eaef344ff92add3b739463564:18231851515@163.com:kingsoft::mnTKaKUCXj8qduVypwuLHA=='
+# 使用配置文件中的变量
+AUTHORIZATION = JX3_AUTHORIZATION
+COOKIES = JX3_COOKIES
+token = JX3_TOKEN
+ticket = JX3_TICKET
 base_url = 'https://www.jx3api.com'
 async_api = AsyncJX3API(token = token, ticket=ticket, base_url = base_url)
 api = JX3API(token = token, ticket=ticket, base_url = base_url)
@@ -139,6 +139,11 @@ async def handle_role_detail(bot: Bot, event: GroupMessageEvent, state: T_State)
 
     try:
          res = await async_api.role_attribute(server=server_name, name=role_name)
+    except APIError as e:
+        # 专门处理 API 错误
+        print(f"RoleAttribute API错误: code={e.code}, msg={e.msg}")
+        await RoleAttribute.finish(message=f"角色属性查询失败: {e.msg}")
+        return
     except:  # 不推荐，但可以捕获所有异常
         await RoleAttribute.finish(message=f"角色属性接口调用失败")
         return

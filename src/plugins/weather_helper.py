@@ -1,7 +1,7 @@
 '''
 Date: 2025-05-22 18:16:28
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-05-26 10:13:33
+LastEditTime: 2025-06-19 16:00:09
 FilePath: /team-bot/jx3-team-bot/src/plugins/weather_helper.py
 '''
 # src/plugins/weather_helper.py
@@ -16,25 +16,62 @@ import os
 import yaml
 import time
 import jwt
-from src.config  import QWEATHER_API_KEY
+from src.config import (
+    QWEATHER_API_KEY, 
+    QWEATHER_PRIVATE_KEY, 
+    QWEATHER_PROJECT_ID, 
+    QWEATHER_KEY_ID,
+    QWEATHER_CITY_LOOKUP_API,
+    QWEATHER_NOW_API,
+    QWEATHER_3D_API
+)
 
 # 导入定时任务模块
 scheduler = require("nonebot_plugin_apscheduler").scheduler
 
-# 和风天气API配置
-# HEFENG_API_KEY = 'eyJhbGciOiJFZERTQSIsImtpZCI6IlRIUE40QzlSTVkifQ.eyJzdWIiOiI0Rjg3S1EzUDNVIiwiaWF0IjoxNzQ4MjI0MzY3LCJleHAiOjE3NDgzMTA3Njd9.GJfoqUagQ47aCn4NBYq1CP6b0zBk91KPwQJ-Yrtb2ulfH1hcn-iyoQtiQT72R5OUVuCPflMo3VJyN8fa6YTNAw' # 请替换为您的和风天气API密钥
-CITY_LOOKUP_API = "https://mv6hewd2ar.re.qweatherapi.com/geo/v2/city/lookup"
-WEATHER_NOW_API = "https://mv6hewd2ar.re.qweatherapi.com/v7/weather/now"
-WEATHER_3D_API = "https://mv6hewd2ar.re.qweatherapi.com/v7/weather/3d"
+def format_private_key(key_string: str) -> str:
+    """格式化私钥字符串"""
+    if not key_string:
+        return ""
+    
+    # 将\n转换为实际换行符
+    return key_string.replace('\\n', '\n')
 
-# 和风天气API密钥配置
-PRIVATE_KEY = """-----BEGIN PRIVATE KEY-----
-MC4CAQAwBQYDK2VwBCIEIPOy4rha1Hh2S6gje0DRfRjSKpCO/e8nUCZZheHdfjyG
------END PRIVATE KEY-----"""
-PROJECT_ID = "4F87KQ3P3U"
-KEY_ID = "THPN4C9RMY"
+# 使用格式化后的私钥
+QWEATHER_PRIVATE_KEY = format_private_key(os.getenv('QWEATHER_PRIVATE_KEY', ''))
+
+# 和风天气API配置 - 从环境变量获取
+CITY_LOOKUP_API = QWEATHER_CITY_LOOKUP_API
+WEATHER_NOW_API = QWEATHER_NOW_API
+WEATHER_3D_API = QWEATHER_3D_API
+
+# 和风天气API密钥配置 - 从环境变量获取
+PRIVATE_KEY = QWEATHER_PRIVATE_KEY
+PROJECT_ID = QWEATHER_PROJECT_ID
+KEY_ID = QWEATHER_KEY_ID
 # 当前API密钥
 current_api_key = ""
+
+
+
+def validate_config():
+    """验证配置是否完整"""
+    required_vars = [
+        'QWEATHER_PRIVATE_KEY',
+        'QWEATHER_PROJECT_ID', 
+        'QWEATHER_KEY_ID'
+    ]
+    
+    missing_vars = []
+    for var in required_vars:
+        if not os.getenv(var):
+            missing_vars.append(var)
+    
+    if missing_vars:
+        raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+
+# 在应用启动时调用验证
+validate_config()
 
 # 生成JWT令牌
 def generate_api_key() -> str:
