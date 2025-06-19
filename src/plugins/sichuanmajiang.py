@@ -412,6 +412,20 @@ async def show_current_turn(bot: Bot, group_id: int):
     game = games[group_id]
     current_user = game.current_player
     player = game.players[current_user]
+
+    # 检查是否已胡牌
+    if hasattr(game, 'hu_players') and current_user in game.hu_players:
+        # 已胡牌玩家的特殊处理
+        await bot.send_private_msg(
+            user_id=current_user, 
+            message=f"您已胡牌！系统将自动为您摸牌打牌。\n当前手牌：\n{game.format_hand(player['hand'], player['melds'])}"
+        )
+        
+        await bot.send_group_msg(
+            group_id=group_id, 
+            message=f"{MessageSegment.at(current_user)} 已胡牌，系统自动操作中..."
+        )
+        return
     
     # 检查暗杠
     an_gang_tiles = game.can_an_gang(player['hand'])
@@ -491,6 +505,11 @@ async def handle_play_tile(bot: Bot, event: GroupMessageEvent):
     game = games[group_id]
     if user_id != game.current_player:
         return
+
+    # 检查是否已胡牌，已胡牌玩家不能主动出牌
+    if hasattr(game, 'hu_players') and user_id in game.hu_players:
+        await play_tile.finish("您已胡牌，系统会自动为您摸牌打牌！")
+        return
     
     tile_text = event.get_plaintext().split()[1]
     player = game.players[user_id]
@@ -519,12 +538,37 @@ async def handle_play_tile(bot: Bot, event: GroupMessageEvent):
         message=f"{player['nickname']} 出牌：{tile_text}"
     )
     
+    # 私聊回复当前最新牌
+    await bot.send_private_msg(
+        user_id=user_id,
+        message=f"您出牌：{tile_text}\n您的剩余手牌：\n{game.format_hand(player['hand'], player['melds'])}"
+    )
+    
     await check_actions_after_discard(bot, group_id, user_id, tile_text)
 
 async def check_actions_after_discard(bot: Bot, group_id: int, discard_player: int, tile: str):
     """检查出牌后其他玩家的操作"""
     game = games[group_id]
     game.waiting_actions = {}
+
+
+    for other_id in game.player_order:
+        if other_id == discard_player:
+            continue
+            
+        # 检查是否已胡牌，已胡牌玩家不能碰牌
+        if hasattr(game, 'hu_players') and other_id in game.hu_players:
+            # 已胡牌玩家只能胡牌，不能碰牌
+            other_player = game.players[other_id]
+            temp_hand = other_player['hand'] + [tile]
+            if game.check_hu(temp_hand, other_player['melds'], tile, other_player['que']):
+                actions.append('hu')
+                game.waiting_actions[other_id] = actions
+                await bot.send_private_msg(
+                    user_id=other_id,
+                    message=f"有人出牌：{tile}\n🎉 您可以胡牌！请输入【胡】"
+                )
+            continue
     
     # 检查其他玩家是否可以胡、碰、杠
     for user_id in game.player_order:
@@ -574,7 +618,7 @@ async def check_actions_after_discard(bot: Bot, group_id: int, discard_player: i
 
 async def action_timeout(bot: Bot, group_id: int):
     """操作超时处理"""
-    await asyncio.sleep(10)
+    await asyncio.sleep(15)
     if group_id in games:
         game = games[group_id]
         # 清空等待操作，继续游戏
@@ -582,7 +626,7 @@ async def action_timeout(bot: Bot, group_id: int):
         await next_player(bot, group_id)
 
 # 胡牌命令
-hu_pai = on_regex(pattern=r"^胡牌$", priority=5)
+hu_pai = on_regex(pattern=r"^胡$", priority=5)
 @hu_pai.handle()
 async def handle_hu_pai(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
@@ -613,6 +657,11 @@ async def execute_hu(bot: Bot, group_id: int, hu_player: int, hu_type: str, hu_t
     
     # 清空等待操作
     game.waiting_actions = {}
+    
+    # 记录胡牌玩家
+    if not hasattr(game, 'hu_players'):
+        game.hu_players = set()
+    game.hu_players.add(hu_player)
     
     # 记录胡牌
     player['hu_count'] += 1
@@ -653,7 +702,7 @@ async def execute_hu(bot: Bot, group_id: int, hu_player: int, hu_type: str, hu_t
     # 更新积分
     await update_player_score(str(hu_player), str(group_id), 20, 'sichuanmajiang', None, 'win')
     
-    # 血流成河：继续游戏
+    # 血流成河：继续游戏，轮到下家摸牌
     await continue_after_hu(bot, group_id, hu_player)
 
 async def continue_after_hu(bot: Bot, group_id: int, hu_player: int):
@@ -665,30 +714,20 @@ async def continue_after_hu(bot: Bot, group_id: int, hu_player: int):
         await end_game(bot, group_id)
         return
     
-    # 重新发牌给胡牌的玩家
-    game.players[hu_player]['hand'] = []
-    game.players[hu_player]['melds'] = []
-    
-    for _ in range(13):
-        tile = game.draw_tile()
-        if tile:
-            game.players[hu_player]['hand'].append(tile)
-    
-    await bot.send_private_msg(
-        user_id=hu_player,
-        message=f"重新发牌！您的手牌：\n{game.format_hand(game.players[hu_player]['hand'])}"
-    )
-    
     await bot.send_group_msg(
         group_id=group_id,
-        message="血流成河！游戏继续，胡牌玩家重新发牌。"
+        message="血流成河！游戏继续！"
     )
     
-    # 下一个玩家继续
+    # 轮到下家摸牌
+    current_index = game.player_order.index(hu_player)
+    next_index = (current_index + 1) % 4
+    game.current_player = game.player_order[next_index]
+    
     await next_player(bot, group_id)
 
 # 碰牌命令
-peng_pai = on_regex(pattern=r"^碰牌$", priority=5)
+peng_pai = on_regex(pattern=r"^碰$", priority=5)
 @peng_pai.handle()
 async def handle_peng_pai(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
@@ -698,6 +737,12 @@ async def handle_peng_pai(bot: Bot, event: GroupMessageEvent):
         return
     
     game = games[group_id]
+
+    # 检查是否已胡牌，已胡牌玩家不能碰牌
+    if hasattr(game, 'hu_players') and user_id in game.hu_players:
+        await peng_pai.finish("您已胡牌，不能碰牌！")
+        return
+    
     
     if user_id not in game.waiting_actions or 'peng' not in game.waiting_actions[user_id]:
         await peng_pai.finish("您当前不能碰牌！")
@@ -730,7 +775,7 @@ async def handle_peng_pai(bot: Bot, event: GroupMessageEvent):
     await show_current_turn(bot, group_id)
 
 # 杠牌命令
-gang_pai = on_regex(pattern=r"^杠牌$", priority=5)
+gang_pai = on_regex(pattern=r"^杠$", priority=5)
 @gang_pai.handle()
 async def handle_gang_pai(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
@@ -974,13 +1019,109 @@ async def next_player(bot: Bot, group_id: int):
     next_index = (current_index + 1) % 4
     game.current_player = game.player_order[next_index]
     
+    # 检查是否是胡牌玩家
+    player = game.players[game.current_player]
+    if hasattr(game, 'hu_players') and game.current_player in game.hu_players:
+        # 摸牌
+        tile = game.draw_tile()
+        if tile:
+            # 检查是否可以杠牌（暗杠）
+            player['hand'].append(tile)
+            an_gang_tiles = game.can_an_gang(player['hand'])
+            
+            # 检查是否可以胡牌
+            can_hu = game.check_hu(player['hand'], player['melds'], None, player['que'])
+            
+            if can_hu:
+                # 可以胡牌，发送私聊提示
+                await bot.send_private_msg(
+                    user_id=game.current_player,
+                    message=f"您摸到：{tile}\n🎉 您可以胡牌！请输入【胡】"
+                )
+                await bot.send_group_msg(
+                    group_id=group_id,
+                    message=f"{player['nickname']} 摸牌，可以胡牌！"
+                )
+                # 设置超时，如果不操作就自动打出摸到的牌
+                game.timer = asyncio.create_task(auto_discard_for_hu_player(bot, group_id, game.current_player, tile))
+                return
+            elif an_gang_tiles:
+                # 可以暗杠，发送私聊提示
+                await bot.send_private_msg(
+                    user_id=game.current_player,
+                    message=f"您摸到：{tile}\n可暗杠：{' '.join(an_gang_tiles)}\n请输入【暗杠 牌面】或系统将自动打出摸到的牌"
+                )
+                await bot.send_group_msg(
+                    group_id=group_id,
+                    message=f"{player['nickname']} 摸牌，可以暗杠！"
+                )
+                # 设置超时，如果不操作就自动打出摸到的牌
+                game.timer = asyncio.create_task(auto_discard_for_hu_player(bot, group_id, game.current_player, tile))
+                return
+            else:
+                # 不能杠也不能胡，自动打出摸到的牌
+                player['hand'].remove(tile)
+                game.discarded_tiles.append(tile)
+                game.current_discard = tile
+                game.discarded_records.append({
+                    'player_id': game.current_player,
+                    'tile': tile,
+                    'nickname': player['nickname']
+                })
+                
+                await bot.send_private_msg(
+                    user_id=game.current_player,
+                    message=f"您摸到：{tile}，系统自动为您打出"
+                )
+                
+                await bot.send_group_msg(
+                    group_id=group_id,
+                    message=f"{player['nickname']} 摸牌并自动出牌：{tile}（已胡牌）"
+                )
+                
+                await check_actions_after_discard(bot, group_id, game.current_player, tile)
+        return
+    
     # 摸牌
     tile = game.draw_tile()
     if tile:
-        game.players[game.current_player]['hand'].append(tile)
+        # 私聊显示当前手牌（不包含刚摸的）+ 刚摸的牌
+        current_hand = player['hand'].copy()
+        await bot.send_private_msg(
+            user_id=game.current_player,
+            message=f"您摸牌：{tile}\n当前手牌：\n{game.format_hand(current_hand, player['melds'])}\n刚摸的牌：{tile}"
+        )
+        
+        player['hand'].append(tile)
         game.last_draw_player = game.current_player
     
     await show_current_turn(bot, group_id)
+
+async def auto_discard_for_hu_player(bot: Bot, group_id: int, user_id: int, tile: str):
+    """已胡牌玩家的自动打牌处理"""
+    await asyncio.sleep(15)  # 给15秒时间考虑杠或胡
+    
+    if group_id in games and games[group_id].current_player == user_id:
+        game = games[group_id]
+        player = game.players[user_id]
+        
+        # 自动打出摸到的牌
+        if tile in player['hand']:
+            player['hand'].remove(tile)
+            game.discarded_tiles.append(tile)
+            game.current_discard = tile
+            game.discarded_records.append({
+                'player_id': user_id,
+                'tile': tile,
+                'nickname': player['nickname']
+            })
+            
+            await bot.send_group_msg(
+                group_id=group_id,
+                message=f"{player['nickname']} 超时，自动打出摸到的牌：{tile}"
+            )
+            
+            await check_actions_after_discard(bot, group_id, user_id, tile)   
 
 async def end_game(bot: Bot, group_id: int):
     """结束游戏（流局）"""
@@ -1096,7 +1237,7 @@ async def handle_majiang_help(bot: Bot, event: GroupMessageEvent):
 2. 【报名麻将】- 报名参与（需要4人）
 3. 【定缺 万/条/筒】- 选择缺门
 4. 【出牌 牌面】- 出牌
-5. 【胡牌】【碰牌】【杠牌】【暗杠 牌面】【过】- 各种操作
+5. 【胡】【碰】【杠】【暗杠 牌面】【过】- 各种操作
 
 💰 计分方式：
 • 自摸：所有玩家各付1分

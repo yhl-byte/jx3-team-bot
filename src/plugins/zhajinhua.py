@@ -245,6 +245,9 @@ async def show_current_turn(bot: Bot, group_id: int):
     msg += f"轮到玩家 {user_info['nickname']} (编号 {game.players[user_id]['number']}) 操作\n"
     msg += f"当前底池：{game.pot}分，当前下注：{game.current_bet}分\n\n"
 
+    # 获取可开牌的玩家列表（除了当前玩家的其他未弃牌玩家）
+    comparable_players = [pid for pid in game.get_active_players() if pid != user_id]
+
     # 显示可开牌的玩家列表
     if len(comparable_players) > 0 and game.players[user_id]['looked']:
         msg += "📋 可开牌的玩家：\n"

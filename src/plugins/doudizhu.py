@@ -473,12 +473,110 @@ async def show_play_turn(bot: Bot, group_id: int):
         msg += "首次出牌，请选择：【出牌 牌面】\n"
     
     msg += "(30秒内未操作将自动要不起)\n"
-    msg += "\n💡 出牌格式：出牌 ♠3 ♥4 ♣5（用空格分隔）"
+    msg += "\n💡 出牌格式：出牌 ♠3 ♥4 ♣5（用空格分隔）或 出牌 345（简化格式）"
     
     await bot.send_group_msg(group_id=group_id, message=msg)
     
+    # 私聊发送最优解提示
+    if game.last_play:
+        suggestions = get_play_suggestions(game, user_id)
+        if suggestions:
+            await bot.send_private_msg(
+                user_id=user_id,
+                message=f"💡 出牌建议：{suggestions}"
+            )
+    else:
+        # 首次出牌建议
+        suggestions = get_first_play_suggestions(game, user_id)
+        if suggestions:
+            await bot.send_private_msg(
+                user_id=user_id,
+                message=f"💡 出牌建议：{suggestions}"
+            )
+    
     # 设置超时
     game.timer = asyncio.create_task(handle_play_timeout(bot, group_id, user_id, 30))
+
+def get_play_suggestions(game: DoudizhuGame, user_id: int) -> str:
+    """获取出牌建议"""
+    player_cards = game.players[user_id]['cards']
+    last_play_cards = game.last_play['cards']
+    last_play_type = game.last_play['type']
+    
+    suggestions = []
+    
+    # 根据上家牌型寻找能压过的牌
+    if last_play_type['type'] == 'single':
+        # 寻找更大的单牌
+        for card in player_cards:
+            if game.can_beat([card], last_play_cards):
+                suggestions.append(game.format_cards([card]))
+                break
+    elif last_play_type['type'] == 'pair':
+        # 寻找更大的对子
+        card_counts = {}
+        for card in player_cards:
+            rank = card[1]
+            if rank not in card_counts:
+                card_counts[rank] = []
+            card_counts[rank].append(card)
+        
+        for rank, cards in card_counts.items():
+            if len(cards) >= 2:
+                pair = cards[:2]
+                if game.can_beat(pair, last_play_cards):
+                    suggestions.append(game.format_cards(pair))
+                    break
+    
+    # 检查是否有炸弹
+    card_counts = {}
+    for card in player_cards:
+        rank = card[1]
+        if rank not in card_counts:
+            card_counts[rank] = []
+        card_counts[rank].append(card)
+    
+    for rank, cards in card_counts.items():
+        if len(cards) == 4:
+            suggestions.append(f"炸弹: {game.format_cards(cards)}")
+            break
+    
+    # 检查王炸
+    has_big_joker = any(card[1] == '大王' for card in player_cards)
+    has_small_joker = any(card[1] == '小王' for card in player_cards)
+    if has_big_joker and has_small_joker:
+        jokers = [card for card in player_cards if card[1] in ['大王', '小王']]
+        suggestions.append(f"王炸: {game.format_cards(jokers)}")
+    
+    return " | ".join(suggestions[:3])  # 最多显示3个建议
+
+def get_first_play_suggestions(game: DoudizhuGame, user_id: int) -> str:
+    """获取首次出牌建议"""
+    player_cards = game.players[user_id]['cards']
+    suggestions = []
+    
+    # 建议出最小的单牌
+    smallest_card = min(player_cards, key=lambda x: game.get_card_value(x[1]))
+    suggestions.append(f"单牌: {game.format_cards([smallest_card])}")
+    
+    # 寻找顺子
+    values = [game.get_card_value(card[1]) for card in player_cards if game.get_card_value(card[1]) < 15]
+    values = sorted(set(values))
+    
+    for i in range(len(values) - 4):
+        if values[i+4] - values[i] == 4:  # 找到5张连续的牌
+            straight_cards = []
+            for j in range(5):
+                target_value = values[i] + j
+                for card in player_cards:
+                    if game.get_card_value(card[1]) == target_value:
+                        straight_cards.append(card)
+                        break
+            if len(straight_cards) == 5:
+                suggestions.append(f"顺子: {game.format_cards(straight_cards)}")
+                break
+    
+    return " | ".join(suggestions[:2])
 
 # 出牌命令
 play_cards = on_regex(pattern=r"^出牌\s+(.+)$", priority=5)
@@ -540,6 +638,13 @@ async def handle_play_cards(bot: Bot, event: GroupMessageEvent):
     msg += f"剩余手牌：{len(player_cards)}张"
     
     await bot.send_group_msg(group_id=group_id, message=msg)
+
+     # 私聊发送剩余手牌
+    if len(player_cards) > 0:
+        await bot.send_private_msg(
+            user_id=user_id,
+            message=f"您的剩余手牌：\n{game.format_cards(player_cards)}"
+        )
     
     # 检查是否获胜
     if len(player_cards) == 0:
@@ -643,6 +748,28 @@ def parse_cards(card_text: str) -> List[Tuple[str, str]]:
     cards = []
     parts = card_text.split()
     
+    # 检查是否是简化格式（纯数字字母）
+    if len(parts) == 1 and all(c.isalnum() for c in parts[0]):
+        # 简化格式：345678 或 JQKA2
+        simplified_text = parts[0]
+        suits = ['♠', '♥', '♣', '♦']
+        
+        i = 0
+        while i < len(simplified_text):
+            if i < len(simplified_text) - 1 and simplified_text[i:i+2] == '10':
+                # 处理10
+                suit = suits[len(cards) % 4]  # 循环使用花色
+                cards.append((suit, '10'))
+                i += 2
+            else:
+                char = simplified_text[i]
+                if char in '3456789JQKA2':
+                    suit = suits[len(cards) % 4]  # 循环使用花色
+                    cards.append((suit, char))
+                i += 1
+        return cards
+    
+    # 原有的解析逻辑
     for part in parts:
         part = part.strip()
         if not part:
