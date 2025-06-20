@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-17 11:26:04
+LastEditTime: 2025-06-20 13:36:58
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -9,8 +9,8 @@ from nonebot import on_message,on_regex
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment, GroupMessageEvent, Bot, Message,GroupMessageEvent
 from ..utils.permission import require_admin_permission
-from .html_generator import render_game_help
-from .render_image import generate_html_screenshot
+from src.utils.html_generator import render_game_help
+from src.utils.render_context import render_and_cleanup
 from ..utils.index import path_to_base64
 from src.config import STATIC_PATH
 from .database import TeamRecordDB  # 添加数据库导入
@@ -153,13 +153,17 @@ async def handle_game_help(bot: Bot, event: GroupMessageEvent, state: T_State):
     
     # 生成帮助页面内容
     html_content = render_game_help()
-    
     # 转换为图片
-    image_path = await generate_html_screenshot(html_content, 1920)
+    image_path = await render_and_cleanup(html_content, 1920)
     
-    # 发送图片
-    await GameHelp.finish(MessageSegment.image(path_to_base64(image_path)))
+    try:
+        # 发送图片
+        await GameHelp.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
+    
     
     # 清理临时文件
-    os.unlink(image_path)
+    # os.unlink(image_path)
 

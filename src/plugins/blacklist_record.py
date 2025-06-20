@@ -1,7 +1,7 @@
 '''
 Date: 2025-01-20 00:00:00
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-17 10:30:00
+LastEditTime: 2025-06-20 13:36:55
 FilePath: /team-bot/jx3-team-bot/src/plugins/blacklist_record.py
 '''
 # 黑本榜单记录插件
@@ -9,8 +9,8 @@ from nonebot import on_regex, on_command
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment, GroupMessageEvent, Bot, Message
 from .database import TeamRecordDB
-from .html_generator import render_blacklist_html
-from .render_image import generate_html_screenshot
+from src.utils.html_generator import render_blacklist_html
+from src.utils.render_context import render_and_cleanup
 from ..utils.index import path_to_base64
 from ..utils.permission import require_admin_permission
 import os
@@ -164,16 +164,18 @@ async def handle_blacklist_list(bot: Bot, event: GroupMessageEvent, state: T_Sta
         html_content = render_blacklist_html(records)
         
         # 转换为图片
-        image_path = await generate_html_screenshot(html_content, 1200)
+        image_path = await render_and_cleanup(html_content, 1200)
         
     except Exception as e:
         await blacklist_list.finish(f"生成榜单失败：{str(e)}")
 
-    # 发送图片
-    await blacklist_list.finish(MessageSegment.image(path_to_base64(image_path)))
-    
-    # 清理临时文件
-    os.unlink(image_path)
+    try:
+        # 发送图片
+        await blacklist_list.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
+   
 
 
 

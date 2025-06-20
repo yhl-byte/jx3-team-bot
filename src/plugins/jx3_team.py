@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-16 08:58:22
+LastEditTime: 2025-06-20 13:37:08
 FilePath: /team-bot/jx3-team-bot/src/plugins/jx3_team.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -10,8 +10,8 @@ from nonebot.rule import to_me
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.utils import highlight_rich_message
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment, GroupMessageEvent, Bot, Message,GroupMessageEvent
-from .html_generator import render_html,render_team_help,render_game_help
-from .render_image import generate_html_screenshot
+from src.utils.html_generator import render_team_html,render_team_help,render_game_help
+from src.utils.render_context import render_and_cleanup
 from .api import check_default_team_exists, check_enroll, check_member, clear_teams, close_team, del_member, enroll_member, team_info, team_list, create_team, update_team_default, update_team_name,move_member,team_info_by_id,del_member_by_name
 from ..utils.index import find_default_team, find_earliest_team, find_id_by_team_name, format_teams, get_code_by_name, get_info_by_id, path_to_base64, upload_image,render_team_template,generate_team_stats
 from ..utils.jx3_profession import JX3PROFESSION
@@ -715,13 +715,16 @@ async def handle_check_team(bot: Bot, event: GroupMessageEvent, state: T_State):
        "members": memberslist,
     }
     # 生成 HTML 内容
-    html_content = render_html(team_box)
+    html_content = render_team_html(team_box)
     # 转换为图片
-    image_path = await generate_html_screenshot(html_content, 1160)
-    # # 发送图片
-    await CheckTeam.finish(MessageSegment.image(path_to_base64(image_path)))
-    # 清理临时文件
-    os.unlink(image_path)
+    image_path = await render_and_cleanup(html_content, 1160)
+    try:
+        # 发送图片
+        await CheckTeam.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
+    
 
 # # 随机黑本
 RandomBlack = on_regex(pattern=r'^随机黑本(?:\s+(\d+))?$',priority=1)
@@ -764,13 +767,16 @@ async def handle_help(bot: Bot, event: GroupMessageEvent, state: T_State):
     html_content = render_team_help()
 
     # 转换为图片
-    image_path = await generate_html_screenshot(html_content, 960)
+    image_path = await render_and_cleanup(html_content, 960)
+
+    try:
+        # 发送图片
+        await Help.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
     
-    # 发送图片
-    await Help.finish(MessageSegment.image(path_to_base64(image_path)))
     
-    # 清理临时文件
-    os.unlink(image_path)
     
 
 

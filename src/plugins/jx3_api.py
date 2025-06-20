@@ -14,8 +14,8 @@ import json
 from typing import Dict, List, Optional
 from jx3api import JX3API,AsyncJX3API
 from ..utils.index import format_daily_data,format_role_data,path_to_base64,render_team_template,darken_color
-from .html_generator import render_role_attribute,img_to_base64,render_role_cd_record,render_role_luck,render_sandbox_html,render_trade_records_html,render_role_achievement_html,render_diary_achievement_html,render_member_recruit_html,render_auction_html,render_black_book_html
-from .render_image import generate_html_screenshot
+from src.utils.html_generator import render_role_attribute,img_to_base64,render_role_cd_record,render_role_luck,render_sandbox_html,render_trade_records_html,render_role_achievement_html,render_diary_achievement_html,render_member_recruit_html,render_auction_html,render_black_book_html,render_baizhan_html
+from src.utils.render_context import render_and_cleanup
 from ..utils.permission import require_admin_permission
 from jx3api.exception import APIError  # 添加导入
 import os
@@ -198,15 +198,18 @@ async def handle_role_detail(bot: Bot, event: GroupMessageEvent, state: T_State)
             if panel.get("name") not in ["会心", "会心效果", "破防", "无双", "破招", "加速"]
         ]
     }
-    print(res.get('equipList', []))
+    # print(res.get('equipList', []))
     # 生成 HTML 内容
     html_content = render_role_attribute(roleInfo)
     # # 转换为图片
-    image_path = await generate_html_screenshot(html_content, 1200)
-    # # 发送图片
-    await RoleAttribute.finish(MessageSegment.image(path_to_base64(image_path)))
-    # 清理临时文件
-    os.unlink(image_path)
+    image_path = await render_and_cleanup(html_content, 1200)
+
+    try:
+        # 发送图片
+        await RoleAttribute.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
 
 
 # 角色状态
@@ -248,11 +251,14 @@ async def handle_role_team_cd_list(bot: Bot, event: GroupMessageEvent, state: T_
        # 生成 HTML 内容
         html_content = render_role_cd_record(res)
         # # 转换为图片
-        image_path = await generate_html_screenshot(html_content, 1200)
-        # # 发送图片
-        await RoleTeamCdList.finish(MessageSegment.image(path_to_base64(image_path)))
-        # 清理临时文件
-        os.unlink(image_path)
+        image_path = await render_and_cleanup(html_content, 1200)
+
+        try:
+            # 发送图片
+            await RoleTeamCdList.finish(MessageSegment.image(path_to_base64(image_path)))
+        finally:
+            if os.path.exists(image_path):
+                os.remove(image_path)
     else:
         msg = f"{server_name} {role_name} 无副本CD记录"
         await RoleTeamCdList.finish(message=Message(msg))
@@ -334,11 +340,13 @@ async def handle_role_luck_record(bot: Bot, event: GroupMessageEvent, state: T_S
     # 生成 HTML 内容
     html_content = render_role_luck(res)
     # # 转换为图片
-    image_path = await generate_html_screenshot(html_content, 1600)
-    # # 发送图片
-    await RoleLuckRecord.finish(MessageSegment.image(path_to_base64(image_path)))
-    # 清理临时文件
-    os.unlink(image_path)
+    image_path = await render_and_cleanup(html_content, 1600)
+    try:
+        # 发送图片
+        await RoleLuckRecord.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
 
 
 # 角色名片
@@ -356,7 +364,7 @@ async def handle_role_status(bot: Bot, event: GroupMessageEvent, state: T_State)
     except:  # 不推荐，但可以捕获所有异常
         await RoleCard.finish(message=f"名片接口调用失败")
         return
-    print(res.get('showAvatar'))
+    # print(res.get('showAvatar'))
     # res = await async_api.request(endpoint="/data/role/online/status", server= server_name, name=role_name)
     await RoleCard.finish(MessageSegment.image(res.get('showAvatar')))
 
@@ -382,11 +390,13 @@ async def handle_role_status(bot: Bot, event: GroupMessageEvent, state: T_State)
     # 生成 HTML 内容
     html_content = render_sandbox_html(info)
     # # 转换为图片
-    image_path = await generate_html_screenshot(html_content, 1340)
-    # # 发送图片
-    await ServerSand.finish(MessageSegment.image(path_to_base64(image_path)))
-    # 清理临时文件
-    os.unlink(image_path)
+    image_path = await render_and_cleanup(html_content, 1340)
+    try:
+        # 发送图片
+        await ServerSand.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
 
 
 # 物价
@@ -412,16 +422,18 @@ async def handle_trade_records(bot: Bot, event: GroupMessageEvent, state: T_Stat
         await TradeRecords.finish(message=f"物价接口调用失败: {str(e)}")
         return
 
-    print('TradeRecords - 物价----', res)
+    # print('TradeRecords - 物价----', res)
     
     # 生成 HTML 内容
     html_content = render_trade_records_html(res)
     # # 转换为图片
-    image_path = await generate_html_screenshot(html_content, 1920)
-    # # 发送图片
-    await TradeRecords.finish(MessageSegment.image(path_to_base64(image_path)))
-    # 清理临时文件
-    os.unlink(image_path)
+    image_path = await render_and_cleanup(html_content, 1920)
+    try:
+        # 发送图片
+        await TradeRecords.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
 
 # 成就
 RoleAchievement = on_regex(pattern=r'^成就\s+(?:(\S+)\s+)?(\S+)(?:\s+(\S+))?$', priority=1)
@@ -463,11 +475,13 @@ async def handle_role_achievement(bot: Bot, event: GroupMessageEvent, state: T_S
     # 生成 HTML 内容
     html_content = render_role_achievement_html(res)
     # # 转换为图片
-    image_path = await generate_html_screenshot(html_content, 1600)
-    # # 发送图片
-    await RoleAchievement.finish(MessageSegment.image(path_to_base64(image_path)))
-    # 清理临时文件
-    os.unlink(image_path)
+    image_path = await render_and_cleanup(html_content, 1600)
+    try:
+        # 发送图片
+        await RoleAchievement.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
 
 
 # 资历分布
@@ -500,11 +514,13 @@ async def handle_diary_achievement(bot: Bot, event: GroupMessageEvent, state: T_
     # 生成 HTML 内容
     html_content = render_diary_achievement_html(res)
     # # 转换为图片
-    image_path = await generate_html_screenshot(html_content, 1600)
-    # # 发送图片
-    await DiaryAchievement.finish(MessageSegment.image(path_to_base64(image_path)))
-    # 清理临时文件
-    os.unlink(image_path)
+    image_path = await render_and_cleanup(html_content, 1600)
+    try:
+        # 发送图片
+        await DiaryAchievement.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
 
 
 # 招募
@@ -544,11 +560,13 @@ async def handle_member_recruit(bot: Bot, event: GroupMessageEvent, state: T_Sta
     # 生成 HTML 内容
     html_content = render_member_recruit_html(res)
     # # 转换为图片
-    image_path = await generate_html_screenshot(html_content, 1600)
-    # # 发送图片
-    await MemberRecruit.finish(MessageSegment.image(path_to_base64(image_path)))
-    # 清理临时文件
-    os.unlink(image_path)
+    image_path = await render_and_cleanup(html_content, 1600)
+    try:
+        # 发送图片
+        await MemberRecruit.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
 
 
 # 交易行
@@ -654,11 +672,13 @@ async def handle_trading_company(bot: Bot, event: GroupMessageEvent, state: T_St
         "stats_data": stats_data
     })
     # # 转换为图片
-    image_path = await generate_html_screenshot(html_content, 1600)
-    # # 发送图片
-    await TradingCompany.finish(MessageSegment.image(path_to_base64(image_path)))
-    # 清理临时文件
-    os.unlink(image_path)
+    image_path = await render_and_cleanup(html_content, 1600)
+    try:
+        # 发送图片
+        await TradingCompany.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
 
     
 
@@ -904,14 +924,52 @@ async def handle_black_book(bot: Bot, event: GroupMessageEvent, state: T_State):
         html_content = render_black_book_html(html_data)
         print('html_data-----', html_data)
         # 4. 转换为图片
-        image_path = await generate_html_screenshot(html_content, 1920)
+        image_path = await render_and_cleanup(html_content, 1920)
        
     except Exception as e:
         print(f"BlackBook 错误: {type(e).__name__}: {str(e)}")
         await BlackBook.finish(f"副本掉落查询失败: {str(e)}")
 
-    # 5. 发送图片
-    await BlackBook.finish(MessageSegment.image(path_to_base64(image_path)))
+    try:
+        # 发送图片
+        await BlackBook.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
+
+
+# 角色百战
+RoleDHundred = on_regex(pattern=r'^精耐\s+(?:(\S+)\s+)?(\S+)$', priority=1)
+@RoleDHundred.handle()
+@check_plugin_enabled
+async def handle_role_hundred(bot: Bot, event: GroupMessageEvent, state: T_State):
+    matched = state['_matched']
+    # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
+    server_name = matched.group(1) if matched.group(1) else default_server
+    # 第二个捕获组一定是角色名
+    role_name = matched.group(2)
+
+    try:
+        res = await async_api.request(endpoint="/data/role/monster", server= server_name, name=role_name)
+    except APIError as e:
+        # 专门处理 API 错误
+        print(f"MemberRecruit API错误: code={e.code}, msg={e.msg}")
+        await MemberRecruit.finish(message=f"角色百战查询失败: {e.msg}")
+        return
+    except Exception as e:
+        # 处理其他异常
+        print(f"MemberRecruit 其他错误: {type(e).__name__}: {str(e)}")
+        await MemberRecruit.finish(message=f"角色百战接口调用失败: {str(e)}")
+        return
+    print(res)
     
-    # 清理临时文件
-    os.unlink(image_path)
+    # 生成 HTML 内容
+    html_content = render_baizhan_html(res)
+    # # 转换为图片
+    image_path = await render_and_cleanup(html_content, 1200)
+    try:
+        # 发送图片
+        await RoleDHundred.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
