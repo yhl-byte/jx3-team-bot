@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-20 13:36:58
+LastEditTime: 2025-06-20 17:08:39
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -13,12 +13,12 @@ from src.utils.html_generator import render_game_help
 from src.utils.render_context import render_and_cleanup
 from ..utils.index import path_to_base64
 from src.config import STATIC_PATH
-from .database import TeamRecordDB  # 添加数据库导入
+from .database import NianZaiDB  # 添加数据库导入
 import os
 
 
 # 添加数据库实例
-db = TeamRecordDB()
+db = NianZaiDB()
 db.init_db()
 
 

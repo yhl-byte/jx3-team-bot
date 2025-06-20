@@ -2,7 +2,7 @@
 from nonebot import on_regex, on_command
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment, GroupMessageEvent, Bot, Message
-from .database import TeamRecordDB
+from .database import NianZaiDB
 from src.utils.html_generator import render_xuanjing_html
 from src.utils.render_context import render_and_cleanup
 from ..utils.index import path_to_base64
@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import List, Dict, Any
 
 # 初始化数据库
-db = TeamRecordDB()
+db = NianZaiDB()
 db.init_db()  # 确保数据库表已创建
 
 # 玄晶榜单相关命令

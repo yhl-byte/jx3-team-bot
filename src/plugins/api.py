@@ -1,14 +1,14 @@
 '''
 Date: 2025-02-19 15:31:53
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-04-23 09:27:09
+LastEditTime: 2025-06-20 17:08:25
 FilePath: /team-bot/jx3-team-bot/src/plugins/api.py
 '''
-from .database import TeamRecordDB
+from .database import NianZaiDB
 from ..utils.table_position import init_table,find_empyt_positions,find_position_by_duty
 
 # 初始化数据库
-db = TeamRecordDB()
+db = NianZaiDB()
 db.init_db()
 
 # # 创建团队

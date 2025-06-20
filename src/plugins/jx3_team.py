@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-20 13:37:08
+LastEditTime: 2025-06-20 17:08:46
 FilePath: /team-bot/jx3-team-bot/src/plugins/jx3_team.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -18,10 +18,10 @@ from ..utils.jx3_profession import JX3PROFESSION
 from ..utils.permission import require_admin_permission
 from src.config import STATIC_PATH
 import os
-from .database import TeamRecordDB  # 添加数据库导入
+from .database import NianZaiDB  # 添加数据库导入
 
 # 添加数据库实例
-db = TeamRecordDB()
+db = NianZaiDB()
 db.init_db()
 
 # # 用于存储每个群的状态

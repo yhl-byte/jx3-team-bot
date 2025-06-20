@@ -1,7 +1,7 @@
 '''
 Date: 2025-01-XX XX:XX:XX
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-16 15:41:51
+LastEditTime: 2025-06-20 17:08:49
 FilePath: /team-bot/jx3-team-bot/src/plugins/red_packet.py
 '''
 from nonebot import on_regex, get_driver
@@ -11,10 +11,10 @@ import asyncio
 import time
 import json
 from typing import Dict, List, Optional
-from .database import TeamRecordDB
+from .database import NianZaiDB
 from .game_score import get_player_score, update_player_score
 
-db = TeamRecordDB()
+db = NianZaiDB()
 db.init_db()
 
 

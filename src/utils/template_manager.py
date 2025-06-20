@@ -1,3 +1,9 @@
+'''
+Date: 2025-06-20 08:39:22
+LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
+LastEditTime: 2025-06-20 17:05:13
+FilePath: /team-bot/jx3-team-bot/src/utils/template_manager.py
+'''
 from jinja2 import Environment, FileSystemLoader
 from src.config import TEMPLATE_PATH, STATIC_PATH
 from typing import Dict, Any
@@ -14,7 +20,7 @@ class TemplateManager:
     
     def __init__(self):
         if self._env is None:
-            template_dir = TEMPLATE_PATH.parent
+            template_dir = TEMPLATE_PATH
             if not os.path.exists(template_dir):
                 os.makedirs(template_dir)
             

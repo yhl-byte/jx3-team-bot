@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:32:40
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-17 11:25:37
+LastEditTime: 2025-06-20 17:08:19
 FilePath: /team-bot/jx3-team-bot/src/plugins/database.py
 '''
 # src/plugins/chat_plugin/database.py
@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from src.config import DATABASE_PATH
 from typing import List, Dict, Any, Optional
 
-class TeamRecordDB:
+class NianZaiDB:
     def __init__(self):
         self.db_path = DATABASE_PATH
 

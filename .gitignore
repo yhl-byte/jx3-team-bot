@@ -108,6 +108,18 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+data/
+database/
+# 数据库文件
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/*.yaml
+
 # Environments
 .env
 .venv

@@ -1,13 +1,13 @@
 '''
 Date: 2025-02-18 13:33:31
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-20 16:02:47
+LastEditTime: 2025-06-20 17:05:30
 FilePath: /team-bot/jx3-team-bot/src/utils/html_generator.py
 '''
 # src/plugins/chat_plugin/html_generator.py
 from jinja2 import Environment, FileSystemLoader
 from src.utils.template_manager import template_manager
-from src.config import TEMPLATE_PATH, STATIC_PATH
+from src.config import STATIC_PATH
 from datetime import datetime
 import time
 import base64

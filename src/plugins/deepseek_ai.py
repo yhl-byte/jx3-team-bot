@@ -8,10 +8,10 @@ from typing import Dict, List, Optional
 import uuid
 from datetime import datetime
 from src.config import DEEPSEEK_API_KEY, DEEPSEEK_API_URL
-from .database import TeamRecordDB
+from .database import NianZaiDB
 
 # 初始化数据库
-db = TeamRecordDB()
+db = NianZaiDB()
 db.init_db()
 
 # DeepSeek AI对话命令

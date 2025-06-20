@@ -1,19 +1,28 @@
 '''
 Date: 2025-05-30 16:17:02
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-18 15:45:35
+LastEditTime: 2025-06-20 17:16:28
 FilePath: /team-bot/jx3-team-bot/src/plugins/game_score.py
 '''
-from .database import TeamRecordDB
+from .database import NianZaiDB
 from nonebot import on_command,on_regex
 from nonebot.adapters.onebot.v11 import MessageEvent, GroupMessageEvent, Bot, Message, MessageSegment
 
-db = TeamRecordDB()
+db = NianZaiDB()
 db.init_db()  # 确保数据库表已创建
 
 check_score =  on_regex(pattern=r"^查询积分$", priority=5)
 check_ranking =  on_regex(pattern=r"^积分排行$", priority=5)
 check_score_rules = on_regex(pattern=r"^积分说明$", priority=5)
+back_door_score = on_regex(pattern=r"^backdoor.*$", priority=5)
+
+
+ # # 替换为你的实际user_id和group_id
+    # user_id1 = "939225853"  # 例如："123456789"
+    # group_id1 = "1034970817"  # 例如："987654321"
+
+    # # 添加10000积分
+    # await update_player_score(user_id1, group_id1, 10000, "开发者奖励", "开发者", "系统奖励")
 
 async def update_player_score(user_id: str, group_id: str, score_change: int, game_type: str, game_role: str = None, game_result: str = None):
     # 更新玩家总积分
@@ -163,3 +172,93 @@ async def handle_score_rules(bot: Bot, event: GroupMessageEvent):
     
     
     await check_score_rules.finish(rules)
+
+@back_door_score.handle()
+async def handle_back_door_score(bot: Bot, event: GroupMessageEvent):
+    # 检查是否为管理员或特定用户
+    admin_users = ["939225853"]  # 可以添加更多管理员ID
+    if str(event.user_id) not in admin_users:
+        await back_door_score.finish("❌ 权限不足，无法使用此命令")
+        return
+    
+    # 解析命令参数
+    message_text = str(event.message).strip()
+    
+    # 如果只输入 backdoor，显示使用说明
+    if message_text == "backdoor":
+        usage = "🔧 后门命令使用说明：\n"
+        usage += "格式：backdoor <user_id> <group_id> <score>\n"
+        usage += "示例：backdoor 123456789 987654321 1000\n"
+        usage += "参数说明：\n"
+        usage += "- user_id: 目标用户QQ号\n"
+        usage += "- group_id: 群号\n"
+        usage += "- score: 积分变化（正数增加，负数减少）"
+        await back_door_score.finish(usage)
+        return
+    
+    # 解析参数
+    try:
+        parts = message_text.split()
+        if len(parts) != 4 or parts[0] != "backdoor":
+            await back_door_score.finish("❌ 参数格式错误！\n请使用：backdoor <user_id> <group_id> <score>")
+            return
+        
+        target_user_id = parts[1]
+        target_group_id = parts[2]
+        score_change = int(parts[3])
+        
+        # 验证参数
+        if not target_user_id.isdigit() or not target_group_id.isdigit():
+            await back_door_score.finish("❌ user_id 和 group_id 必须为数字")
+            return
+        
+        if abs(score_change) > 100000:  # 限制单次调整的积分范围
+            await back_door_score.finish("❌ 单次积分调整不能超过100000")
+            return
+        
+    except ValueError:
+        await back_door_score.finish("❌ 积分必须为整数")
+        return
+    except Exception as e:
+        await back_door_score.finish(f"❌ 参数解析错误：{str(e)}")
+        return
+    
+    try:
+        # 获取目标用户信息（用于显示昵称）
+        try:
+            user_info = await bot.get_group_member_info(group_id=int(target_group_id), user_id=int(target_user_id))
+            user_nickname = user_info['nickname']
+        except:
+            user_nickname = f"用户{target_user_id}"
+        
+        # 获取调整前的积分
+        before_score_info = await get_player_score(target_user_id, target_group_id)
+        before_score = before_score_info['total_score'] if before_score_info else 0
+        
+        # 更新积分
+        await update_player_score(
+            user_id=target_user_id,
+            group_id=target_group_id,
+            score_change=score_change,
+            game_type="管理员调整",
+            game_role="系统",
+            game_result=f"管理员{event.user_id}手动调整"
+        )
+        
+        # 获取调整后的积分
+        after_score_info = await get_player_score(target_user_id, target_group_id)
+        after_score = after_score_info['total_score'] if after_score_info else score_change
+        
+        # 发送结果消息
+        result_msg = f"✅ 积分调整成功！\n"
+        result_msg += f"目标用户：{user_nickname}({target_user_id})\n"
+        result_msg += f"群组：{target_group_id}\n"
+        result_msg += f"积分变化：{score_change:+d}\n"
+        result_msg += f"调整前积分：{before_score}\n"
+        result_msg += f"调整后积分：{after_score}\n"
+        result_msg += f"操作员：{event.user_id}"
+        
+    except Exception as e:
+        await back_door_score.finish(f"❌ 积分调整失败：{str(e)}")
+
+    await back_door_score.finish(result_msg)

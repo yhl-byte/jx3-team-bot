@@ -19,7 +19,7 @@ from src.utils.render_context import render_and_cleanup
 from ..utils.permission import require_admin_permission
 from jx3api.exception import APIError  # 添加导入
 import os
-from .database import TeamRecordDB  # 添加数据库导入
+from .database import NianZaiDB  # 添加数据库导入
 from src.config import STATIC_PATH,JX3_AUTHORIZATION, JX3_COOKIES, JX3_TOKEN, JX3_TICKET
 
 
@@ -34,7 +34,7 @@ api = JX3API(token = token, ticket=ticket, base_url = base_url)
 default_server = '唯我独尊'
 
 # 初始化数据库
-db = TeamRecordDB()
+db = NianZaiDB()
 db.init_db()
 
 # 插件名称
