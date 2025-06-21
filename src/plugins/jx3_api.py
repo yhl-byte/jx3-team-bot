@@ -1458,3 +1458,91 @@ async def handle_toggle_feature(bot: Bot, event: GroupMessageEvent, state: T_Sta
         await ToggleFeature.finish(message=f"✅ {feature_name}功能已{action}")
     else:
         await ToggleFeature.finish(message=f"❌ {action}{feature_name}功能失败")
+
+
+SerendipityGuide = on_regex(pattern=r'^攻略\s+(\S+)$', priority=1)
+@SerendipityGuide.handle()
+@check_plugin_enabled
+async def handle_serendipity_guide(bot: Bot, event: GroupMessageEvent, state: T_State):
+    # 获取用户输入的奇遇名称（必填）
+    serendipity_name = state['_matched'].group(1)
+    
+    try:
+        # 调用奇遇API获取数据
+        async with aiohttp.ClientSession() as session:
+            # 获取所有完美奇遇数据
+            url = "https://node.jx3box.com/serendipities"
+            params = {
+                "per": 3,  # 获取更多数据以确保完整性
+                "client": "std",
+                "page": 1,
+                "name": serendipity_name
+            }
+            
+            async with session.get(url, params=params) as response:
+                if response.status != 200:
+                    await SerendipityGuide.send(message="❌ 攻略接口调用失败，请稍后重试")
+                    return
+                
+                data = await response.json()
+                
+                if not data or 'list' not in data or not data['list']:
+                    await SerendipityGuide.send(message="❌ 暂无奇遇攻略数据")
+                    return
+                
+                serendipities = data['list']
+                
+                 # 查找所有匹配的奇遇（支持多个结果）
+                found_serendipities = []
+                for item in serendipities:
+                    if serendipity_name in item.get('szName', ''):
+                        found_serendipities.append(item)
+                
+                if not found_serendipities:
+                    # 显示可用的奇遇列表
+                    msg_parts = [f"❌ 未找到包含'{serendipity_name}'的奇遇\n"]
+                    msg_parts.append("📋 可用的完美奇遇（前10个）：\n")
+                    for i, item in enumerate(serendipities[:10], 1):
+                        dw_id = item.get('dwID', '')
+                        sz_name = item.get('szName', '未知')
+                        link = f"https://jx3box.com/adventure/{dw_id}"
+                        msg_parts.append(f"{i}. 🎯 {sz_name}\n   🔗 {link}\n")
+                    
+                    msg_parts.append("💡 使用'攻略 奇遇名称'查看具体攻略")
+                    msg = '\n'.join(msg_parts)
+                    await SerendipityGuide.send(message=Message(msg))
+                    return
+                
+                # 显示所有找到的奇遇信息（支持多个结果）
+                if len(found_serendipities) == 1:
+                    # 单个结果
+                    item = found_serendipities[0]
+                    dw_id = item.get('dwID', '')
+                    sz_name = item.get('szName', '未知奇遇')
+                    link = f"https://jx3box.com/adventure/{dw_id}"
+                    
+                    msg = f"🎯 找到奇遇攻略\n\n" \
+                          f"📖 奇遇名称：{sz_name}\n" \
+                          f"🔗 详细攻略：{link}"
+                else:
+                    # 多个结果
+                    msg_parts = [f"🎯 找到 {len(found_serendipities)} 个相关奇遇：\n"]
+                    for i, item in enumerate(found_serendipities, 1):
+                        dw_id = item.get('dwID', '')
+                        sz_name = item.get('szName', '未知奇遇')
+                        link = f"https://jx3box.com/adventure/{dw_id}"
+                        msg_parts.append(f"{i}. 📖 {sz_name}\n   🔗 {link}\n")
+                    
+                    msg = '\n'.join(msg_parts)
+                
+                await SerendipityGuide.send(message=Message(msg))
+                
+    except aiohttp.ClientError as e:
+        print(f"SerendipityGuide 网络错误: {str(e)}")
+        await SerendipityGuide.finish(message="❌ 网络连接失败，请稍后重试")
+    except json.JSONDecodeError as e:
+        print(f"SerendipityGuide JSON解析错误: {str(e)}")
+        await SerendipityGuide.finish(message="❌ 数据解析失败，请稍后重试")
+    except Exception as e:
+        print(f"SerendipityGuide 其他错误: {type(e).__name__}: {str(e)}")
+        await SerendipityGuide.finish(message="❌ 攻略查询失败，请稍后重试")
