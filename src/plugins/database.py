@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:32:40
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-20 17:08:19
+LastEditTime: 2025-06-21 18:29:09
 FilePath: /team-bot/jx3-team-bot/src/plugins/database.py
 '''
 # src/plugins/chat_plugin/database.py
@@ -10,6 +10,7 @@ import os
 from contextlib import contextmanager
 from src.config import DATABASE_PATH
 from typing import List, Dict, Any, Optional
+from datetime import datetime
 
 class NianZaiDB:
     def __init__(self):
@@ -142,12 +143,37 @@ class NianZaiDB:
             ''')
              # 创建报名格式配置表
             cursor.execute('''
-            CREATE TABLE IF NOT EXISTS signup_format_config (
+            CREATE TABLE IF NOT EXISTS group_config (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 group_id TEXT NOT NULL UNIQUE,
+
+                -- 报名格式配置
                 is_xf_first INTEGER DEFAULT 1,  -- 1: 心法+昵称, 0: 昵称+心法
+
+                -- 服务器配置
+                default_server TEXT DEFAULT NULL,  -- 群组默认服务器
+                
+                -- 功能开关配置
+                enable_gold_price INTEGER DEFAULT 1,  -- 是否启用金价换算
+                enable_daily_query INTEGER DEFAULT 1,  -- 是否启用日常查询
+                enable_role_query INTEGER DEFAULT 1,  -- 是否启用角色查询
+                enable_ai_chat INTEGER DEFAULT 1,     -- 是否启用AI对话
+                -- 其他配置
+                welcome_message TEXT DEFAULT NULL,    -- 入群欢迎消息
+                auto_reply_keywords TEXT DEFAULT NULL, -- 自动回复关键词(JSON格式)
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
+            # 创建金价缓存表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS gold_price_cache (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                server TEXT NOT NULL,
+                date TEXT NOT NULL,
+                wanbaolou_price TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(server, date)
             )
             ''')
              # 创建积分礼包表
@@ -368,7 +394,7 @@ class NianZaiDB:
         Returns:
             True: 心法+昵称格式, False: 昵称+心法格式
         """
-        result = self.fetch_one('signup_format_config', 'group_id = ?', (group_id,))
+        result = self.fetch_one('group_config', 'group_id = ?', (group_id,))
         if result:
             return bool(result['is_xf_first'])
         # 如果没有记录，默认为心法在前
@@ -386,15 +412,15 @@ class NianZaiDB:
             操作是否成功
         """
         try:
-            existing = self.fetch_one('signup_format_config', 'group_id = ?', (group_id,))
+            existing = self.fetch_one('group_config', 'group_id = ?', (group_id,))
             if existing:
                 # 更新现有记录
-                self.update('signup_format_config', 
+                self.update('group_config', 
                            {'is_xf_first': int(is_xf_first), 'updated_at': 'CURRENT_TIMESTAMP'}, 
                            f'group_id = "{group_id}"')
             else:
                 # 插入新记录
-                self.insert('signup_format_config', {
+                self.insert('group_config', {
                     'group_id': group_id,
                     'is_xf_first': int(is_xf_first)
                 })
@@ -410,6 +436,76 @@ class NianZaiDB:
         Returns:
             {group_id: is_xf_first} 格式的字典
         """
-        results = self.fetch_all('signup_format_config')
+        results = self.fetch_all('group_config')
         return {row['group_id']: bool(row['is_xf_first']) for row in results}
-            
+    
+    def get_today_gold_price(self, server: str) -> Optional[Dict[str, Any]]:
+        """
+        获取今日金价缓存
+        """
+        today = datetime.now().strftime('%Y-%m-%d')
+        return self.fetch_one(
+            'gold_price_cache', 
+            'server = ? AND date = ?', 
+            (server, today)
+        )
+
+    def save_gold_price(self, server: str, date: str, wanbaolou_price: str) -> bool:
+        """
+        保存金价到缓存
+        """
+        try:
+            data = {
+                'server': server,
+                'date': date,
+                'wanbaolou_price': wanbaolou_price
+            }
+            # 使用 INSERT OR REPLACE 避免重复
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT OR REPLACE INTO gold_price_cache 
+                    (server, date, wanbaolou_price) 
+                    VALUES (?, ?, ?)
+                ''', (server, date, wanbaolou_price))
+                conn.commit()
+                return True
+        except Exception as e:
+            print(f"保存金价失败: {e}")
+            return False
+
+    def get_group_config(self, group_id: str) -> Optional[Dict[str, Any]]:
+        """
+        获取群组配置
+        """
+        return self.fetch_one('group_config', 'group_id = ?', (group_id,))
+
+    def update_group_config(self, group_id: str, config_data: Dict[str, Any]) -> bool:
+        """
+        更新群组配置
+        """
+        try:
+            # 先检查是否存在
+            existing = self.get_group_config(group_id)
+            if existing:
+                # 更新
+                set_clause = ', '.join([f"{k} = ?" for k in config_data.keys()])
+                sql = f"UPDATE group_config SET {set_clause}, updated_at = CURRENT_TIMESTAMP WHERE group_id = ?"
+                values = list(config_data.values()) + [group_id]
+            else:
+                # 插入
+                config_data['group_id'] = group_id
+                return self.insert('group_config', config_data) > 0
+                
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(sql, values)
+                conn.commit()
+                return True
+        except Exception as e:
+            print(f"更新群组配置失败: {e}")
+            return False
+                
+
+
+

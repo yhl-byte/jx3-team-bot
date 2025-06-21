@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金价查询</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #container {
+            width: 800px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin: 0;
+            font-weight: 600;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header .subtitle {
+            font-size: 16px;
+            margin-top: 10px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+            color: #495057;
+        }
+        
+        td {
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 500;
+        }
+        
+        tr:hover {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        }
+        
+        .price-wanbaolou {
+            color: #20c997;
+            font-weight: 600;
+        }
+        
+        .price-tieba {
+            color: #fd7e14;
+            font-weight: 600;
+        }
+        
+        .price-dd373 {
+            color: #6f42c1;
+            font-weight: 600;
+        }
+        
+        .price-other {
+            color: #6c757d;
+            font-weight: 600;
+        }
+        
+        .price-zero {
+            color: #adb5bd;
+            font-weight: 400;
+        }
+        
+        .footer {
+            text-align: center;
+            color: #6c757d;
+            margin-top: 20px;
+            font-size: 12px;
+            opacity: 0.8;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        /* 让header在渐变背景上显示 */
+        .header-overlay {
+            position: absolute;
+            top: -30px;
+            left: -30px;
+            right: -30px;
+            height: 160px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px 20px 0 0;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="header-overlay"></div>
+        <div class="header">
+            <h1>年崽 · 金价查询</h1>
+            <div class="subtitle">{{ data[0].server if data and data|length > 0 else '唯我独尊' }}</div>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>万宝楼</th>
+                        <th>贴吧</th>
+                        <th>DD373</th>
+                        <th>UU898</th>
+                        <th>5173</th>
+                        <th>7881</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in data %}
+                    <tr>
+                        <td>{{ item.date }}</td>
+                        <td class="{% if item.wanbaolou != '000.00' %}price-wanbaolou{% else %}price-zero{% endif %}">{{ item.wanbaolou }}</td>
+                        <td class="{% if item.tieba != '000.00' %}price-tieba{% else %}price-zero{% endif %}">{{ item.tieba }}</td>
+                        <td class="{% if item.dd373 != '000.00' %}price-dd373{% else %}price-zero{% endif %}">{{ item.dd373 }}</td>
+                        <td class="{% if item.uu898 != '000.00' %}price-other{% else %}price-zero{% endif %}">{{ item.uu898 }}</td>
+                        <td class="{% if item['5173'] != '000.00' %}price-other{% else %}price-zero{% endif %}">{{ item['5173'] }}</td>
+                        <td class="{% if item['7881'] != '000.00' %}price-other{% else %}price-zero{% endif %}">{{ item['7881'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="footer">
+            📢 交易需谨慎 <br>
+            {{ current_time }}
+        </div>
+    </div>
+</body>
+</html>

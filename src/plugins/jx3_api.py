@@ -14,7 +14,7 @@ import json
 from typing import Dict, List, Optional
 from jx3api import JX3API,AsyncJX3API
 from ..utils.index import format_daily_data,format_role_data,path_to_base64,render_team_template,darken_color
-from src.utils.html_generator import render_role_attribute,img_to_base64,render_role_cd_record,render_role_luck,render_sandbox_html,render_trade_records_html,render_role_achievement_html,render_diary_achievement_html,render_member_recruit_html,render_auction_html,render_black_book_html,render_baizhan_html
+from src.utils.html_generator import render_role_attribute,img_to_base64,render_role_cd_record,render_role_luck,render_sandbox_html,render_trade_records_html,render_role_achievement_html,render_diary_achievement_html,render_member_recruit_html,render_auction_html,render_black_book_html,render_baizhan_html,render_gold_price_html,render_mountain_pass_html,render_daily_prediction_html
 from src.utils.render_context import render_and_cleanup
 from ..utils.permission import require_admin_permission
 from jx3api.exception import APIError  # 添加导入
@@ -97,6 +97,137 @@ async def handle_server_status(bot: Bot, event: GroupMessageEvent, state: T_Stat
     print(res)
     msg = f"{server_name} {'开服了' if res['status'] == 1 else '维护中'}"
     await OpenServer.finish(message=Message(msg))
+
+# 公告
+NoticeNew = on_regex(pattern=r'^公告$', priority=1)
+@NoticeNew.handle()
+@check_plugin_enabled
+async def handle_notice_new(bot: Bot, event: GroupMessageEvent, state: T_State):
+    try:
+        res = await async_api.request(endpoint="/data/news/announce", limit=1)
+    except APIError as e:
+        # 专门处理 API 错误
+        print(f"NoticeNew API错误: code={e.code}, msg={e.msg}")
+        await NoticeNew.finish(message=f"公告查询失败: {e.msg}")
+        return
+    except Exception as e:
+        # 处理其他异常
+        print(f"NoticeNew 其他错误: {type(e).__name__}: {str(e)}")
+        await NoticeNew.finish(message=f"公告接口调用失败: {str(e)}")
+        return
+    print('公告------',res)
+    # 检查返回数据是否为空
+    if not res or len(res) == 0:
+        await NoticeNew.finish(message="暂无最新公告")
+        return
+    
+    # 获取最新公告信息
+    latest_notice = res[0]
+    # 组织返回消息
+    msg = f"📢 最新公告\n" \
+          f"标题：{latest_notice['title']}\n" \
+          f"分类：{latest_notice['class']}\n" \
+          f"日期：{latest_notice['date']}\n" \
+          f"详情：{latest_notice['url']}"
+    await NoticeNew.finish(message=Message(msg))
+
+# 资讯
+NewsAll = on_regex(pattern=r'^资讯(?:\s+(\d+))?$', priority=1)
+@NewsAll.handle()
+@check_plugin_enabled
+async def handle_news_all(bot: Bot, event: GroupMessageEvent, state: T_State):
+    # 获取用户输入的数量参数
+    limit_str = state['_matched'].group(1) if state['_matched'].group(1) else None
+    
+    # 设置默认值和范围限制
+    if limit_str:
+        try:
+            limit = int(limit_str)
+            # 限制范围在1-50之间
+            if limit < 1:
+                limit = 1
+            elif limit > 50:
+                limit = 50
+        except ValueError:
+            limit = 3  # 如果转换失败，使用默认值
+    else:
+        limit = 3  # 默认值
+    
+    try:
+        res = await async_api.request(endpoint="/data/news/allnews", limit=limit)
+    except APIError as e:
+        # 专门处理 API 错误
+        print(f"NewsAll API错误: code={e.code}, msg={e.msg}")
+        await NewsAll.finish(message=f"资讯查询失败: {e.msg}")
+        return
+    except Exception as e:
+        # 处理其他异常
+        print(f"NewsAll 其他错误: {type(e).__name__}: {str(e)}")
+        await NewsAll.finish(message=f"资讯接口调用失败: {str(e)}")
+        return
+    print('资讯------',res)
+    # 检查返回数据是否为空
+    if not res or len(res) == 0:
+        await NewsAll.finish(message="暂无最新资讯")
+        return
+    
+    # 组织资讯消息
+    msg_parts = [f"📰 最新资讯（最新{limit}条）："]
+    
+    for news in res:
+        title = news.get('title', '未知标题')
+        date = news.get('date', '未知日期')
+        class_name = news.get('class', '未知分类')
+        url = news.get('url', '').strip(' `')
+        
+        msg_parts.append(f"\n🔸 {title}")
+        msg_parts.append(f"   📅 日期：{date}")
+        msg_parts.append(f"   🏷️ 分类：{class_name}")
+        if url:
+            msg_parts.append(f"   🔗 详情链接：{url}")
+    
+    message = '\n'.join(msg_parts)
+    await NewsAll.finish(message=Message(message))
+
+# 技改
+TechUpgrade = on_regex(pattern=r'^技改$', priority=1)
+@TechUpgrade.handle()
+@check_plugin_enabled
+async def handle_tech_upgrade(bot: Bot, event: GroupMessageEvent, state: T_State):
+    try:
+        res = await async_api.request(endpoint="/data/skills/records")
+    except APIError as e:
+        # 专门处理 API 错误
+        print(f"TechUpgrade API错误: code={e.code}, msg={e.msg}")
+        await TechUpgrade.finish(message=f"技改查询失败: {e.msg}")
+        return
+    except Exception as e:
+        # 处理其他异常
+        print(f"TechUpgrade 其他错误: {type(e).__name__}: {str(e)}")
+        await TechUpgrade.finish(message=f"技改接口调用失败: {str(e)}")
+        return
+    print('技改------',res)
+    # 检查返回数据是否为空
+    if res:
+        # 只取最新5条记录
+        latest_records = res[:3]
+        # 组织技改公告消息
+        msg_parts = ["📋 最新技改公告："]
+        
+        for announcement in latest_records:
+            title = announcement.get('title', '未知标题')
+            time = announcement.get('time', '未知时间')
+            url = announcement.get('url', '').strip(' `')
+            
+            msg_parts.append(f"\n🔸 {title}")
+            msg_parts.append(f"   📅 发布时间：{time}")
+            if url:
+                msg_parts.append(f"   🔗 详情链接：{url}")
+        
+        message = '\n'.join(msg_parts)
+        await TechUpgrade.finish(message=message)
+    else:
+        await TechUpgrade.finish(message="暂无技改公告信息")
 
 # 查看日常
 CheckDaily = on_regex(pattern=r'^日常(?:\s+(\S+))?$', priority=1)
@@ -953,13 +1084,13 @@ async def handle_role_hundred(bot: Bot, event: GroupMessageEvent, state: T_State
         res = await async_api.request(endpoint="/data/role/monster", server= server_name, name=role_name)
     except APIError as e:
         # 专门处理 API 错误
-        print(f"MemberRecruit API错误: code={e.code}, msg={e.msg}")
-        await MemberRecruit.finish(message=f"角色百战查询失败: {e.msg}")
+        print(f"RoleDHundred API错误: code={e.code}, msg={e.msg}")
+        await RoleDHundred.finish(message=f"角色百战查询失败: {e.msg}")
         return
     except Exception as e:
         # 处理其他异常
-        print(f"MemberRecruit 其他错误: {type(e).__name__}: {str(e)}")
-        await MemberRecruit.finish(message=f"角色百战接口调用失败: {str(e)}")
+        print(f"RoleDHundred 其他错误: {type(e).__name__}: {str(e)}")
+        await RoleDHundred.finish(message=f"角色百战接口调用失败: {str(e)}")
         return
     print(res)
     
@@ -973,3 +1104,357 @@ async def handle_role_hundred(bot: Bot, event: GroupMessageEvent, state: T_State
     finally:
         if os.path.exists(image_path):
             os.remove(image_path)
+
+# 金价
+GoldPrice = on_regex(pattern=r'^金价(?:\s+(\S+))?$', priority=1)
+@GoldPrice.handle()
+@check_plugin_enabled
+async def handle_gold_price(bot: Bot, event: GroupMessageEvent, state: T_State):
+    # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
+    server_name = state['_matched'].group(1) if state['_matched'].group(1) else default_server
+
+    try:
+        res = await async_api.request(endpoint="/data/trade/demon", server= server_name)
+    except APIError as e:
+        # 专门处理 API 错误
+        print(f"GoldPrice API错误: code={e.code}, msg={e.msg}")
+        await GoldPrice.finish(message=f"金价查询失败: {e.msg}")
+        return
+    except Exception as e:
+        # 处理其他异常
+        print(f"GoldPrice 其他错误: {type(e).__name__}: {str(e)}")
+        await GoldPrice.finish(message=f"金价接口调用失败: {str(e)}")
+        return
+    print('金价------',res)
+    
+    # 生成 HTML 内容
+    html_content = render_gold_price_html(res)
+    # # 转换为图片
+    image_path = await render_and_cleanup(html_content, 820)
+    try:
+        # 发送图片
+        await GoldPrice.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
+
+
+# 关隘
+MountainPass = on_regex(pattern=r'^关隘$', priority=1)
+@MountainPass.handle()
+@check_plugin_enabled
+async def handle_mountain_pass(bot: Bot, event: GroupMessageEvent, state: T_State):
+
+    try:
+        res = await async_api.request(endpoint="/data/server/leader")
+    except APIError as e:
+        # 专门处理 API 错误
+        print(f"MountainPass API错误: code={e.code}, msg={e.msg}")
+        await MountainPass.finish(message=f"关隘查询失败: {e.msg}")
+        return
+    except Exception as e:
+        # 处理其他异常
+        print(f"MountainPass 其他错误: {type(e).__name__}: {str(e)}")
+        await MountainPass.finish(message=f"关隘接口调用失败: {str(e)}")
+        return
+    print('关隘------',res)
+    
+    # 生成 HTML 内容
+    html_content = render_mountain_pass_html(res)
+    # # 转换为图片
+    image_path = await render_and_cleanup(html_content, 800)
+    try:
+        # 发送图片
+        await MountainPass.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
+
+# 日常预测
+DailyPrediction = on_regex(pattern=r'^日常预测$', priority=1)
+@DailyPrediction.handle()
+@check_plugin_enabled
+async def handle_daily_prediction(bot: Bot, event: GroupMessageEvent, state: T_State):
+
+    try:
+        res = await async_api.request(endpoint="/data/active/list/calendar", num=15)
+    except APIError as e:
+        # 专门处理 API 错误
+        print(f"DailyPrediction API错误: code={e.code}, msg={e.msg}")
+        await DailyPrediction.finish(message=f"日常预测查询失败: {e.msg}")
+        return
+    except Exception as e:
+        # 处理其他异常
+        print(f"DailyPrediction 其他错误: {type(e).__name__}: {str(e)}")
+        await DailyPrediction.finish(message=f"日常预测接口调用失败: {str(e)}")
+        return
+    print('日常预测------',res)
+    
+    # 生成 HTML 内容
+    html_content = render_daily_prediction_html(res)
+    # # 转换为图片
+    image_path = await render_and_cleanup(html_content, 1400)
+    try:
+        # 发送图片
+        await DailyPrediction.finish(MessageSegment.image(path_to_base64(image_path)))
+    finally:
+        if os.path.exists(image_path):
+            os.remove(image_path)
+
+
+# 金价换算
+GoldPriceRate = on_regex(pattern=r'^(\d+(?:\.\d+)?)[jzJZ](?:(\d+(?:\.\d+)?)[jzJZ]?)?$', priority=1)
+@GoldPriceRate.handle()
+@check_plugin_enabled
+async def handle_gold_price(bot: Bot, event: GroupMessageEvent, state: T_State):
+    from datetime import datetime
+    
+    # 检查群组是否启用金价换算功能
+    group_id = str(event.group_id)
+    group_config = db.get_group_config(group_id)
+    
+    if group_config and not group_config.get('enable_gold_price', 1):
+        return
+    
+    # 获取完整的匹配字符串进行重新解析
+    full_match = state['_matched'].group(0)
+    
+    # 重新解析输入格式
+    import re
+    
+    # 支持的格式：200j, 3z, 2z3, 2z3j, 1.5z, 2.5z1.2j 等
+    pattern = r'^(\d+(?:\.\d+)?)[jzJZ](?:(\d+(?:\.\d+)?)([jzJZ]?))?$'
+    match = re.match(pattern, full_match)
+    
+    if not match:
+        await GoldPriceRate.finish(message="❌ 不支持的金币格式，请使用如：200j、1000j、3z、2z3 等格式")
+        return
+    
+    first_num = match.group(1)  # 第一部分数字
+    first_unit = full_match[len(first_num)].lower()  # 第一部分单位
+    second_num = match.group(2) if match.group(2) else None  # 第二部分数字
+    second_unit = match.group(3).lower() if match.group(3) else 'j'  # 第二部分单位，默认为j
+    
+    # 解析用户输入的金币数量
+    try:
+        total_gold = 0
+        
+        # 处理第一部分
+        if first_unit == 'j':
+            total_gold += float(first_num)
+        elif first_unit == 'z':
+            total_gold += float(first_num) * 10000
+        else:
+            await GoldPriceRate.finish(message="❌ 不支持的金币格式，请使用如：200j、1000j、3z、2z3 等格式")
+            return
+        
+        # 处理第二部分（如果存在）
+        if second_num:
+            if second_unit == 'j':
+                total_gold += float(second_num)
+            elif second_unit == 'z':
+                total_gold += float(second_num) * 10000
+            else:
+                await GoldPriceRate.finish(message="❌ 不支持的金币格式，请使用如：200j、1000j、3z、2z3 等格式")
+                return
+                
+    except ValueError:
+        await GoldPriceRate.finish(message="❌ 金币数量格式错误")
+        return
+    
+    # 获取当前群默认服务器
+    server_name = group_config.get('default_server') if group_config else None
+    if not server_name:
+        server_name = default_server
+    
+    # 获取今日日期
+    today = datetime.now().strftime('%Y-%m-%d')
+    
+    # 先尝试从缓存获取金价
+    cached_price = db.get_today_gold_price(server_name)
+    
+    if cached_price:
+        # 使用缓存的金价
+        wanbaolou_price = cached_price['wanbaolou_price']
+        date_info = cached_price['date']
+        cache_status = "📦 (缓存)"
+        print(f"使用缓存金价: {server_name} - {wanbaolou_price}")
+    else:
+        # 缓存中没有，调用接口获取
+        try:
+            res = await async_api.request(endpoint="/data/trade/demon", server=server_name)
+        except APIError as e:
+            print(f"GoldPriceRate API错误: code={e.code}, msg={e.msg}")
+            await GoldPriceRate.finish(message=f"金价查询失败: {e.msg}")
+            return
+        except Exception as e:
+            print(f"GoldPriceRate 其他错误: {type(e).__name__}: {str(e)}")
+            await GoldPriceRate.finish(message=f"金价接口调用失败: {str(e)}")
+            return
+        
+        # 检查返回数据并获取今日万宝楼金价
+        if not res or len(res) == 0:
+            await GoldPriceRate.finish(message="❌ 获取万宝楼金价失败")
+            return
+        
+        try:
+            # 获取最新日期的数据（数组第一个元素）
+            latest_data = res[0]
+            wanbaolou_price = latest_data.get('wanbaolou', '0')
+            date_info = latest_data.get('date', today)
+            cache_status = "🔄 (实时)"
+            
+            if wanbaolou_price == '000.00' or wanbaolou_price == '0':
+                await GoldPriceRate.finish(message="❌ 今日万宝楼暂无金价数据")
+                return
+            
+            # 保存到缓存
+            if db.save_gold_price(server_name, date_info, wanbaolou_price):
+                print(f"金价已缓存: {server_name} - {date_info} - {wanbaolou_price}")
+            
+        except (ValueError, KeyError, IndexError) as e:
+            await GoldPriceRate.finish(message="❌ 金价数据解析失败")
+            return
+    
+    try:
+        gold_rate = float(wanbaolou_price)
+        
+        # 计算人民币价值
+        rmb_value = total_gold / gold_rate
+        
+        # 格式化显示
+        def format_gold(gold):
+            if gold >= 10000:
+                z_part = int(gold // 10000)
+                j_part = int(gold % 10000)
+                if j_part > 0:
+                    return f"{z_part}z{j_part}"
+                else:
+                    return f"{z_part}z"
+            else:
+                return f"{int(gold)}j"
+        
+        formatted_gold = format_gold(total_gold)
+        
+        # 组织返回消息
+        msg = f"💰 金价换算结果 {cache_status}\n" \
+              f"服务器：{server_name}\n" \
+              f"日期：{date_info}\n" \
+              f"游戏金币：{formatted_gold}\n" \
+              f"万宝楼金价：1元 = {gold_rate}j\n" \
+              f"等值人民币：¥{rmb_value:.2f}元"
+        
+        await GoldPriceRate.finish(message=Message(msg))
+        
+    except (ValueError, KeyError) as e:
+        await GoldPriceRate.finish(message="❌ 金价数据解析失败")
+        return
+
+# 设置默认服务器
+SetDefaultServer = on_regex(pattern=r'^绑定服务器\s+(\S+)$', priority=1)
+@SetDefaultServer.handle()
+@check_plugin_enabled
+async def handle_set_default_server(bot: Bot, event: GroupMessageEvent, state: T_State):
+    # 检查是否为管理员（可选，根据需要添加权限检查）
+    group_id = str(event.group_id)
+    user_id = str(event.user_id)
+    
+    # 获取服务器名称
+    match = state['_matched']
+    server_name = match.group(1)
+    
+    # 验证服务器名称是否有效（可选，根据需要添加服务器列表验证）
+    # 这里可以添加服务器名称验证逻辑
+    
+    # 更新群组配置
+    if db.update_group_config(group_id, {'default_server': server_name}):
+        await SetDefaultServer.finish(message=f"✅ 群组默认服务器已设置为：{server_name}")
+    else:
+        await SetDefaultServer.finish(message="❌ 设置默认服务器失败")
+
+# 查看群组配置
+ViewGroupConfig = on_regex(pattern=r'^查看群组配置$', priority=1)
+@ViewGroupConfig.handle()
+@check_plugin_enabled
+async def handle_view_group_config(bot: Bot, event: GroupMessageEvent, state: T_State):
+    group_id = str(event.group_id)
+    config = db.get_group_config(group_id)
+    
+    if config:
+        default_server = config.get('default_server', '未设置')
+        enable_gold_price = "开启" if config.get('enable_gold_price', 1) else "关闭"
+        enable_daily_query = "开启" if config.get('enable_daily_query', 1) else "关闭"
+        enable_role_query = "开启" if config.get('enable_role_query', 1) else "关闭"
+        enable_ai_chat = "开启" if config.get('enable_ai_chat', 1) else "关闭"
+        
+        msg = f"📋 群组配置信息\n" \
+              f"默认服务器：{default_server}\n" \
+              f"金价换算：{enable_gold_price}\n" \
+              f"日常查询：{enable_daily_query}\n" \
+              f"角色查询：{enable_role_query}\n" \
+              f"AI对话：{enable_ai_chat}"
+    else:
+        msg = "📋 群组配置信息\n" \
+              "默认服务器：未设置\n" \
+              "金价换算：开启\n" \
+              "日常查询：开启\n" \
+              "角色查询：开启\n" \
+              "AI对话：开启"
+    
+    await ViewGroupConfig.finish(message=msg)
+
+
+# 金价换算开关
+ToggleGoldPrice = on_regex(pattern=r'^金价换算\s+(开启|关闭)$', priority=1)
+@ToggleGoldPrice.handle()
+@check_plugin_enabled
+async def handle_toggle_gold_price(bot: Bot, event: GroupMessageEvent, state: T_State):
+    # 检查是否为管理员（可选，根据需要添加权限检查）
+    group_id = str(event.group_id)
+    user_id = str(event.user_id)
+    
+    # 获取操作类型
+    match = state['_matched']
+    action = match.group(1)
+    
+    enable_value = 1 if action == '开启' else 0
+    
+    # 更新群组配置
+    if db.update_group_config(group_id, {'enable_gold_price': enable_value}):
+        await ToggleGoldPrice.finish(message=f"✅ 金价换算功能已{action}")
+    else:
+        await ToggleGoldPrice.finish(message=f"❌ {action}金价换算功能失败")
+
+# 功能开关通用命令
+ToggleFeature = on_regex(pattern=r'^(日常查询|角色查询|AI对话)\s+(开启|关闭)$', priority=1)
+@ToggleFeature.handle()
+@check_plugin_enabled
+async def handle_toggle_feature(bot: Bot, event: GroupMessageEvent, state: T_State):
+    # 检查是否为管理员（可选，根据需要添加权限检查）
+    group_id = str(event.group_id)
+    user_id = str(event.user_id)
+    
+    # 获取功能名称和操作类型
+    match = state['_matched']
+    feature_name = match.group(1)
+    action = match.group(2)
+    
+    # 映射功能名称到数据库字段
+    feature_mapping = {
+        '日常查询': 'enable_daily_query',
+        '角色查询': 'enable_role_query',
+        'AI对话': 'enable_ai_chat'
+    }
+    
+    if feature_name not in feature_mapping:
+        await ToggleFeature.finish(message="❌ 不支持的功能名称")
+        return
+    
+    db_field = feature_mapping[feature_name]
+    enable_value = 1 if action == '开启' else 0
+    
+    # 更新群组配置
+    if db.update_group_config(group_id, {db_field: enable_value}):
+        await ToggleFeature.finish(message=f"✅ {feature_name}功能已{action}")
+    else:
+        await ToggleFeature.finish(message=f"❌ {action}{feature_name}功能失败")

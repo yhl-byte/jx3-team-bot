@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:33:31
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-20 17:05:30
+LastEditTime: 2025-06-21 16:26:54
 FilePath: /team-bot/jx3-team-bot/src/utils/html_generator.py
 '''
 # src/plugins/chat_plugin/html_generator.py
@@ -325,4 +325,35 @@ def render_baizhan_html(data):
         **data,
         current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         get_color_class=lambda n: f'color-{n}' # 将函数传给模板
+    )
+
+def render_gold_price_html(data):
+    """渲染金价查询HTML"""
+    print('金价数据', data)
+    return render_html(
+        "gold_price_template.html",
+        data=data,
+        current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    )
+
+def render_mountain_pass_html(data):
+    """渲染关隘BOSS HTML"""
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    current_timestamp = int(time.time())
+    
+    return render_html(
+        "mountain_pass_template.html",
+        data=data,
+        current_time=current_time,
+        current_timestamp=current_timestamp
+    )
+
+def render_daily_prediction_html(data):
+    """渲染关隘BOSS HTML"""
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    
+    return render_html(
+        "daily_prediction_template.html",
+        data=data,
+        current_time=current_time,
     )
