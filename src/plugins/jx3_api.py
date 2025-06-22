@@ -6,7 +6,7 @@ import token
 import asyncio
 from datetime import datetime
 from warnings import catch_warnings
-from nonebot import on_regex, on_command
+from nonebot import on_regex, require, get_driver
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import MessageEvent,MessageSegment, GroupMessageEvent, Bot, Message
 import aiohttp
@@ -32,6 +32,12 @@ base_url = 'https://www.jx3api.com'
 async_api = AsyncJX3API(token = token, ticket=ticket, base_url = base_url)
 api = JX3API(token = token, ticket=ticket, base_url = base_url)
 default_server = '唯我独尊'
+
+# 导入定时任务模块
+scheduler = require("nonebot_plugin_apscheduler").scheduler
+
+# 全局变量存储上次获取的沙盘记录
+last_sandbox_data = {}
 
 # 初始化数据库
 db = NianZaiDB()
@@ -1546,3 +1552,476 @@ async def handle_serendipity_guide(bot: Bot, event: GroupMessageEvent, state: T_
     except Exception as e:
         print(f"SerendipityGuide 其他错误: {type(e).__name__}: {str(e)}")
         await SerendipityGuide.finish(message="❌ 攻略查询失败，请稍后重试")
+
+# 宏查询命令
+MacroGuide = on_regex(r"^宏\s+(\S+)$", priority=5)
+@MacroGuide.handle()
+@check_plugin_enabled
+async def handle_macro_guide(bot: Bot, event: GroupMessageEvent, state: T_State):
+    """处理宏查询命令"""
+    xinfa_name = state['_matched'].group(1)
+    try:
+        # 构建API请求URL
+        import urllib.parse
+        encoded_xinfa = urllib.parse.quote(xinfa_name)
+        api_url = f"https://cms.jx3box.com/api/cms/posts?type=macro&per=5&page=1&order=update&client=std&search={encoded_xinfa}"
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(api_url) as response:
+                if response.status != 200:
+                    await MacroGuide.finish(message="❌ API请求失败，请稍后重试")
+                    return
+                
+                data = await response.json()
+                
+                # 检查返回数据格式
+                if not isinstance(data, dict) or 'data' not in data:
+                    await MacroGuide.finish(message="❌ 数据格式错误，请稍后重试")
+                    return
+                
+                macro_list = data['data'].get('list', [])
+                
+                if not macro_list:
+                    msg = f"❌ 未找到'{xinfa_name}'相关的宏\n\n" \
+                          f"💡 请尝试使用更准确的心法名称，如：冰心、气纯、剑纯等"
+                    await MacroGuide.send(message=Message(msg))
+                    return
+                
+                # 显示找到的宏信息
+                if len(macro_list) == 1:
+                    # 单个结果
+                    item = macro_list[0]
+                    macro_id = item.get('ID', '')
+                    title = item.get('post_title', '未知标题')
+                    author = item.get('author', '未知作者')
+                    link = f"https://www.jx3box.com/macro/{macro_id}"
+                    
+                    msg = f"📋 找到宏攻略\n\n" \
+                          f"📖 标题：{title}\n" \
+                          f"👤 作者：{author}\n" \
+                          f"🔗 详细内容：{link}"
+                else:
+                    # 多个结果
+                    msg_parts = [f"📋 找到 {len(macro_list)} 个'{xinfa_name}'相关宏：\n"]
+                    for i, item in enumerate(macro_list, 1):
+                        macro_id = item.get('ID', '')
+                        title = item.get('post_title', '未知标题')
+                        author = item.get('author', '未知作者')
+                        link = f"https://www.jx3box.com/macro/{macro_id}"
+                        msg_parts.append(f"{i}. 📖 {title}\n   👤 作者：{author}\n   🔗 {link}\n")
+                    
+                    msg = '\n'.join(msg_parts)
+                
+                await MacroGuide.send(message=Message(msg))
+                
+    except aiohttp.ClientError as e:
+        print(f"MacroGuide 网络错误: {str(e)}")
+        await MacroGuide.finish(message="❌ 网络连接失败，请稍后重试")
+    except json.JSONDecodeError as e:
+        print(f"MacroGuide JSON解析错误: {str(e)}")
+        await MacroGuide.finish(message="❌ 数据解析失败，请稍后重试")
+    except Exception as e:
+        print(f"MacroGuide 其他错误: {type(e).__name__}: {str(e)}")
+        await MacroGuide.finish(message="❌ 宏查询失败，请稍后重试")
+
+
+# 配装查询命令
+EquipmentGuide = on_regex(r"^配装\s+([^\s]+)(?:\s+(pve|pvp|PvE|PvP))?$", priority=5)
+@EquipmentGuide.handle()
+@check_plugin_enabled
+async def handle_equipment_guide(bot: Bot, event: GroupMessageEvent, state: T_State):
+    """处理配装查询命令"""
+    xinfa_name = state['_matched'].group(1)
+    tag_input = state['_matched'].group(2) if state['_matched'].group(2) else ""  # 默认PvE
+    try:
+        # 标准化标签格式
+        if tag_input.lower() == "pve":
+            tag = "PvE"
+        elif tag_input.lower() == "pvp":
+            tag = "PvP"
+        else:
+            tag = ""  # 默认值
+        
+        # 构建API请求URL
+        import urllib.parse
+        encoded_xinfa = urllib.parse.quote(xinfa_name)
+        api_url = f"https://cms.jx3box.com/api/cms/app/pz?per=10&page=1&search={encoded_xinfa}&tags={tag}&client=std&global_level=130&star=1"
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(api_url) as response:
+                if response.status != 200:
+                    await EquipmentGuide.finish(message="❌ API请求失败，请稍后重试")
+                    return
+                
+                data = await response.json()
+                
+                # 检查返回数据格式
+                if not isinstance(data, dict) or 'data' not in data:
+                    await EquipmentGuide.finish(message="❌ 数据格式错误，请稍后重试")
+                    return
+                
+                equipment_list = data['data'].get('list', [])
+                
+                if not equipment_list:
+                    msg = f"❌ 未找到'{xinfa_name}'的{tag}配装\n\n" \
+                          f"💡 请尝试使用更准确的心法名称，如：冰心、气纯、剑纯等\n" \
+                          f"🏷️ 或尝试切换标签：配装 {xinfa_name} {'PvP' if tag == 'PvE' else 'PvE'}"
+                    await EquipmentGuide.send(message=Message(msg))
+                    return
+                
+                # 显示找到的配装信息
+                if len(equipment_list) == 1:
+                    # 单个结果
+                    item = equipment_list[0]
+                    equipment_id = item.get('id', '')
+                    title = item.get('title', '未知标题')
+                    author_info = item.get('pz_author_info', {})
+                    author = author_info.get('display_name', '未知作者')
+                    link = f"https://www.jx3box.com/pz/view/{equipment_id}"
+                    
+                    msg = f"⚔️ 找到{xinfa_name}配装\n\n" \
+                          f"📖 标题：{title}\n" \
+                          f"👤 作者：{author}\n" \
+                          f"🏷️ 标签：{tag}\n" \
+                          f"🔗 详细配装：{link}"
+                else:
+                    # 多个结果
+                    msg_parts = [f"⚔️ 找到 {len(equipment_list)} 个'{xinfa_name}'的{tag}配装：\n"]
+                    for i, item in enumerate(equipment_list, 1):
+                        equipment_id = item.get('id', '')
+                        title = item.get('title', '未知标题')
+                        author_info = item.get('pz_author_info', {})
+                        author = author_info.get('display_name', '未知作者')
+                        link = f"https://www.jx3box.com/pz/view/{equipment_id}"
+                        msg_parts.append(f"{i}. 📖 {title}\n   👤 作者：{author}\n   🔗 {link}\n")
+                    
+                    msg = '\n'.join(msg_parts)
+                
+                await EquipmentGuide.send(message=Message(msg))
+                
+    except aiohttp.ClientError as e:
+        print(f"EquipmentGuide 网络错误: {str(e)}")
+        await EquipmentGuide.finish(message="❌ 网络连接失败，请稍后重试")
+    except json.JSONDecodeError as e:
+        print(f"EquipmentGuide JSON解析错误: {str(e)}")
+        await EquipmentGuide.finish(message="❌ 数据解析失败，请稍后重试")
+    except Exception as e:
+        print(f"EquipmentGuide 其他错误: {type(e).__name__}: {str(e)}")
+        await EquipmentGuide.finish(message="❌ 配装查询失败，请稍后重试")
+
+# 沙盘记录查询
+SandboxRecord = on_regex(r"^攻防记录(?:\s+(.+))?$", priority=1)
+
+@SandboxRecord.handle()
+@check_plugin_enabled
+async def handle_sandbox_record(bot: Bot, event: GroupMessageEvent, state: T_State):
+    matched = state['_matched']
+    server_name = matched.group(1) if matched.group(1) else None
+    
+    # 如果没有指定服务器，使用默认服务器
+    if not server_name:
+        group_id = str(event.group_id)
+        group_config = db.get_group_config(group_id)
+        server_name = group_config.get('default_server')
+        
+        if not server_name:
+            await SandboxRecord.finish(message="❌ 请先设置默认服务器或指定服务器名称\n💡 使用方法：攻防记录 [服务器名称]")
+            return
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            # 构建API请求参数
+            params = {}
+            if server_name:
+                params['server'] = server_name
+            
+            async with session.get(
+                "https://next2.jx3box.com/api/game/reporter/sandbox",
+                params=params,
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as response:
+                if response.status != 200:
+                    await SandboxRecord.send(message=f"❌ API请求失败，状态码: {response.status}")
+                    return
+                
+                data = await response.json()
+                 # 检查返回数据格式
+                if not isinstance(data, dict) or 'data' not in data:
+                    await SandboxRecord.send(message="❌ 数据格式错误，请稍后重试")
+                    return
+                
+                record_list = data['data'].get('list', [])
+                
+                if not record_list:
+                    await SandboxRecord.send(message="❌ 暂无沙盘记录数据")
+                    return
+                
+                # 获取第一条记录的日期
+                first_record = record_list[0]
+                first_created_at = first_record.get('created_at')
+                
+                if not first_created_at:
+                    await SandboxRecord.send(message="❌ 数据格式错误，无法获取时间信息")
+                    return
+                
+                # 解析日期（格式："2025-06-19T21:32:54+08:00"）
+                try:
+                    first_datetime = datetime.fromisoformat(first_created_at)
+                    target_date = first_datetime.date()  # 只取日期部分
+                except ValueError:
+                    await SandboxRecord.send(message="❌ 时间格式解析失败")
+                    return
+                
+                # 筛选同一天的所有记录
+                same_day_records = []
+                for record in record_list:
+                    record_created_at = record.get('created_at')
+                    if record_created_at:
+                        try:
+                            record_datetime = datetime.fromisoformat(record_created_at)
+                            if record_datetime.date() == target_date:
+                                same_day_records.append(record)
+                        except ValueError:
+                            continue
+                
+                if not same_day_records:
+                    await SandboxRecord.send(message=f"❌ 未找到 {target_date} 的沙盘记录")
+                    return
+                
+                # 按时间倒序排列（最新的在前）
+                same_day_records.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+                
+                # 构建消息
+                server_display = server_name if server_name else "默认服务器"
+                msg_parts = [f"📊 {server_display} - {target_date} 沙盘记录：\n"]
+                
+                for i, record in enumerate(same_day_records, 1):
+                    content = record.get('content', '无内容')
+                    created_at = record.get('created_at', '')
+
+                    if '据点！' in content:
+                        content = content.split('据点！')[0] + '据点！'
+                    
+                    # 格式化时间显示（只显示时分秒）
+                    try:
+                        dt = datetime.fromisoformat(created_at)
+                        time_str = dt.strftime('%H:%M:%S')
+                    except:
+                        time_str = created_at
+                    
+                    msg_parts.append(f"{i}. [{time_str}] {content}")
+                
+                msg = '\n'.join(msg_parts)
+                
+                # 如果消息太长，截断并提示
+                if len(msg) > 1000:
+                    msg = msg[:1000] + "\n\n... (记录过多，已截断)"
+                
+                await SandboxRecord.send(message=Message(msg))
+                
+    except aiohttp.ClientError as e:
+        print(f"SandboxRecord 网络错误: {str(e)}")
+        await SandboxRecord.finish(message="❌ 网络连接失败，请稍后重试")
+    except Exception as e:
+        print(f"SandboxRecord 其他错误: {type(e).__name__}: {str(e)}")
+        await SandboxRecord.finish(message="❌ 沙盘记录查询失败，请稍后重试")
+
+
+# 定时轮询沙盘记录 - 周二和周四 20:00-22:00 每分钟执行
+@scheduler.scheduled_job("cron", day_of_week="1,3", hour="20-21", minute="*")
+async def poll_sandbox_records():
+    """定时轮询沙盘记录"""
+    global last_sandbox_data
+    
+    # 获取所有bot实例
+    driver = get_driver()
+    if not driver.bots:
+        return
+    
+    bot = list(driver.bots.values())[0]
+    
+    # 获取所有启用了jx3_api插件的群
+    enabled_groups = db.get_enabled_groups("jx3_api")
+    
+    for group_id in enabled_groups:
+        try:
+            group_key = str(group_id)
+            
+            # 获取该群的默认服务器
+            group_config = db.get_group_config(group_key)
+            server_name = group_config.get('default_server')
+            
+            if not server_name:
+                # 如果没有设置默认服务器，跳过该群
+                continue
+            
+            # 调用沙盘API
+            async with aiohttp.ClientSession() as session:
+                params = {'server': server_name}
+                
+                async with session.get(
+                    "https://next2.jx3box.com/api/game/reporter/sandbox",
+                    params=params,
+                    timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    if response.status != 200:
+                        continue
+                    
+                    data = await response.json()
+                    if data.get('code') != 0 or not data.get('data', {}).get('list'):
+                        continue
+                    
+                    current_records = data['data']['list']
+                    
+                    # 检查是否有新记录
+                    if group_key in last_sandbox_data:
+                        last_records = last_sandbox_data[group_key]
+                        new_records = []
+                        
+                        # 找出新增的记录（通过ID比较）
+                        for record in current_records:
+                            record_id = record.get('id')
+                            if not any(r.get('id') == record_id for r in last_records):
+                                new_records.append(record)
+                        
+                        # 如果有新记录，发送通知
+                        if new_records:
+                            for record in new_records:
+                                content = record.get('content', '')
+                                created_at = record.get('created_at', '')
+                                
+                                # 处理content，只保留"据点！"之前的部分
+                                if '据点！' in content:
+                                    content = content.split('据点！')[0] + '据点！'
+                                
+                                # 处理时间格式
+                                try:
+                                    dt = datetime.fromisoformat(created_at)
+                                    time_str = dt.strftime('%H:%M:%S')
+                                except:
+                                    time_str = created_at
+                                
+                                msg = f"🚨 【{server_name}】新沙盘记录\n[{time_str}] {content}"
+                                
+                                try:
+                                    await bot.send_group_msg(group_id=group_id, message=msg)
+                                except Exception as e:
+                                    print(f"发送沙盘记录到群 {group_id} 失败: {e}")
+                    
+                    # 更新该群的记录
+                    last_sandbox_data[group_key] = current_records
+                    
+        except Exception as e:
+            print(f"轮询群 {group_id} 的沙盘记录失败: {e}")
+            continue
+
+# 22:00 发送当天阵营记录 - 周二和周四
+@scheduler.scheduled_job("cron", day_of_week="1,3", hour="22", minute="0")
+async def send_daily_sandbox_summary():
+    """发送当天的阵营记录汇总"""
+    # 获取所有bot实例
+    driver = get_driver()
+    if not driver.bots:
+        return
+    
+    bot = list(driver.bots.values())[0]
+    
+    # 获取所有启用了jx3_api插件的群
+    enabled_groups = db.get_enabled_groups("jx3_api")
+    
+    for group_id in enabled_groups:
+        try:
+            group_key = str(group_id)
+            
+            # 获取该群的默认服务器
+            group_config = db.get_group_config(group_key)
+            server_name = group_config.get('default_server')
+            
+            if not server_name:
+                # 如果没有设置默认服务器，跳过该群
+                continue
+            
+            # 调用沙盘API获取当天记录
+            async with aiohttp.ClientSession() as session:
+                params = {'server': server_name}
+                
+                async with session.get(
+                    "https://next2.jx3box.com/api/game/reporter/sandbox",
+                    params=params,
+                    timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    if response.status != 200:
+                        continue
+                    
+                    data = await response.json()
+                    if data.get('code') != 0 or not data.get('data', {}).get('list'):
+                        continue
+                    
+                    records = data['data']['list']
+                    
+                    if not records:
+                        continue
+                    
+                    # 获取今天的日期
+                    today = datetime.now().date()
+                    
+                    # 筛选今天的记录
+                    today_records = []
+                    for record in records:
+                        try:
+                            created_at = record.get('created_at', '')
+                            dt = datetime.fromisoformat(created_at)
+                            
+                            if dt.date() == today:
+                                today_records.append(record)
+                        except:
+                            continue
+                    
+                    if not today_records:
+                        # 如果今天没有记录，发送提示
+                        msg = f"📊 【{server_name}】今日阵营记录汇总 ({today.strftime('%Y-%m-%d')})\n\n暂无记录"
+                        try:
+                            await bot.send_group_msg(group_id=group_id, message=msg)
+                        except Exception as e:
+                            print(f"发送每日沙盘汇总到群 {group_id} 失败: {e}")
+                        continue
+                    
+                    # 按时间倒序排列
+                    today_records.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+                    
+                    # 构建消息
+                    msg_parts = [f"📊 【{server_name}】今日阵营记录汇总 ({today.strftime('%Y-%m-%d')})"]
+                    
+                    for i, record in enumerate(today_records[:20], 1):  # 最多显示20条
+                        content = record.get('content', '')
+                        created_at = record.get('created_at', '')
+                        
+                        # 处理content，只保留"据点！"之前的部分
+                        if '据点！' in content:
+                            content = content.split('据点！')[0] + '据点！'
+                        
+                        # 处理时间格式
+                        try:
+                            dt = datetime.fromisoformat(created_at)
+                            time_str = dt.strftime('%H:%M:%S')
+                        except:
+                            time_str = created_at
+                        
+                        msg_parts.append(f"{i}. [{time_str}] {content}")
+                    
+                    msg = '\n'.join(msg_parts)
+                    
+                    # 如果消息太长，截断并提示
+                    if len(msg) > 1000:
+                        msg = msg[:1000] + "\n\n... (记录过多，已截断)"
+                    
+                    try:
+                        await bot.send_group_msg(group_id=group_id, message=msg)
+                    except Exception as e:
+                        print(f"发送每日沙盘汇总到群 {group_id} 失败: {e}")
+                        
+        except Exception as e:
+            print(f"为群 {group_id} 生成每日沙盘汇总失败: {e}")
+            continue
+
+        
