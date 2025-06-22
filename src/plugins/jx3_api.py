@@ -33,6 +33,28 @@ async_api = AsyncJX3API(token = token, ticket=ticket, base_url = base_url)
 api = JX3API(token = token, ticket=ticket, base_url = base_url)
 default_server = '唯我独尊'
 
+async def get_group_default_server(bot: Bot, event: GroupMessageEvent) -> Optional[str]:
+    """
+    获取群组默认服务器的公共方法
+    如果未设置则提示用户进行服务器绑定
+    
+    Args:
+        bot: Bot实例
+        event: 群消息事件
+        
+    Returns:
+        str: 服务器名称，如果未设置则返回None
+    """
+    group_id = str(event.group_id)
+    group_config = db.get_group_config(group_id)
+    
+    if group_config and group_config.get('default_server'):
+        return group_config.get('default_server')
+    else:
+        # 提示用户进行服务器绑定
+        await bot.send(event, "❌ 未设置默认服务器，请使用 绑定服务器 [服务器名称] 命令进行服务器绑定")
+        return None
+
 # 导入定时任务模块
 scheduler = require("nonebot_plugin_apscheduler").scheduler
 
@@ -98,7 +120,12 @@ OpenServer = on_regex(pattern=r'^(开服|倒闭了)(?:\s+(\S+))?$', priority=1)
 @OpenServer.handle()
 @check_plugin_enabled
 async def handle_server_status(bot: Bot, event: GroupMessageEvent, state: T_State):
-    server_name = state['_matched'].group(2) if state['_matched'].group(2) else default_server
+    if state['_matched'].group(2):
+        server_name = state['_matched'].group(2)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
     res = api.server_check(server= server_name)
     print(res)
     msg = f"{server_name} {'开服了' if res['status'] == 1 else '维护中'}"
@@ -240,7 +267,12 @@ CheckDaily = on_regex(pattern=r'^日常(?:\s+(\S+))?$', priority=1)
 @CheckDaily.handle()
 @check_plugin_enabled
 async def handle_daily(bot: Bot, event: GroupMessageEvent, state: T_State):
-    server_name = state['_matched'].group(1) if state['_matched'].group(1) else default_server
+    if state['_matched'].group(1):
+        server_name = state['_matched'].group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
     res = api.active_calendar(server= server_name)
     msg = f"{server_name} {format_daily_data(res)}"
     await CheckDaily.finish(message=Message(msg))
@@ -252,7 +284,12 @@ RoleDetail = on_regex(pattern=r'^角色\s+(?:(\S+)\s+)?(\S+)$', priority=1)
 async def handle_role_detail(bot: Bot, event: GroupMessageEvent, state: T_State):
     matched = state['_matched']
     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
-    server_name = matched.group(1) if matched.group(1) else default_server
+    if state['_matched'].group(1):
+        server_name = state['_matched'].group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
     # 第二个捕获组一定是角色名
     role_name = matched.group(2)
     res = api.role_detailed(server= server_name, name=role_name)
@@ -266,7 +303,12 @@ RoleAttribute = on_regex(pattern=r'^属性\s+(?:(\S+)\s+)?(\S+)$', priority=1)
 async def handle_role_detail(bot: Bot, event: GroupMessageEvent, state: T_State):
     matched = state['_matched']
     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
-    server_name = matched.group(1) if matched.group(1) else default_server
+    if matched.group(1):
+        server_name = matched.group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
     # 第二个捕获组一定是角色名
     role_name = matched.group(2)
     # 发送处理提示
@@ -356,7 +398,12 @@ RoleStatus = on_regex(pattern=r'^在线\s+(?:(\S+)\s+)?(\S+)$', priority=1)
 async def handle_role_status(bot: Bot, event: GroupMessageEvent, state: T_State):
     matched = state['_matched']
     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
-    server_name = matched.group(1) if matched.group(1) else default_server
+    if matched.group(1):
+        server_name = matched.group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
     # 第二个捕获组一定是角色名 
     role_name = matched.group(2)
     res = await async_api.request(endpoint="/data/role/online/status", server= server_name, name=role_name)
@@ -379,7 +426,12 @@ RoleTeamCdList = on_regex(pattern=r'^副本\s+(?:(\S+)\s+)?(\S+)$', priority=1)
 async def handle_role_team_cd_list(bot: Bot, event: GroupMessageEvent, state: T_State):
     matched = state['_matched']
     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
-    server_name = matched.group(1) if matched.group(1) else default_server
+    if matched.group(1):
+        server_name = matched.group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
     # 第二个捕获组一定是角色名 
     role_name = matched.group(2)
     res = await async_api.role_team_cd_list(server= server_name, name=role_name)
@@ -407,7 +459,12 @@ RoleLuckRecord = on_regex(pattern=r'^查询\s+(?:(\S+)\s+)?(\S+)$', priority=1)
 async def handle_role_luck_record(bot: Bot, event: GroupMessageEvent, state: T_State):
     matched = state['_matched']
     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
-    server_name = matched.group(1) if matched.group(1) else default_server
+    if matched.group(1):
+        server_name = matched.group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
     # 第二个捕获组一定是角色名 
     role_name = matched.group(2)
     records = await async_api.luck_adventure(server= server_name, name=role_name)
@@ -493,7 +550,12 @@ RoleCard = on_regex(pattern=r'^(名片|QQ秀|qq秀)\s+(?:(\S+)\s+)?(\S+)$', prio
 async def handle_role_status(bot: Bot, event: GroupMessageEvent, state: T_State):
     matched = state['_matched']
     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
-    server_name = matched.group(2) if matched.group(2) else default_server
+    if matched.group(2):
+        server_name = matched.group(2)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
     # 第二个捕获组一定是角色名 
     role_name = matched.group(3)
     try:
@@ -506,13 +568,18 @@ async def handle_role_status(bot: Bot, event: GroupMessageEvent, state: T_State)
     await RoleCard.finish(MessageSegment.image(res.get('showAvatar')))
 
 # 沙盘
-ServerSand = on_regex(pattern=r'^沙盘(?:\s+(\S+))?', priority=1)
+ServerSand = on_regex(pattern=r'^沙盘(?:\s+(\S+))?$', priority=1)
 @ServerSand.handle()
 @check_plugin_enabled
 async def handle_role_status(bot: Bot, event: GroupMessageEvent, state: T_State):
     matched = state['_matched']
     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
-    server_name = matched.group(1) if matched.group(1) else default_server
+    if matched.group(1):
+        server_name = matched.group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
     try:
         res = await async_api.server_sand(server= server_name)
     except:  # 不推荐，但可以捕获所有异常
@@ -543,7 +610,12 @@ TradeRecords = on_regex(pattern=r'^物价\s+(?:(\S+)\s+)?(\S+)$', priority=1)
 async def handle_trade_records(bot: Bot, event: GroupMessageEvent, state: T_State):
     matched = state['_matched']
     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
-    server_name = matched.group(1) if matched.group(1) else default_server
+    if matched.group(1):
+        server_name = matched.group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
     # 第二个捕获组一定是物品名
     name = matched.group(2)
     try:
@@ -589,7 +661,9 @@ async def handle_role_achievement(bot: Bot, event: GroupMessageEvent, state: T_S
         role_name = param2
         achievement_name = param3
     else:  # 两个参数：角色名 成就名
-        server_name = default_server
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
         role_name = param1
         achievement_name = param2
     
@@ -628,7 +702,12 @@ DiaryAchievement = on_regex(pattern=r'^资历分布\s+(?:(\S+)\s+)?(\S+)$', prio
 async def handle_diary_achievement(bot: Bot, event: GroupMessageEvent, state: T_State):
     matched = state['_matched']
     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
-    server_name = matched.group(1) if matched.group(1) else default_server
+    if state['_matched'].group(1):
+        server_name = state['_matched'].group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
     # 第二个捕获组一定是物品名
     role_name = matched.group(2)
     
@@ -667,7 +746,12 @@ MemberRecruit = on_regex(pattern=r'^招募\s+(?:(\S+)\s+)?(\S+)$', priority=1)
 async def handle_member_recruit(bot: Bot, event: GroupMessageEvent, state: T_State):
     matched = state['_matched']
     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
-    server_name = matched.group(1) if matched.group(1) else default_server
+    if state['_matched'].group(1):
+        server_name = state['_matched'].group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
     # 第二个捕获组一定是关键字
     keyword = matched.group(2)
     
@@ -697,7 +781,7 @@ async def handle_member_recruit(bot: Bot, event: GroupMessageEvent, state: T_Sta
     # 生成 HTML 内容
     html_content = render_member_recruit_html(res)
     # # 转换为图片
-    image_path = await render_and_cleanup(html_content, 1600)
+    image_path = await render_and_cleanup(html_content, 1700)
     try:
         # 发送图片
         await MemberRecruit.finish(MessageSegment.image(path_to_base64(image_path)))
@@ -713,7 +797,12 @@ TradingCompany = on_regex(pattern=r'^交易行\s+(?:(\S+)\s+)?(\S+)$', priority=
 async def handle_trading_company(bot: Bot, event: GroupMessageEvent, state: T_State):
     matched = state['_matched']
     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
-    server_name = matched.group(1) if matched.group(1) else default_server
+    if state['_matched'].group(1):
+        server_name = state['_matched'].group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
     # 第二个捕获组一定是关键字
     keyword = matched.group(2)
     
@@ -1082,7 +1171,12 @@ RoleDHundred = on_regex(pattern=r'^精耐\s+(?:(\S+)\s+)?(\S+)$', priority=1)
 async def handle_role_hundred(bot: Bot, event: GroupMessageEvent, state: T_State):
     matched = state['_matched']
     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
-    server_name = matched.group(1) if matched.group(1) else default_server
+    if state['_matched'].group(1):
+        server_name = state['_matched'].group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
     # 第二个捕获组一定是角色名
     role_name = matched.group(2)
 
@@ -1116,8 +1210,14 @@ GoldPrice = on_regex(pattern=r'^金价(?:\s+(\S+))?$', priority=1)
 @GoldPrice.handle()
 @check_plugin_enabled
 async def handle_gold_price(bot: Bot, event: GroupMessageEvent, state: T_State):
+    matched = state['_matched']
     # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
-    server_name = state['_matched'].group(1) if state['_matched'].group(1) else default_server
+    if state['_matched'].group(1):
+        server_name = state['_matched'].group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
 
     try:
         res = await async_api.request(endpoint="/data/trade/demon", server= server_name)
@@ -1269,9 +1369,9 @@ async def handle_gold_price(bot: Bot, event: GroupMessageEvent, state: T_State):
         return
     
     # 获取当前群默认服务器
-    server_name = group_config.get('default_server') if group_config else None
+    server_name = await get_group_default_server(bot, event)
     if not server_name:
-        server_name = default_server
+        return
     
     # 获取今日日期
     today = datetime.now().strftime('%Y-%m-%d')
@@ -1361,6 +1461,9 @@ SetDefaultServer = on_regex(pattern=r'^绑定服务器\s+(\S+)$', priority=1)
 @SetDefaultServer.handle()
 @check_plugin_enabled
 async def handle_set_default_server(bot: Bot, event: GroupMessageEvent, state: T_State):
+    # 检查管理员权限
+    if not await require_admin_permission(bot, event.group_id, event.user_id, SetDefaultServer):
+        return
     # 检查是否为管理员（可选，根据需要添加权限检查）
     group_id = str(event.group_id)
     user_id = str(event.user_id)
@@ -1369,8 +1472,26 @@ async def handle_set_default_server(bot: Bot, event: GroupMessageEvent, state: T
     match = state['_matched']
     server_name = match.group(1)
     
-    # 验证服务器名称是否有效（可选，根据需要添加服务器列表验证）
-    # 这里可以添加服务器名称验证逻辑
+     # 剑网3有效服务器列表
+    valid_servers = {
+        # 电信区服务器
+        '梦江南', '长安城', '唯我独尊', '乾坤一掷', '斗转星移', '绝代天骄', 
+        '幽月轮', '剑胆琴心', '蝶恋花', '龙争虎斗',
+        
+        # 双线区服务器
+        '破阵子', '天鹅坪', '飞龙在天', 
+        
+        # 无界区
+        '眉间雪', '山海相逢'
+    }
+    
+    # 验证服务器名称
+    if server_name not in valid_servers:
+        await SetDefaultServer.finish(
+            message=f"❌ 服务器名称 '{server_name}' 无效\n" +
+                   "请输入正确的服务器名称，如：梦江南、长安城、唯我独尊、破阵子、天鹅坪等\n" +
+                   "提示：请确保服务器名称完全匹配，区分大小写"
+        )
     
     # 更新群组配置
     if db.update_group_config(group_id, {'default_server': server_name}):
@@ -1392,20 +1513,17 @@ async def handle_view_group_config(bot: Bot, event: GroupMessageEvent, state: T_
         enable_daily_query = "开启" if config.get('enable_daily_query', 1) else "关闭"
         enable_role_query = "开启" if config.get('enable_role_query', 1) else "关闭"
         enable_ai_chat = "开启" if config.get('enable_ai_chat', 1) else "关闭"
+        enable_sandbox_monitor = "开启" if config.get('enable_sandbox_monitor', 1) else "关闭"
         
         msg = f"📋 群组配置信息\n" \
               f"默认服务器：{default_server}\n" \
               f"金价换算：{enable_gold_price}\n" \
-              f"日常查询：{enable_daily_query}\n" \
-              f"角色查询：{enable_role_query}\n" \
-              f"AI对话：{enable_ai_chat}"
+              f"沙盘记录：{enable_sandbox_monitor}" 
     else:
         msg = "📋 群组配置信息\n" \
               "默认服务器：未设置\n" \
               "金价换算：开启\n" \
-              "日常查询：开启\n" \
-              "角色查询：开启\n" \
-              "AI对话：开启"
+              "沙盘记录：开启" 
     
     await ViewGroupConfig.finish(message=msg)
 
@@ -1710,24 +1828,18 @@ async def handle_equipment_guide(bot: Bot, event: GroupMessageEvent, state: T_St
         await EquipmentGuide.finish(message="❌ 配装查询失败，请稍后重试")
 
 # 沙盘记录查询
-SandboxRecord = on_regex(r"^攻防记录(?:\s+(.+))?$", priority=1)
+SandboxRecord = on_regex(r"^沙盘记录(?:\s+(.+))?$", priority=1)
 
 @SandboxRecord.handle()
 @check_plugin_enabled
 async def handle_sandbox_record(bot: Bot, event: GroupMessageEvent, state: T_State):
     matched = state['_matched']
-    server_name = matched.group(1) if matched.group(1) else None
-    
-    # 如果没有指定服务器，使用默认服务器
-    if not server_name:
-        group_id = str(event.group_id)
-        group_config = db.get_group_config(group_id)
-        server_name = group_config.get('default_server')
-        
+    if matched.group(1):
+        server_name = matched.group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
         if not server_name:
-            await SandboxRecord.finish(message="❌ 请先设置默认服务器或指定服务器名称\n💡 使用方法：攻防记录 [服务器名称]")
             return
-    
     try:
         async with aiohttp.ClientSession() as session:
             # 构建API请求参数
@@ -1827,12 +1939,27 @@ async def handle_sandbox_record(bot: Bot, event: GroupMessageEvent, state: T_Sta
         await SandboxRecord.finish(message="❌ 沙盘记录查询失败，请稍后重试")
 
 
+# 沙盘监控开关
+SandboxMonitorSwitch = on_regex(pattern=r'^沙盘监控\s+(开启|关闭)$', priority=1)
+@SandboxMonitorSwitch.handle()
+@check_plugin_enabled
+async def handle_sandbox_monitor_switch(bot: Bot, event: GroupMessageEvent, state: T_State):
+    group_id = str(event.group_id)
+    action = state['_matched'].group(1)
+    
+    enable_value = 1 if action == '开启' else 0
+    
+    if db.update_group_config(group_id, {'enable_sandbox_monitor': enable_value}):
+        status = "已开启" if enable_value else "已关闭"
+        await SandboxMonitorSwitch.finish(message=f"✅ 沙盘记录监控{status}")
+    else:
+        await SandboxMonitorSwitch.finish(message="❌ 设置失败")
+
 # 定时轮询沙盘记录 - 周二和周四 20:00-22:00 每分钟执行
-@scheduler.scheduled_job("cron", day_of_week="1,3", hour="20-21", minute="*")
+@scheduler.scheduled_job("cron", day_of_week="1,3", hour="20-21", minute="*/5", id="sandbox_monitor")
 async def poll_sandbox_records():
     """定时轮询沙盘记录"""
     global last_sandbox_data
-    
     # 获取所有bot实例
     driver = get_driver()
     if not driver.bots:
@@ -1842,78 +1969,96 @@ async def poll_sandbox_records():
     
     # 获取所有启用了jx3_api插件的群
     enabled_groups = db.get_enabled_groups("jx3_api")
-    
+    print('0000----', enabled_groups)
     for group_id in enabled_groups:
         try:
             group_key = str(group_id)
-            
-            # 获取该群的默认服务器
+            print(1)
+            # 获取该群的配置
             group_config = db.get_group_config(group_key)
+            if not group_config:
+                continue
+            print(2)
+            # 检查是否启用了沙盘监控功能
+            if not group_config.get('enable_sandbox_monitor', 1):
+                continue
+            print(3)
+            # 获取该群的默认服务器
             server_name = group_config.get('default_server')
-            
             if not server_name:
                 # 如果没有设置默认服务器，跳过该群
                 continue
-            
+            print(4)
             # 调用沙盘API
-            async with aiohttp.ClientSession() as session:
-                params = {'server': server_name}
+            try:
+                async with aiohttp.ClientSession() as session:
+                    params = {'server': server_name}
+                    
+                    async with session.get(
+                        "https://next2.jx3box.com/api/game/reporter/sandbox",
+                        params=params,
+                        timeout=aiohttp.ClientTimeout(total=10)
+                    ) as response:
+                        if response.status != 200:
+                            continue
+                        print(5)
+                        data = await response.json()
+                        if data.get('code') != 0 or not data.get('data', {}).get('list'):
+                            continue
+                        
+                        current_records = data['data']['list']
+                        # 检查是否有新记录
+                        if group_key in last_sandbox_data:
+                            last_records = last_sandbox_data[group_key]
+                            new_records = []
+                            # 找出新增的记录（通过ID比较）
+                            for record in current_records:
+                                record_id = record.get('id')
+                                if not any(r.get('id') == record_id for r in last_records):
+                                    new_records.append(record)
+                            print(f"群 {group_id} - 新增记录数: {len(new_records)}")
+                            # 如果有新记录，发送通知
+                            if new_records:
+                                await _send_sandbox_notifications(bot, group_id, server_name, new_records)
+                        
+                        # 更新该群的记录
+                        last_sandbox_data[group_key] = current_records
+            except aiohttp.ClientError as e:
+                print(f"请求沙盘API失败 (群 {group_id}): {e}")
+                continue
+            except Exception as e:
+                print(f"处理沙盘API响应失败 (群 {group_id}): {e}")
+                continue
                 
-                async with session.get(
-                    "https://next2.jx3box.com/api/game/reporter/sandbox",
-                    params=params,
-                    timeout=aiohttp.ClientTimeout(total=10)
-                ) as response:
-                    if response.status != 200:
-                        continue
-                    
-                    data = await response.json()
-                    if data.get('code') != 0 or not data.get('data', {}).get('list'):
-                        continue
-                    
-                    current_records = data['data']['list']
-                    
-                    # 检查是否有新记录
-                    if group_key in last_sandbox_data:
-                        last_records = last_sandbox_data[group_key]
-                        new_records = []
-                        
-                        # 找出新增的记录（通过ID比较）
-                        for record in current_records:
-                            record_id = record.get('id')
-                            if not any(r.get('id') == record_id for r in last_records):
-                                new_records.append(record)
-                        
-                        # 如果有新记录，发送通知
-                        if new_records:
-                            for record in new_records:
-                                content = record.get('content', '')
-                                created_at = record.get('created_at', '')
-                                
-                                # 处理content，只保留"据点！"之前的部分
-                                if '据点！' in content:
-                                    content = content.split('据点！')[0] + '据点！'
-                                
-                                # 处理时间格式
-                                try:
-                                    dt = datetime.fromisoformat(created_at)
-                                    time_str = dt.strftime('%H:%M:%S')
-                                except:
-                                    time_str = created_at
-                                
-                                msg = f"🚨 【{server_name}】新沙盘记录\n[{time_str}] {content}"
-                                
-                                try:
-                                    await bot.send_group_msg(group_id=group_id, message=msg)
-                                except Exception as e:
-                                    print(f"发送沙盘记录到群 {group_id} 失败: {e}")
-                    
-                    # 更新该群的记录
-                    last_sandbox_data[group_key] = current_records
-                    
         except Exception as e:
             print(f"轮询群 {group_id} 的沙盘记录失败: {e}")
             continue
+
+
+async def _send_sandbox_notifications(bot: Bot, group_id: int, server_name: str, new_records: list):
+    """发送沙盘记录通知"""
+    for record in new_records:
+        try:
+            content = record.get('content', '')
+            created_at = record.get('created_at', '')
+            
+            # 处理content，只保留"据点！"之前的部分
+            if '据点！' in content:
+                content = content.split('据点！')[0] + '据点！'
+            
+            # 处理时间格式
+            try:
+                dt = datetime.fromisoformat(created_at)
+                time_str = dt.strftime('%H:%M:%S')
+            except (ValueError, TypeError):
+                time_str = created_at
+            
+            msg = f"🚨 【{server_name}】新沙盘记录\n[{time_str}] {content}"
+            
+            await bot.send_group_msg(group_id=group_id, message=msg)
+            
+        except Exception as e:
+            print(f"发送沙盘记录到群 {group_id} 失败: {e}")
 
 # 22:00 发送当天阵营记录 - 周二和周四
 @scheduler.scheduled_job("cron", day_of_week="1,3", hour="22", minute="0")
@@ -1932,9 +2077,15 @@ async def send_daily_sandbox_summary():
     for group_id in enabled_groups:
         try:
             group_key = str(group_id)
+
+            # 获取该群的配置
+            group_config = db.get_group_config(group_key)
+
+            # 检查是否启用了沙盘监控功能
+            if not group_config.get('enable_sandbox_monitor', 1):
+                continue
             
             # 获取该群的默认服务器
-            group_config = db.get_group_config(group_key)
             server_name = group_config.get('default_server')
             
             if not server_name:

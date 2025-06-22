@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:32:40
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-21 18:29:09
+LastEditTime: 2025-06-22 20:10:06
 FilePath: /team-bot/jx3-team-bot/src/plugins/database.py
 '''
 # src/plugins/chat_plugin/database.py
@@ -141,7 +141,7 @@ class NianZaiDB:
                 UNIQUE(plugin_name, group_id)
             )
             ''')
-             # 创建报名格式配置表
+             # 创建群组配置表
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS group_config (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -158,6 +158,7 @@ class NianZaiDB:
                 enable_daily_query INTEGER DEFAULT 1,  -- 是否启用日常查询
                 enable_role_query INTEGER DEFAULT 1,  -- 是否启用角色查询
                 enable_ai_chat INTEGER DEFAULT 1,     -- 是否启用AI对话
+                enable_sandbox_monitor INTEGER DEFAULT 1,  -- 是否启用沙盘记录轮询和播报
                 -- 其他配置
                 welcome_message TEXT DEFAULT NULL,    -- 入群欢迎消息
                 auto_reply_keywords TEXT DEFAULT NULL, -- 自动回复关键词(JSON格式)
@@ -230,7 +231,35 @@ class NianZaiDB:
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
             ''')
-            conn.commit()     
+            conn.commit()  
+
+            # 升级现有表结构
+            self.upgrade_group_config_table()   
+
+    def upgrade_group_config_table(self):
+        """
+        升级 group_config 表，添加 enable_sandbox_monitor 字段
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            try:
+                # 检查字段是否已存在
+                cursor.execute("PRAGMA table_info(group_config)")
+                columns = [column[1] for column in cursor.fetchall()]
+                
+                if 'enable_sandbox_monitor' not in columns:
+                    # 添加新字段
+                    cursor.execute("""
+                        ALTER TABLE group_config 
+                        ADD COLUMN enable_sandbox_monitor INTEGER DEFAULT 1
+                    """)
+                    conn.commit()
+                    print("✅ 成功添加 enable_sandbox_monitor 字段")
+                else:
+                    print("ℹ️ enable_sandbox_monitor 字段已存在")
+                    
+            except Exception as e:
+                print(f"❌ 升级数据库表失败: {e}")
 
     def insert(self, table_name: str, data: Dict[str, Any]):
         """
@@ -359,6 +388,32 @@ class NianZaiDB:
             return bool(result['enabled'])
         # 如果没有记录，默认启用
         return True
+
+    def get_enabled_groups(self, plugin_name: str) -> List[int]:
+        """
+        获取启用了指定插件的所有群组ID列表
+        
+        Args:
+            plugin_name: 插件名称
+        
+        Returns:
+            启用了该插件的群组ID列表
+        """
+        try:
+             # 获取所有群组ID（从group_config表或其他方式）
+            all_groups = self.fetch_all('group_config', '')
+            enabled_groups = []
+            
+            for group in all_groups:
+                group_id = group['group_id']
+                # 使用get_plugin_status检查状态（包含默认值逻辑）
+                if self.get_plugin_status(plugin_name, group_id):
+                    enabled_groups.append(int(group_id))
+            
+            return enabled_groups
+        except Exception as e:
+            print(f"获取启用群组列表失败: {e}")
+            return []
 
     
     def set_plugin_status(self, plugin_name: str, group_id: str, enabled: bool) -> bool:
