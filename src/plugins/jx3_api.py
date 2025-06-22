@@ -1518,12 +1518,12 @@ async def handle_view_group_config(bot: Bot, event: GroupMessageEvent, state: T_
         msg = f"📋 群组配置信息\n" \
               f"默认服务器：{default_server}\n" \
               f"金价换算：{enable_gold_price}\n" \
-              f"沙盘记录：{enable_sandbox_monitor}" 
+              f"沙盘监控：{enable_sandbox_monitor}" 
     else:
         msg = "📋 群组配置信息\n" \
               "默认服务器：未设置\n" \
               "金价换算：开启\n" \
-              "沙盘记录：开启" 
+              "沙盘监控：开启" 
     
     await ViewGroupConfig.finish(message=msg)
 
