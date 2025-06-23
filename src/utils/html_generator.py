@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:33:31
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-21 16:26:54
+LastEditTime: 2025-06-23 09:40:49
 FilePath: /team-bot/jx3-team-bot/src/utils/html_generator.py
 '''
 # src/plugins/chat_plugin/html_generator.py
@@ -131,11 +131,15 @@ def format_price_currency(price):
     if price == 0:
         return "0铜"
     
-    gold = price // 10000
-    silver = (price % 10000) // 100
-    copper = price % 100
+    # 计算钻、金、银、铜的数量
+    z = price // 100000000  # 1钻 = 100000000铜
+    gold = (price % 100000000) // 10000  # 1金 = 10000铜
+    silver = (price % 10000) // 100  # 1银 = 100铜
+    copper = price % 100  # 剩余为铜
     
     result = []
+    if z > 0:
+        result.append(f"{z}砖")
     if gold > 0:
         result.append(f"{gold}金")
     if silver > 0:

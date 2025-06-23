@@ -808,34 +808,83 @@ async def handle_trading_company(bot: Bot, event: GroupMessageEvent, state: T_St
     
     print(f"交易行查询参数: server={server_name}, keyword={keyword}")
     try:
-        # 第一步：搜索物品获取ID
+        # 第一步：分别调用三次接口获取不同BindType的物品
         import urllib.parse
         encoded_keyword = urllib.parse.quote(keyword)
-        search_url = f"https://node.jx3box.com/api/node/item/search?ids=&keyword={encoded_keyword}&page=1&per=15&client=std"
         
         headers = {
             "Authorization": AUTHORIZATION,
             "Cookie": COOKIES,
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
         }
         
-        # 使用aiohttp发送请求
-        async with aiohttp.ClientSession() as session:
-            async with session.get(search_url, headers=headers) as response:
-                search_data = await response.json()
+        all_items = []
         
-        if search_data["code"] != 200 or not search_data["data"]["data"]:
-            await TradingCompany.finish(message=f"未找到物品: {keyword}")
+        async with aiohttp.ClientSession() as session:
+            # 第一次调用：BindType为空（null）
+            search_url_1 = f"https://node.jx3box.com/api/node/item/search?ids=&keyword={encoded_keyword}&page=1&per=500&client=std"
+            async with session.get(search_url_1, headers=headers) as response:
+                search_data_1 = await response.json()
+                if search_data_1["code"] == 200 and search_data_1["data"]["data"]:
+                    items_1 = search_data_1["data"]["data"]
+                    # 过滤掉BindType为3的数据
+                    filtered_items_1 = [item for item in items_1 if item.get("BindType") != 3]
+                    all_items.extend(filtered_items_1)
+                    print(f"第一次调用(BindType为空)获取到 {len(filtered_items_1)} 个物品")
+            
+            # 添加请求间隔
+            await asyncio.sleep(0.2)
+            
+            # 第二次调用：BindType为1
+            search_url_2 = f"https://node.jx3box.com/api/node/item/search?ids=&keyword={encoded_keyword}&page=1&per=500&client=std&BindType=1"
+            async with session.get(search_url_2, headers=headers) as response:
+                search_data_2 = await response.json()
+                if search_data_2["code"] == 200 and search_data_2["data"]["data"]:
+                    items_2 = search_data_2["data"]["data"]
+                    # 过滤掉BindType为3的数据
+                    filtered_items_2 = [item for item in items_2 if item.get("BindType") != 3]
+                    all_items.extend(filtered_items_2)
+                    print(f"第二次调用(BindType=1)获取到 {len(filtered_items_2)} 个物品")
+            
+            # 添加请求间隔
+            await asyncio.sleep(0.2)
+            
+            # 第三次调用：BindType为2
+            search_url_3 = f"https://node.jx3box.com/api/node/item/search?ids=&keyword={encoded_keyword}&page=1&per=500&client=std&BindType=2"
+            async with session.get(search_url_3, headers=headers) as response:
+                search_data_3 = await response.json()
+                if search_data_3["code"] == 200 and search_data_3["data"]["data"]:
+                    items_3 = search_data_3["data"]["data"]
+                    # 过滤掉BindType为3的数据
+                    filtered_items_3 = [item for item in items_3 if item.get("BindType") != 3]
+                    all_items.extend(filtered_items_3)
+                    print(f"第三次调用(BindType=2)获取到 {len(filtered_items_3)} 个物品")
+        
+        # 去重处理（基于物品ID）
+        unique_items = []
+        seen_ids = set()
+        for item in all_items:
+            item_id = item.get("id")
+            if item_id not in seen_ids:
+                unique_items.append(item)
+                seen_ids.add(item_id)
+        
+        if not unique_items:
+            await TradingCompany.send(message=f"未找到符合条件的物品: {keyword}")
             return
         
-        # 获取前3个物品的ID
-        items = search_data["data"]["data"][:3]
+        # 使用去重后的物品数据
+        items = unique_items
+        print(f'去重后的物品数量: {len(items)}')
+        
         auction_data = []
         stats_data = None
         
         # 第二步：为每个物品ID调用交易行接口
         async with aiohttp.ClientSession() as session:
-            for item in items:
+            # 限制处理的物品数量，避免请求过多
+            for item in items[:10]:  # 最多处理前10个物品
+                print(f"处理物品: {item['id']} - {item['Name']} (BindType: {item.get('BindType')})")
                 item_id = item["id"]
                 
                 # 获取小时数据
@@ -860,6 +909,9 @@ async def handle_trading_company(bot: Bot, event: GroupMessageEvent, state: T_St
                         },
                         "auction_data": auction_result
                     })
+                
+                # 添加请求间隔
+                await asyncio.sleep(0.1)
         
         # 如果只有一个物品，获取日统计数据
         if len(auction_data) == 1:
