@@ -4,7 +4,7 @@ Description: 剑网3 API 插件
 '''
 import token
 import asyncio
-from datetime import datetime
+from datetime import datetime,timedelta
 from warnings import catch_warnings
 from nonebot import on_regex, require, get_driver
 from nonebot.typing import T_State
@@ -19,6 +19,7 @@ from src.utils.render_context import render_and_cleanup
 from ..utils.permission import require_admin_permission
 from jx3api.exception import APIError  # 添加导入
 import os
+import re
 from .database import NianZaiDB  # 添加数据库导入
 from src.config import STATIC_PATH,JX3_AUTHORIZATION, JX3_COOKIES, JX3_TOKEN, JX3_TICKET
 
@@ -417,6 +418,30 @@ async def handle_role_status(bot: Bot, event: GroupMessageEvent, state: T_State)
         f"登录状态：{'游戏在线' if res.get('onlineStatus', True) else '游戏离线'}"
     )
     await RoleStatus.finish(message=Message(msg))
+
+# 心法的阵眼效果
+SchoolMatrix = on_regex(pattern=r'^阵眼\s+(\S+)$', priority=1)
+@SchoolMatrix.handle()
+@check_plugin_enabled
+async def handle_school_matrix(bot: Bot, event: GroupMessageEvent, state: T_State):
+    matched = state['_matched']
+    # 如果第一个捕获组有值，则它是区服名，否则使用默认区服
+    name = matched.group(1)
+    res = await async_api.request(endpoint="/data/school/matrix", name=name)
+    # 构建消息
+    msg_parts = []
+    msg_parts.append(f"{res.get('name', '未知')} · {res.get('skillName', '未知')}")
+    
+    # 遍历阵眼效果描述
+    descs = res.get('descs', [])
+    for desc in descs:
+        level = desc.get('level', 0)
+        desc_name = desc.get('name', '未知')
+        desc_text = desc.get('desc', '未知')
+        msg_parts.append(f"{desc_name} : {desc_text}")
+    
+    msg = "\n".join(msg_parts)
+    await SchoolMatrix.finish(message=Message(msg))
 
 
 # 角色副本cd记录
@@ -1375,10 +1400,7 @@ async def handle_gold_price(bot: Bot, event: GroupMessageEvent, state: T_State):
         return
     
     # 获取完整的匹配字符串进行重新解析
-    full_match = state['_matched'].group(0)
-    
-    # 重新解析输入格式
-    import re
+    full_match = state['_matched'].group(0)  
     
     # 支持的格式：200j, 3z, 2z3, 2z3j, 1.5z, 2.5z1.2j 等
     pattern = r'^(\d+(?:\.\d+)?)[jzJZ](?:(\d+(?:\.\d+)?)([jzJZ]?))?$'
@@ -1881,7 +1903,6 @@ async def handle_equipment_guide(bot: Bot, event: GroupMessageEvent, state: T_St
 
 # 沙盘记录查询
 SandboxRecord = on_regex(r"^沙盘记录(?:\s+(.+))?$", priority=1)
-
 @SandboxRecord.handle()
 @check_plugin_enabled
 async def handle_sandbox_record(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -1990,6 +2011,302 @@ async def handle_sandbox_record(bot: Bot, event: GroupMessageEvent, state: T_Sta
         print(f"SandboxRecord 其他错误: {type(e).__name__}: {str(e)}")
         await SandboxRecord.finish(message="❌ 沙盘记录查询失败，请稍后重试")
 
+
+# 马场查询
+HorseQuery = on_regex(pattern=r'^马场(?:\s+(\S+))?$', priority=1)
+@HorseQuery.handle()
+@check_plugin_enabled
+async def handle_horse_query(bot: Bot, event: GroupMessageEvent, state: T_State):
+    """处理马场查询"""
+    # 获取服务器参数
+    if state['_matched'].group(1):
+        server_name = state['_matched'].group(1)
+    else:
+        server_name = await get_group_default_server(bot, event)
+        if not server_name:
+            return
+    
+    try:
+        # 调用马场API
+        async with aiohttp.ClientSession() as session:
+            params = {
+                'pageIndex': 1,
+                'pageSize': 50,
+                'server': server_name,
+                'type': 'horse'
+            }
+            
+            async with session.get(
+                "https://next2.jx3box.com/api/game/reporter/horse",
+                params=params,
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as response:
+                if response.status != 200:
+                    await HorseQuery.send(message=f"❌ 马场查询失败，服务器响应错误: {response.status}")
+                    return
+                
+                data = await response.json()
+                if data.get('code') != 0:
+                    await HorseQuery.send(message=f"❌ 马场查询失败: {data.get('msg', '未知错误')}")
+                    return
+                
+                records = data.get('data', {}).get('list', [])
+                if not records:
+                    await HorseQuery.send(message=f"🐎 【{server_name}】暂无马场记录")
+                    return
+
+                
+                # 获取当前时间
+                now = datetime.now()
+
+                # 按 subtype 分组处理
+                grouped_data = {}
+                for item in records:
+                    subtype = item['subtype']
+                    if subtype not in grouped_data:
+                        grouped_data[subtype] = []
+                    grouped_data[subtype].append(item)
+
+                # 处理 npc_chat 类型数据
+                npc_chat_data = grouped_data.get("npc_chat", [])
+                npc_chat_results = []
+                # 按地图分组存储npc_chat数据
+                npc_chat_by_map = {}
+                
+                for item in npc_chat_data:
+                    content = item["content"]
+                    created_at = datetime.fromisoformat(item['created_at'][:-6])
+                    map_name = item["map_name"]
+                    
+                    # 使用正则表达式提取出世时间信息
+                    import re
+                    matches = re.findall(r'距离下一匹(.*?)出世还有(\d+)分钟', content)
+                    
+                    for match in matches:
+                        horse_name = match[0].strip()
+                        minutes = int(match[1])
+                        
+                        # 计算出世时间
+                        birth_time = created_at + timedelta(minutes=minutes)
+                        
+                        # 判断是否大于当前时间
+                        if birth_time > now:
+                            # 创建唯一键：地图名_马名
+                            unique_key = f"{map_name}_{horse_name}"
+                            
+                            # 如果这个地图+马名组合还没有记录，或者当前记录的created_at更新
+                            if (unique_key not in npc_chat_by_map or 
+                                created_at > npc_chat_by_map[unique_key]["created_at"]):
+                                
+                                npc_chat_by_map[unique_key] = {
+                                    "horse_name": horse_name,
+                                    "created_at": created_at,
+                                    "birth_time": birth_time,
+                                    "map_name": map_name,
+                                    "server": item["server"]
+                                }
+                
+                # 将去重后的结果添加到npc_chat_results
+                for result in npc_chat_by_map.values():
+                    npc_chat_results.append(result)
+
+                # 处理 foreshow 类型数据
+                foreshow_data = grouped_data.get("foreshow", [])
+                foreshow_results = []
+
+                # 计算当前时间往前9分钟的时间点
+                nine_minutes_ago = now - timedelta(minutes=9)
+
+                for item in foreshow_data:
+                    created_at = datetime.fromisoformat(item['created_at'][:-6])
+                    
+                    # 筛选created_at大于当前时间往前9分钟的数据
+                    if created_at >= nine_minutes_ago:
+                        content = item["content"]
+                        
+                        # 从content中提取地图名字
+                        import re
+                        location_match = re.search(r'将有宝马良驹在(.*?)出没', content)
+                        if location_match:
+                            location = location_match.group(1).strip()
+                        else:
+                            location = "未知地点"
+                        
+                        # 从content中提取马名字（这里可能需要根据实际content格式调整）
+                        horse_match = re.search(r'宝马良驹', content)
+                        horse_name = "宝马良驹" if horse_match else "未知马匹"
+                        
+                        # 计算时间段：created_at为起始时间，created_at+10分钟为截止时间
+                        start_time = created_at
+                        end_time = created_at + timedelta(minutes=10)
+                        
+                        foreshow_results.append({
+                            "horse_name": horse_name,
+                            "location": location,
+                            "start_time": start_time,
+                            "end_time": end_time,
+                            "created_at": created_at,
+                            "server": item["server"]
+                        })
+
+                # 合并结果并构建消息
+                all_results = []
+
+                # 添加npc_chat结果（已经去重）
+                for result in npc_chat_results:
+                    all_results.append({
+                        "type": "npc_chat",
+                        "horse_name": result["horse_name"],
+                        "map_name": result["map_name"],
+                        "birth_time": result["birth_time"],
+                        "server": result["server"]
+                    })
+
+                # 添加foreshow结果
+                for result in foreshow_results:
+                    all_results.append({
+                        "type": "foreshow",
+                        "horse_name": result["horse_name"],
+                        "location": result["location"],
+                        "start_time": result["start_time"],
+                        "end_time": result["end_time"],
+                        "server": result["server"]
+                    })
+                # 构建消息
+                if not all_results:
+                    message = f"🐎 【{server_name}】暂无马场活动"
+                else:
+                    msg_parts = [f"🐎 【{server_name}】马场信息"]
+                    
+                    # 按地点分组显示
+                    location_groups = {}
+                    for result in all_results:
+                        if result["type"] == "npc_chat":
+                            location = result["map_name"]
+                        else:  # foreshow
+                            location = result["location"]
+                        
+                        if location not in location_groups:
+                            location_groups[location] = []
+                        location_groups[location].append(result)
+                    
+                    for location, items in location_groups.items():
+                        msg_parts.append(f"📍 地点：{location}")
+                        
+                        for item in items:
+                            if item["type"] == "npc_chat":
+                                # npc_chat类型：显示具体出世时间
+                                birth_time = item["birth_time"]
+                                time_left = birth_time - now
+                                
+                                if time_left.total_seconds() > 0:
+                                    hours = int(time_left.total_seconds() // 3600)
+                                    minutes = int((time_left.total_seconds() % 3600) // 60)
+                                    
+                                    if hours > 0:
+                                        time_left_str = f"{hours}小时{minutes}分钟"
+                                    else:
+                                        time_left_str = f"{minutes}分钟"
+                                    
+                                    birth_time_str = birth_time.strftime('%H:%M:%S')
+                                    msg_parts.append(f"⏰ {item['horse_name']} - 预计{birth_time_str}出世 (还有{time_left_str})")
+                            
+                            else:  # foreshow类型
+                                # foreshow类型：显示时间段
+                                start_time_str = item["start_time"].strftime('%H:%M')
+                                end_time_str = item["end_time"].strftime('%H:%M')
+                                msg_parts.append(f"📢 {item['horse_name']} - 预告时间段 {start_time_str}-{end_time_str}")
+                    
+                    message = "\n".join(msg_parts)
+                                
+                # 格式化并发送消息
+                # message = format_horse_message(server_name, horse_records)
+                
+                # 如果消息太长，截断
+                if len(message) > 1500:
+                    message = message[:1500] + "\n\n... (记录过多，已截断)"
+                
+                await HorseQuery.send(message=Message(message))
+                
+    except aiohttp.ClientError as e:
+        await HorseQuery.finish(message=f"❌ 网络请求失败: {str(e)}")
+    except Exception as e:
+        print(f"马场查询异常: {type(e).__name__}: {str(e)}")
+        await HorseQuery.finish(message=f"❌ 马场查询失败: {str(e)}")
+
+# 名望查询
+CelebrityQuery = on_regex(pattern=r'^名望$', priority=1)
+@CelebrityQuery.handle()
+@check_plugin_enabled
+async def handle_celebrity_query(bot: Bot, event: MessageEvent, state: T_State):
+    """处理名望查询"""
+    try:
+        # 获取当前时间
+        now = datetime.now()
+        current_hour = now.hour
+        current_minute = now.minute
+        
+        # 计算hour：当前小时除以3的余数
+        hour = current_hour % 3
+        
+        # 调用名望API
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                "https://cms.jx3box.com/api/cms/game/celebrity?type=2",
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as response:
+                if response.status != 200:
+                    await CelebrityQuery.finish(message=f"❌ 名望查询失败: HTTP {response.status}")
+                
+                data = await response.json()
+                if data.get("code") != 0:
+                    await CelebrityQuery.finish(message=f"❌ 名望查询失败: {data.get('msg', '未知错误')}")
+                
+                celebrity_data = data.get("data", [])
+                
+                # 筛选符合hour的数据
+                filtered_data = [item for item in celebrity_data if item.get("hour") == hour]
+                
+                if not filtered_data:
+                    await CelebrityQuery.finish(message=f"❌ 未找到当前时段({hour})的名望数据")
+                
+                # 找到time小于当前分钟数的一个
+                previous_events = [item for item in filtered_data if item.get("time") <= current_minute]
+                previous_event = max(previous_events, key=lambda x: x.get("time")) if previous_events else None
+                
+                # 找到time大于等于当前分钟数的三个
+                next_events = [item for item in filtered_data if item.get("time") >= current_minute]
+                next_events.sort(key=lambda x: x.get("time"))
+                next_events = next_events[:3] if len(next_events) > 3 else next_events
+                
+                # 如果没有找到前一个事件，则取最后一个作为前一个
+                if not previous_event and filtered_data:
+                    filtered_data.sort(key=lambda x: x.get("time"))
+                    previous_event = filtered_data[-1]
+                
+                # 构建消息
+                msg_parts = ["📜 名望活动"]
+                
+                # 添加前一个事件（如果有）
+                if previous_event:
+                    hour_str = str(current_hour).zfill(2)
+                    minute_str = str(previous_event.get("time")).zfill(2)
+                    msg_parts.append(f"⏰ {hour_str}:{minute_str} | 📍 {previous_event.get('site')} | 🎯 {previous_event.get('stage')}")
+                
+                # 添加接下来的事件
+                for event in next_events:
+                    hour_str = str(current_hour).zfill(2)
+                    minute_str = str(event.get("time")).zfill(2)
+                    msg_parts.append(f"⏰ {hour_str}:{minute_str} | 📍 {event.get('site')} | 🎯 {event.get('stage')}")
+               
+                message = "\n\n".join(msg_parts)
+                await CelebrityQuery.send(message=Message(message))
+                
+    except aiohttp.ClientError as e:
+        await CelebrityQuery.finish(message=f"❌ 网络请求失败: {str(e)}")
+    except Exception as e:
+        print(f"名望查询异常: {type(e).__name__}: {str(e)}")
+        await CelebrityQuery.finish(message=f"❌ 名望查询失败: {str(e)}")
 
 # 沙盘监控开关
 SandboxMonitorSwitch = on_regex(pattern=r'^沙盘监控\s+(开启|关闭)$', priority=1)
