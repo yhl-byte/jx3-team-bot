@@ -2325,7 +2325,7 @@ async def handle_sandbox_monitor_switch(bot: Bot, event: GroupMessageEvent, stat
         await SandboxMonitorSwitch.finish(message="❌ 设置失败")
 
 # 定时轮询沙盘记录 - 周二和周四 20:00-22:00 每分钟执行
-@scheduler.scheduled_job("cron", day_of_week="1,3", hour="20-21", minute="*/5", id="sandbox_monitor")
+@scheduler.scheduled_job("cron", day_of_week="1,3", hour="20-21", minute="*/3", id="sandbox_monitor")
 async def poll_sandbox_records():
     """定时轮询沙盘记录"""
     global last_sandbox_data
