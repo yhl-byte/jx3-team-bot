@@ -137,12 +137,12 @@ class JX3WebSocketManager:
                 await self.handle_news_event(event_data)
             elif action == 2003:
                 await self.handle_game_update(event_data)
-            elif action == 2004:
-                await self.handle_gossip_news(event_data)
-            elif action == 2005:
-                await self.handle_castle_leader(event_data)
-            elif action == 2006:
-                await self.handle_yuncong_forecast(event_data)
+            # elif action == 2004:
+            #     await self.handle_gossip_news(event_data)
+            # elif action == 2005:
+            #     await self.handle_castle_leader(event_data)
+            # elif action == 2006:
+            #     await self.handle_yuncong_forecast(event_data)
             else:
                 event_name = EVENT_TYPES.get(action, f"未知事件({action})")
                 logger.info(f"收到事件: {event_name}")

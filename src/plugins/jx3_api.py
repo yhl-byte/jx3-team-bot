@@ -443,6 +443,49 @@ async def handle_school_matrix(bot: Bot, event: GroupMessageEvent, state: T_Stat
     msg = "\n".join(msg_parts)
     await SchoolMatrix.finish(message=Message(msg))
 
+# 加速命令
+SpeedCommand = on_regex(pattern=r'^加速$', priority=1)
+@SpeedCommand.handle()
+@check_plugin_enabled
+async def handle_speed_command(bot: Bot, event: GroupMessageEvent, state: T_State):
+    """发送加速图片"""
+    try:
+        # 构建图片路径
+        image_path = os.path.join(STATIC_PATH, 'speed.png')
+        
+        # 检查文件是否存在
+        if not os.path.exists(image_path):
+            await SpeedCommand.finish(message="❌ 加速图片文件不存在")
+            return
+        
+        # 发送图片
+        await SpeedCommand.send(MessageSegment.image(path_to_base64(image_path)))
+        
+    except Exception as e:
+        print(f"发送加速图片失败: {e}")
+        await SpeedCommand.finish(message="❌ 发送加速图片失败")
+
+# 家园酒命令
+HomeFood = on_regex(pattern=r'^家园酒$', priority=1)
+@HomeFood.handle()
+@check_plugin_enabled
+async def handle_home_food(bot: Bot, event: GroupMessageEvent, state: T_State):
+    """发送加速图片"""
+    try:
+        # 构建图片路径
+        image_path = os.path.join(STATIC_PATH, 'home-food.jpg')
+        
+        # 检查文件是否存在
+        if not os.path.exists(image_path):
+            await HomeFood.finish(message="❌ 家园食物图片文件不存在")
+            return
+        
+        # 发送图片
+        await HomeFood.send(MessageSegment.image(path_to_base64(image_path)))
+        
+    except Exception as e:
+        print(f"发送加速图片失败: {e}")
+        await HomeFood.finish(message="❌ 发送家园图片图片失败")
 
 # 角色副本cd记录
 RoleTeamCdList = on_regex(pattern=r'^副本\s+(?:(\S+)\s+)?(\S+)$', priority=1)
@@ -718,7 +761,6 @@ async def handle_role_achievement(bot: Bot, event: GroupMessageEvent, state: T_S
     finally:
         if os.path.exists(image_path):
             os.remove(image_path)
-
 
 # 资历分布
 DiaryAchievement = on_regex(pattern=r'^资历分布\s+(?:(\S+)\s+)?(\S+)$', priority=1)
@@ -2235,12 +2277,25 @@ async def handle_horse_query(bot: Bot, event: GroupMessageEvent, state: T_State)
         await HorseQuery.finish(message=f"❌ 马场查询失败: {str(e)}")
 
 # 名望查询
-CelebrityQuery = on_regex(pattern=r'^名望$', priority=1)
+CelebrityQuery = on_regex(pattern=r'^名望(?:\s+(披风会))?$', priority=1)
 @CelebrityQuery.handle()
 @check_plugin_enabled
 async def handle_celebrity_query(bot: Bot, event: MessageEvent, state: T_State):
     """处理名望查询"""
     try:
+        # 获取分类参数
+        matched = state['_matched']
+        category_name = matched.group(1) if matched.group(1) else "披风会"
+        
+        # 分类映射
+        category_map = {
+            "披风会": {"type": 2, "name": "披风会"},
+            "云从社": {"type": 1, "name": "云从社"},
+            "楚天社": {"type": 0, "name": "楚天社"}
+        }
+        
+        category_info = category_map[category_name]
+
         # 获取当前时间
         now = datetime.now()
         current_hour = now.hour
@@ -2252,7 +2307,7 @@ async def handle_celebrity_query(bot: Bot, event: MessageEvent, state: T_State):
         # 调用名望API
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                "https://cms.jx3box.com/api/cms/game/celebrity?type=2",
+                f"https://cms.jx3box.com/api/cms/game/celebrity?type={category_info['type']}",
                 timeout=aiohttp.ClientTimeout(total=10)
             ) as response:
                 if response.status != 200:
@@ -2285,7 +2340,7 @@ async def handle_celebrity_query(bot: Bot, event: MessageEvent, state: T_State):
                     previous_event = filtered_data[-1]
                 
                 # 构建消息
-                msg_parts = ["📜 名望活动"]
+                msg_parts = [f"📜 名望活动 - {category_info['name']}"]
                 
                 # 添加前一个事件（如果有）
                 if previous_event:
