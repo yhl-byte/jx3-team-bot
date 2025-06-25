@@ -314,7 +314,7 @@ async def handle_ws_plugin_control(bot: Bot, event: GroupMessageEvent, state: T_
                 subscribed_groups.add(group_id)
                 if not ws_manager.is_running:
                     await ws_manager.start()
-                msg = "剑三推送功能已开启\n将接收：开服报时、新闻资讯、游戏更新、八卦速报、关隘首领、云丛预告"
+                msg = "剑三推送功能已开启\n将接收：开服报时、新闻资讯、游戏更新"
             else:
                 msg = "开启剑三推送功能失败，请稍后重试"
         elif action == "关闭":
