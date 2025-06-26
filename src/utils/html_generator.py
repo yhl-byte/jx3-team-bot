@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:33:31
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-23 09:40:49
+LastEditTime: 2025-06-26 22:57:23
 FilePath: /team-bot/jx3-team-bot/src/utils/html_generator.py
 '''
 # src/plugins/chat_plugin/html_generator.py
@@ -225,6 +225,9 @@ def render_team_html(team_box, template_name="team.html") -> str:
 
 def render_game_help() -> str:
     return render_html("games_help.html")
+
+def render_bot_help() -> str:
+    return render_html("help_guide.html")
 
 def render_team_help() -> str:
     return render_html("team_help.html")

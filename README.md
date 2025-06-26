@@ -1,7 +1,7 @@
 <!--
  * @Date: 2025-03-10 11:39:44
  * @LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
- * @LastEditTime: 2025-06-11 16:30:37
+ * @LastEditTime: 2025-06-26 22:39:24
  * @FilePath: /team-bot/jx3-team-bot/README.md
 -->
 # 年崽机器人 (JX3 Team Bot)
@@ -78,7 +78,7 @@ docker-compose build
 # 启动服务
 docker-compose up -d
 ```
-
+```
 jx3-team-bot/
 ├── src/
 │   ├── plugins/          # 插件目录
@@ -95,7 +95,7 @@ jx3-team-bot/
 ├── requirements.txt    # 依赖列表
 ├── docker-compose.yml  # Docker 配置
 └── README.md          # 项目说明
-
+```
 
 ##  使用指南
 ### 基础命令

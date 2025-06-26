@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-20 17:08:39
+LastEditTime: 2025-06-26 23:10:00
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -9,7 +9,7 @@ from nonebot import on_message,on_regex
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment, GroupMessageEvent, Bot, Message,GroupMessageEvent
 from ..utils.permission import require_admin_permission
-from src.utils.html_generator import render_game_help
+from src.utils.html_generator import render_game_help,render_bot_help
 from src.utils.render_context import render_and_cleanup
 from ..utils.index import path_to_base64
 from src.config import STATIC_PATH
@@ -163,7 +163,26 @@ async def handle_game_help(bot: Bot, event: GroupMessageEvent, state: T_State):
         if os.path.exists(image_path):
             os.remove(image_path)
     
-    
-    # 清理临时文件
-    # os.unlink(image_path)
+# 加速命令
+NianZaiHelp = on_regex(pattern=r'^帮助$', priority=1)
+@NianZaiHelp.handle()
+async def handle_bot_help(bot: Bot, event: GroupMessageEvent, state: T_State):
+    """发送年崽帮助图片"""
+    # 发送处理提示
+    processing_msg = await bot.send(event=event, message="正在生成年崽帮助信息，请稍候...")
+    try:
+        # 构建图片路径
+        image_path = os.path.join(STATIC_PATH, 'help.png')
+        
+        # 检查文件是否存在
+        if not os.path.exists(image_path):
+            await NianZaiHelp.finish(message="❌ 年崽帮助图片文件不存在")
+            return
+        
+        # 发送图片
+        await NianZaiHelp.send(MessageSegment.image(path_to_base64(image_path)))
+        
+    except Exception as e:
+        print(f"发送加速图片失败: {e}")
+        await NianZaiHelp.finish(message="❌ 发送年崽帮助图片失败")
 

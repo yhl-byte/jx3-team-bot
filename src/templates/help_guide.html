@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>年崽功能帮助指南</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 1920px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .category {
+            margin-bottom: 40px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .category-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        
+        .category-header .icon {
+            margin-right: 15px;
+            font-size: 1.8em;
+        }
+        
+        .category-content {
+            background: white;
+            padding: 25px;
+        }
+        
+        .plugin-section {
+            margin-bottom: 30px;
+            border-left: 4px solid #4facfe;
+            padding-left: 20px;
+        }
+        
+        .plugin-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .plugin-title .badge {
+            background: #4facfe;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        
+        .command-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .command-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .command-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: #4facfe;
+        }
+        
+        .command-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .command-desc {
+            color: #6c757d;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        .command-example {
+            background: #e3f2fd;
+            border-left: 3px solid #2196f3;
+            padding: 8px 12px;
+            margin-top: 8px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #1565c0;
+        }
+        
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .footer p {
+            margin-bottom: 10px;
+        }
+        
+        .version {
+            opacity: 0.7;
+            font-size: 0.9em;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #ff6b6b;
+        }
+        
+        .highlight h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .command-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 年崽功能帮助指南</h1>
+            <p>全面的功能介绍与使用说明</p>
+        </div>
+        
+        <div class="content">
+            <div class="highlight">
+                <h3>📢 使用须知</h3>
+                <p>• 所有命令都需要在群聊中发送</p>
+                <p>• 部分功能需要管理员权限</p>
+                <p>• 使用前请确保对应插件已开启</p>
+                <p>• 命令格式中的 [] 表示必填参数，() 表示可选参数</p>
+            </div>
+            
+            <!-- JX3 API 相关功能 -->
+            <div class="category">
+                <div class="category-header">
+                    <span class="icon">⚔️</span>
+                    剑网3 API 功能
+                </div>
+                <div class="category-content">
+                    <div class="plugin-section">
+                        <div class="plugin-title">
+                            剑三助手 <span class="badge">核心功能</span>
+                        </div>
+                        <div class="command-grid">
+                            <div class="command-item">
+                                <div class="command-name">服务器状态</div>
+                                <div class="command-desc">查询服务器开服状态</div>
+                                <div class="command-example">开服 [服务器名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">游戏公告</div>
+                                <div class="command-desc">获取最新游戏公告</div>
+                                <div class="command-example">公告</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">游戏资讯</div>
+                                <div class="command-desc">查看游戏新闻资讯</div>
+                                <div class="command-example">资讯 (数量)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">技改信息</div>
+                                <div class="command-desc">查询技能改动信息</div>
+                                <div class="command-example">技改</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">日常任务</div>
+                                <div class="command-desc">查询每日任务信息</div>
+                                <div class="command-example">日常 (服务器)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">角色信息</div>
+                                <div class="command-desc">查询角色基本信息</div>
+                                <div class="command-example">角色 (服务器) [角色名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">角色属性</div>
+                                <div class="command-desc">查询角色详细属性</div>
+                                <div class="command-example">属性 (服务器) [角色名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">在线状态</div>
+                                <div class="command-desc">查询角色在线状态</div>
+                                <div class="command-example">在线 (服务器) [角色名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">阵眼效果</div>
+                                <div class="command-desc">查询心法阵眼效果</div>
+                                <div class="command-example">阵眼 [心法名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">奇穴加速</div>
+                                <div class="command-desc">查询奇穴加速信息</div>
+                                <div class="command-example">加速</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">家园美酒</div>
+                                <div class="command-desc">查询家园酒类信息</div>
+                                <div class="command-example">家园酒</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">副本记录</div>
+                                <div class="command-desc">查询角色副本CD</div>
+                                <div class="command-example">副本 (服务器) [角色名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">奇遇记录</div>
+                                <div class="command-desc">查询角色奇遇记录</div>
+                                <div class="command-example">查询 (服务器) [角色名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">角色名片</div>
+                                <div class="command-desc">生成角色名片</div>
+                                <div class="command-example">名片 (服务器) [角色名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">沙盘信息</div>
+                                <div class="command-desc">查询服务器沙盘</div>
+                                <div class="command-example">沙盘 (服务器)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">物价查询</div>
+                                <div class="command-desc">查询物品价格</div>
+                                <div class="command-example">物价 (服务器) [物品名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">成就查询</div>
+                                <div class="command-desc">查询角色成就</div>
+                                <div class="command-example">成就 (服务器) [角色名] (成就名)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">资历分布</div>
+                                <div class="command-desc">查询角色资历分布</div>
+                                <div class="command-example">资历分布 (服务器) [角色名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">团队招募</div>
+                                <div class="command-desc">查询团队招募信息</div>
+                                <div class="command-example">招募 (服务器) [关键词]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">交易行</div>
+                                <div class="command-desc">查询交易行信息</div>
+                                <div class="command-example">交易行 (服务器) [物品名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">黑本</div>
+                                <div class="command-desc">模拟查询黑本信息</div>
+                                <div class="command-example">黑本 (服务器)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">精耐查询</div>
+                                <div class="command-desc">查询角色精耐信息</div>
+                                <div class="command-example">精耐 (服务器) [角色名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">金价查询</div>
+                                <div class="command-desc">查询服务器金价</div>
+                                <div class="command-example">金价 (服务器)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">关隘信息</div>
+                                <div class="command-desc">查询关隘战况</div>
+                                <div class="command-example">关隘</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">日常预测</div>
+                                <div class="command-desc">预测明日日常</div>
+                                <div class="command-example">日常预测</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">金价换算</div>
+                                <div class="command-desc">进行金价换算</div>
+                                <div class="command-example">[数字]j 或 [数字]z</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">攻略查询</div>
+                                <div class="command-desc">查询奇遇攻略</div>
+                                <div class="command-example">攻略 [奇遇名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">马场信息</div>
+                                <div class="command-desc">查询马场刷新</div>
+                                <div class="command-example">马场 (服务器)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">名望查询</div>
+                                <div class="command-desc">查询名望信息</div>
+                                <div class="command-example">名望 (披风会)</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 30px; padding: 15px; background: #f0f8ff; border-radius: 10px;">
+                            <h4 style="color: #2c3e50; margin-bottom: 10px;">🔧 管理命令</h4>
+                            <div class="command-grid">
+                                <div class="command-item">
+                                    <div class="command-name">绑定服务器</div>
+                                    <div class="command-desc">设置群组默认服务器</div>
+                                    <div class="command-example">绑定服务器 [服务器名]</div>
+                                </div>
+                                <div class="command-item">
+                                    <div class="command-name">查看群组配置</div>
+                                    <div class="command-desc">查看当前群组设置</div>
+                                    <div class="command-example">查看群组配置</div>
+                                </div>
+                                <div class="command-item">
+                                    <div class="command-name">金价换算</div>
+                                    <div class="command-desc">开启/关闭金价换算</div>
+                                    <div class="command-example">金价换算 开启/关闭</div>
+                                </div>
+                                <div class="command-item">
+                                    <div class="command-name">沙盘监控</div>
+                                    <div class="command-desc">开启/关闭沙盘监控</div>
+                                    <div class="command-example">沙盘监控 开启/关闭</div>
+                                </div>
+                                <div class="command-item">
+                                    <div class="command-name">日常播报</div>
+                                    <div class="command-desc">开启/关闭日常播报</div>
+                                    <div class="command-example">日常播报 开启/关闭</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- JX3 Team 功能 -->
+            <div class="category">
+                <div class="category-header">
+                    <span class="icon">👥</span>
+                    剑网3 开团功能
+                </div>
+                <div class="category-content">
+                    <div class="plugin-section">
+                        <div class="plugin-title">
+                            开团管理 <span class="badge">团队协作</span>
+                        </div>
+                        <div class="command-grid">
+                            <div class="command-item">
+                                <div class="command-name">创建团队</div>
+                                <div class="command-desc">创建新的团队</div>
+                                <div class="command-example">创建团队 / 开团 [团队名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">修改团名</div>
+                                <div class="command-desc">修改团队名称</div>
+                                <div class="command-example">修改团名 [旧名] [新名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">默认团队</div>
+                                <div class="command-desc">设置默认团队</div>
+                                <div class="command-example">默认团队 [团队名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">结束团队</div>
+                                <div class="command-desc">结束指定团队</div>
+                                <div class="command-example">结束团队 [团队名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">团队列表</div>
+                                <div class="command-desc">查看所有团队</div>
+                                <div class="command-example">团队列表</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">报名</div>
+                                <div class="command-desc">报名参加团队</div>
+                                <div class="command-example">报名 [心法] [昵称] (团队ID)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">取消报名</div>
+                                <div class="command-desc">取消团队报名</div>
+                                <div class="command-example">取消报名 (团队ID)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">代报名</div>
+                                <div class="command-desc">代替他人报名</div>
+                                <div class="command-example">代报名 [心法] [昵称] (团队ID)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">开除团员</div>
+                                <div class="command-desc">移除团队成员</div>
+                                <div class="command-example">开除团员 [昵称] (团队ID)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">移动位置</div>
+                                <div class="command-desc">调整成员位置</div>
+                                <div class="command-example">移动位置 [原位置] [新位置] (团队ID)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">查看团队</div>
+                                <div class="command-desc">查看团队详情</div>
+                                <div class="command-example">查看团队 (团队ID)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">随机黑本</div>
+                                <div class="command-desc">随机选择黑名单</div>
+                                <div class="command-example">随机黑本 (团队ID)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">报名格式</div>
+                                <div class="command-desc">设置报名格式</div>
+                                <div class="command-example">设置报名格式 1/2</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">开团帮助</div>
+                                <div class="command-desc">查看开团帮助</div>
+                                <div class="command-example">开团帮助</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- JX3 WebSocket 推送功能 -->
+            <div class="category">
+                <div class="category-header">
+                    <span class="icon">📡</span>
+                    剑网3 推送功能
+                </div>
+                <div class="category-content">
+                    <div class="plugin-section">
+                        <div class="plugin-title">
+                            实时推送 <span class="badge">消息推送</span>
+                        </div>
+                        <div class="command-grid">
+                            <div class="command-item">
+                                <div class="command-name">推送开关</div>
+                                <div class="command-desc">开启/关闭推送功能</div>
+                                <div class="command-example">剑三推送 开启/关闭/状态</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">推送设置</div>
+                                <div class="command-desc">设置推送类型</div>
+                                <div class="command-example">推送设置 [开服/新闻/更新/八卦] 开启/关闭</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">推送状态</div>
+                                <div class="command-desc">查看推送状态</div>
+                                <div class="command-example">推送状态</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Handler 插件管理功能 -->
+            <div class="category">
+                <div class="category-header">
+                    <span class="icon">🔧</span>
+                    插件管理功能
+                </div>
+                <div class="category-content">
+                    <div class="plugin-section">
+                        <div class="plugin-title">
+                            系统管理 <span class="badge">管理员</span>
+                        </div>
+                        <div class="command-grid">
+                            <div class="command-item">
+                                <div class="command-name">插件管理</div>
+                                <div class="command-desc">管理插件开关状态</div>
+                                <div class="command-example">插件管理 [插件名] 开启/关闭/状态</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">插件列表</div>
+                                <div class="command-desc">查看所有插件</div>
+                                <div class="command-example">游戏插件 / 插件列表</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">游戏帮助</div>
+                                <div class="command-desc">查看游戏帮助</div>
+                                <div class="command-example">游戏帮助 / 游戏大厅</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">禁言管理</div>
+                                <div class="command-desc">禁言/解禁成员</div>
+                                <div class="command-example">禁言 [@用户/QQ号] [时长]分钟</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 游戏类插件 -->
+            <div class="category">
+                <div class="category-header">
+                    <span class="icon">🎮</span>
+                    游戏娱乐功能
+                </div>
+                <div class="category-content">
+                    <!-- 棋牌类游戏 -->
+                    <div class="plugin-section">
+                        <div class="plugin-title">
+                            棋牌类游戏 <span class="badge">策略</span>
+                        </div>
+                        <div class="command-grid">
+                            <div class="command-item">
+                                <div class="command-name">五子棋</div>
+                                <div class="command-desc">开始五子棋游戏</div>
+                                <div class="command-example">开始五子棋 / 下棋 A1 / 五子棋帮助</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">井字棋</div>
+                                <div class="command-desc">开始井字棋游戏</div>
+                                <div class="command-example">开始井字棋 / 下棋 1 / 查看棋盘</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">四川麻将</div>
+                                <div class="command-desc">四人麻将游戏</div>
+                                <div class="command-example">开始四川麻将 / 报名麻将 / 麻将帮助</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 扑克类游戏 -->
+                    <div class="plugin-section">
+                        <div class="plugin-title">
+                            扑克类游戏 <span class="badge">运气</span>
+                        </div>
+                        <div class="command-grid">
+                            <div class="command-item">
+                                <div class="command-name">21点</div>
+                                <div class="command-desc">经典21点游戏</div>
+                                <div class="command-example">开始21点 / 报名21点 / 要牌 / 停牌</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">炸金花</div>
+                                <div class="command-desc">炸金花游戏</div>
+                                <div class="command-example">开始炸金花 / 看牌 / 跟注 / 加注</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">斗地主</div>
+                                <div class="command-desc">三人斗地主</div>
+                                <div class="command-example">开始斗地主 / 叫地主 / 出牌</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 推理类游戏 -->
+                    <div class="plugin-section">
+                        <div class="plugin-title">
+                            推理类游戏 <span class="badge">智力</span>
+                        </div>
+                        <div class="command-grid">
+                            <div class="command-item">
+                                <div class="command-name">狼人杀</div>
+                                <div class="command-desc">经典狼人杀游戏</div>
+                                <div class="command-example">开始狼人杀 / 报名狼人杀 / 查询角色</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">谁是卧底</div>
+                                <div class="command-desc">卧底推理游戏</div>
+                                <div class="command-example">开始谁是卧底 / 报名卧底 / 投票</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">海龟汤</div>
+                                <div class="command-desc">情景推理游戏</div>
+                                <div class="command-example">开始海龟汤 / 猜测 [内容] / 提示</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 文字类游戏 -->
+                    <div class="plugin-section">
+                        <div class="plugin-title">
+                            文字类游戏 <span class="badge">知识</span>
+                        </div>
+                        <div class="command-grid">
+                            <div class="command-item">
+                                <div class="command-name">猜词游戏</div>
+                                <div class="command-desc">描述猜词游戏</div>
+                                <div class="command-example">开始猜词 / 登基 / 猜词 [答案]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">经典台词</div>
+                                <div class="command-desc">台词猜测游戏</div>
+                                <div class="command-example">开始台词 / 报名台词 / 台词帮助</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">禁词游戏</div>
+                                <div class="command-desc">害你在心口难开</div>
+                                <div class="command-example">开始害你在心口难开 / 报名害你</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">猜歌游戏</div>
+                                <div class="command-desc">音乐猜测游戏</div>
+                                <div class="command-example">开始猜歌 / 报名猜歌 / 跳过</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 休闲类游戏 -->
+                    <div class="plugin-section">
+                        <div class="plugin-title">
+                            休闲类游戏 <span class="badge">轻松</span>
+                        </div>
+                        <div class="command-grid">
+                            <div class="command-item">
+                                <div class="command-name">俄罗斯轮盘</div>
+                                <div class="command-desc">刺激的轮盘游戏</div>
+                                <div class="command-example">开始轮盘 / biu / 砰</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">开口中</div>
+                                <div class="command-desc">数字猜测游戏</div>
+                                <div class="command-example">开始开口中 / 猜数 [数字]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">瓶子排序</div>
+                                <div class="command-desc">逻辑排序游戏</div>
+                                <div class="command-example">开始瓶子游戏 / 移动 1 2</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">人生重开</div>
+                                <div class="command-desc">人生模拟游戏</div>
+                                <div class="command-example">人生重开 / 分配属性 / 开始模拟</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">掷骰子</div>
+                                <div class="command-desc">随机掷骰子</div>
+                                <div class="command-example">掷骰子 / roll / 骰子记录</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 积分系统 -->
+                    <div class="plugin-section">
+                        <div class="plugin-title">
+                            积分系统 <span class="badge">奖励</span>
+                        </div>
+                        <div class="command-grid">
+                            <div class="command-item">
+                                <div class="command-name">查询积分</div>
+                                <div class="command-desc">查看个人积分</div>
+                                <div class="command-example">查询积分</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">积分排行</div>
+                                <div class="command-desc">查看积分排行榜</div>
+                                <div class="command-example">积分排行</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">积分说明</div>
+                                <div class="command-desc">查看积分规则</div>
+                                <div class="command-example">积分说明</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">礼包系统</div>
+                                <div class="command-desc">发送和抢夺礼包</div>
+                                <div class="command-example">发礼包 [积分] [数量] / 抢礼包 [ID]</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 休闲生活功能 -->
+            <div class="category">
+                <div class="category-header">
+                    <span class="icon">🌈</span>
+                    休闲生活功能
+                </div>
+                <div class="category-content">
+                    <div class="plugin-section">
+                        <div class="plugin-title">
+                            生活助手 <span class="badge">实用</span>
+                        </div>
+                        <div class="command-grid">
+                            <div class="command-item">
+                                <div class="command-name">天气查询</div>
+                                <div class="command-desc">查询城市天气信息</div>
+                                <div class="command-example">天气 [城市名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">天气设置</div>
+                                <div class="command-desc">设置天气推送和默认城市</div>
+                                <div class="command-example">设置天气推送 开启/关闭</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">城市订阅</div>
+                                <div class="command-desc">订阅城市天气推送</div>
+                                <div class="command-example">订阅城市 [城市名]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">吃什么</div>
+                                <div class="command-desc">随机推荐美食</div>
+                                <div class="command-example">吃什么 / 今天吃什么 / 吃啥</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">喝什么</div>
+                                <div class="command-desc">随机推荐饮品</div>
+                                <div class="command-example">喝什么 / 今天喝什么 / 喝啥</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI 对话功能 -->
+            <div class="category">
+                <div class="category-header">
+                    <span class="icon">🤖</span>
+                    AI 智能对话
+                </div>
+                <div class="category-content">
+                    <div class="plugin-section">
+                        <div class="plugin-title">
+                            DeepSeek AI <span class="badge">智能</span>
+                        </div>
+                        <div class="command-grid">
+                            <div class="command-item">
+                                <div class="command-name">AI对话</div>
+                                <div class="command-desc">与AI进行智能对话</div>
+                                <div class="command-example">ds [对话内容]</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">新对话</div>
+                                <div class="command-desc">开始新的对话会话</div>
+                                <div class="command-example">ds新对话 (对话内容)</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">对话历史</div>
+                                <div class="command-desc">查看对话历史记录</div>
+                                <div class="command-example">ds历史 (条数)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 记录管理功能 -->
+            <div class="category">
+                <div class="category-header">
+                    <span class="icon">📝</span>
+                    记录管理功能
+                </div>
+                <div class="category-content">
+                    <div class="plugin-section">
+                        <div class="plugin-title">
+                            数据记录 <span class="badge">管理</span>
+                        </div>
+                        <div class="command-grid">
+                            <div class="command-item">
+                                <div class="command-name">黑本记录</div>
+                                <div class="command-desc">管理黑名单记录</div>
+                                <div class="command-example">黑本模板 / 黑本录入 / 黑本榜</div>
+                            </div>
+                            <div class="command-item">
+                                <div class="command-name">玄晶记录</div>
+                                <div class="command-desc">管理玄晶记录</div>
+                                <div class="command-example">玄晶模板 / 玄晶录入 / 玄晶榜</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>🎯 <strong>使用提示</strong></p>
+            <p>• 命令不区分大小写，但参数区分大小写</p>
+            <p>• 部分功能需要管理员权限才能使用</p>
+            <p>• 如遇问题请联系管理员或查看具体帮助</p>
+            <div class="version">Version 2.0 | 更新时间：2025年06月</div>
+        </div>
+    </div>
+</body>
+</html>
