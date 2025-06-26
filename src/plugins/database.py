@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:32:40
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-22 20:10:06
+LastEditTime: 2025-06-26 08:46:52
 FilePath: /team-bot/jx3-team-bot/src/plugins/database.py
 '''
 # src/plugins/chat_plugin/database.py
@@ -159,6 +159,7 @@ class NianZaiDB:
                 enable_role_query INTEGER DEFAULT 1,  -- 是否启用角色查询
                 enable_ai_chat INTEGER DEFAULT 1,     -- 是否启用AI对话
                 enable_sandbox_monitor INTEGER DEFAULT 1,  -- 是否启用沙盘记录轮询和播报
+                enable_daily_broadcast INTEGER DEFAULT 0,  -- 是否启用日常播报
                 -- 其他配置
                 welcome_message TEXT DEFAULT NULL,    -- 入群欢迎消息
                 auto_reply_keywords TEXT DEFAULT NULL, -- 自动回复关键词(JSON格式)
@@ -238,7 +239,7 @@ class NianZaiDB:
 
     def upgrade_group_config_table(self):
         """
-        升级 group_config 表，添加 enable_sandbox_monitor 字段
+        升级 group_config 表，添加 enable_daily_broadcast 字段
         """
         with self._get_connection() as conn:
             cursor = conn.cursor()
@@ -247,16 +248,16 @@ class NianZaiDB:
                 cursor.execute("PRAGMA table_info(group_config)")
                 columns = [column[1] for column in cursor.fetchall()]
                 
-                if 'enable_sandbox_monitor' not in columns:
+                if 'enable_daily_broadcast' not in columns:
                     # 添加新字段
                     cursor.execute("""
                         ALTER TABLE group_config 
-                        ADD COLUMN enable_sandbox_monitor INTEGER DEFAULT 1
+                        ADD COLUMN enable_daily_broadcast INTEGER DEFAULT 1
                     """)
                     conn.commit()
-                    print("✅ 成功添加 enable_sandbox_monitor 字段")
+                    print("✅ 成功添加 enable_daily_broadcast 字段")
                 else:
-                    print("ℹ️ enable_sandbox_monitor 字段已存在")
+                    print("ℹ️ enable_daily_broadcast 字段已存在")
                     
             except Exception as e:
                 print(f"❌ 升级数据库表失败: {e}")

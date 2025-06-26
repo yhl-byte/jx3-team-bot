@@ -160,12 +160,28 @@ class JX3WebSocketManager:
         status_emoji = "🟢" if status == 1 else "🔴"
         
         message = f"{status_emoji} 开服报时\n" \
-                 f"区服：{zone}\n" \
-                 f"服务器：{server}\n" \
-                 f"状态：{status_text}\n" \
-                 f"时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                f"区服：{zone}\n" \
+                f"服务器：{server}\n" \
+                f"状态：{status_text}\n" \
+                f"时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         
-        await self.broadcast_to_groups(message)
+        # 只向设置了对应服务器为默认服务器的群组发送消息
+        await self.broadcast_to_server_groups(message, server)
+
+    async def broadcast_to_server_groups(self, message: str, target_server: str):
+        """向设置了指定服务器为默认服务器的群组广播消息"""
+        try:
+            bot = get_bot()
+            for group_id in subscribed_groups:
+                try:
+                    # 获取群组配置
+                    group_config = db.get_group_config(group_id)
+                    if group_config and group_config.get('default_server') == target_server:
+                        await bot.send_group_msg(group_id=int(group_id), message=message)
+                except Exception as e:
+                    logger.error(f"向群组 {group_id} 发送消息失败: {e}")
+        except Exception as e:
+            logger.error(f"广播消息失败: {e}")
     
     async def handle_news_event(self, data: dict):
         """处理新闻资讯事件 (action: 2002)"""

@@ -32,7 +32,6 @@ ticket = JX3_TICKET
 base_url = 'https://www.jx3api.com'
 async_api = AsyncJX3API(token = token, ticket=ticket, base_url = base_url)
 api = JX3API(token = token, ticket=ticket, base_url = base_url)
-default_server = '唯我独尊'
 
 async def get_group_default_server(bot: Bot, event: GroupMessageEvent) -> Optional[str]:
     """
@@ -1626,20 +1625,23 @@ async def handle_view_group_config(bot: Bot, event: GroupMessageEvent, state: T_
     if config:
         default_server = config.get('default_server', '未设置')
         enable_gold_price = "开启" if config.get('enable_gold_price', 1) else "关闭"
-        enable_daily_query = "开启" if config.get('enable_daily_query', 1) else "关闭"
-        enable_role_query = "开启" if config.get('enable_role_query', 1) else "关闭"
-        enable_ai_chat = "开启" if config.get('enable_ai_chat', 1) else "关闭"
+        # enable_daily_query = "开启" if config.get('enable_daily_query', 1) else "关闭"
+        # enable_role_query = "开启" if config.get('enable_role_query', 1) else "关闭"
+        # enable_ai_chat = "开启" if config.get('enable_ai_chat', 1) else "关闭"
+        enable_daily_broadcast = "开启" if config.get('enable_daily_broadcast', 0) else "关闭"
         enable_sandbox_monitor = "开启" if config.get('enable_sandbox_monitor', 1) else "关闭"
         
         msg = f"📋 群组配置信息\n" \
-              f"默认服务器：{default_server}\n" \
-              f"金价换算：{enable_gold_price}\n" \
-              f"沙盘监控：{enable_sandbox_monitor}" 
+              f"🖥️ 默认服务器：{default_server}\n" \
+              f"💰 金价换算：{enable_gold_price}\n" \
+              f"🌅 日常播报：{enable_daily_broadcast}\n" \
+              f"🏰 沙盘监控：{enable_sandbox_monitor}" 
     else:
         msg = "📋 群组配置信息\n" \
-              "默认服务器：未设置\n" \
-              "金价换算：开启\n" \
-              "沙盘监控：开启" 
+              "🖥️ 默认服务器：未设置\n" \
+              "💰 金价换算：开启\n" \
+              "🌅 日常播报：开启\n" \
+              "🏰 沙盘监控：开启" 
     
     await ViewGroupConfig.finish(message=msg)
 
@@ -1683,7 +1685,10 @@ async def handle_toggle_feature(bot: Bot, event: GroupMessageEvent, state: T_Sta
     feature_mapping = {
         '日常查询': 'enable_daily_query',
         '角色查询': 'enable_role_query',
-        'AI对话': 'enable_ai_chat'
+        'AI对话': 'enable_ai_chat',
+        '金价换算': 'enable_gold_price',
+        '日常播报': 'enable_daily_broadcast',
+        '沙盘监控': 'enable_sandbox_monitor',
     }
     
     if feature_name not in feature_mapping:
@@ -2600,3 +2605,70 @@ async def send_daily_sandbox_summary():
             continue
 
         
+# ... existing code ...
+
+# 定时播报日常 - 每天早上7点
+@scheduler.scheduled_job("cron", hour=7, minute=0, id="daily_broadcast")
+async def daily_broadcast():
+    """定时播报日常信息"""
+    # 获取所有bot实例
+    driver = get_driver()
+    if not driver.bots:
+        return
+    
+    bot = list(driver.bots.values())[0]
+    
+    # 获取所有启用了jx3_api插件的群
+    enabled_groups = db.get_enabled_groups("jx3_api")
+    
+    for group_id in enabled_groups:
+        try:
+            group_key = str(group_id)
+            # 获取该群的配置
+            group_config = db.get_group_config(group_key)
+            if not group_config:
+                continue
+            
+            # 检查是否启用了日常播报功能
+            if not group_config.get('enable_daily_broadcast', 0):
+                continue
+            
+            # 获取该群的默认服务器
+            server_name = group_config.get('default_server')
+            if not server_name:
+                # 如果没有设置默认服务器，跳过该群
+                continue
+            
+            # 调用日常API获取数据
+            try:
+                res = api.active_calendar(server=server_name)
+                msg = f"🌅 早安！今日{server_name}日常信息：\n\n{format_daily_data(res)}"
+                
+                # 发送消息到群
+                await bot.send_group_msg(group_id=group_id, message=msg)
+                
+            except Exception as e:
+                print(f"获取群 {group_id} 的日常数据失败: {e}")
+                continue
+                
+        except Exception as e:
+            print(f"为群 {group_id} 播报日常失败: {e}")
+            continue
+
+# 日常播报开关
+DailyBroadcastSwitch = on_regex(pattern=r'^日常播报\s+(开启|关闭)$', priority=1)
+@DailyBroadcastSwitch.handle()
+async def handle_daily_broadcast_switch(bot: Bot, event: GroupMessageEvent, state: T_State):
+    # 检查管理员权限
+    if not await require_admin_permission(bot, event.group_id, event.user_id, DailyBroadcastSwitch):
+        return
+    
+    action = state['_matched'].group(1)
+    group_id = str(event.group_id)
+    enable_value = 1 if action == '开启' else 0
+    
+    # 更新群组配置
+    if db.update_group_config(group_id, {'enable_daily_broadcast': enable_value}):
+        await DailyBroadcastSwitch.finish(message=f"✅ 日常播报功能已{action}")
+    else:
+        await DailyBroadcastSwitch.finish(message=f"❌ {action}日常播报功能失败")
