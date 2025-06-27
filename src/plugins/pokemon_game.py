@@ -1920,7 +1920,7 @@ async def handle_release_pokemon(bot: Bot, event: GroupMessageEvent, state: T_St
     rarity_emoji = RARITY_CONFIG[pokemon_data['rarity']]['emoji']
     
     # 根据精灵稀有度和等级给予补偿积分
-    rarity_bonus = RARITY_CONFIG[pokemon_data['rarity']]['score_bonus']
+    rarity_bonus = RARITY_CONFIG[pokemon_data['rarity']]['score_base']
     level_bonus = pokemon['level'] * 2
     friendship_bonus = pokemon['friendship'] // 10
     total_score = rarity_bonus + level_bonus + friendship_bonus
