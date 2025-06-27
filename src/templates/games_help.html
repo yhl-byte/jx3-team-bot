@@ -14,7 +14,7 @@
         body {
             font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            /* min-height: 100vh; */
+            height: 100vh;
             padding: 20px;
             line-height: 1.6;
         }
@@ -132,6 +132,18 @@
 
         .game-card.sichuanmajiang {
             border-left-color: #27ae60;
+        }
+
+        .game-card.pokemon {
+            border-left-color: #ffcc02;
+        }
+
+        .game-card.virtual-pet {
+            border-left-color: #ff69b4;
+        }
+
+        .game-card.cultivation {
+            border-left-color: #9370db;
         }
 
 
@@ -636,6 +648,72 @@
                             <li class="command-item"><code>查看牌局</code> - 查看当前牌局状态</li>
                             <li class="command-item"><code>强制结束麻将</code> - 强制结束游戏</li>
                             <li class="command-item"><code>麻将帮助</code> - 查看游戏帮助</li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- 精灵游戏 -->
+                <div class="game-card pokemon">
+                    <div class="game-title">[养成] 精灵宝可梦</div>
+                    <div class="game-description">
+                        经典的精灵宝可梦养成游戏！捕获、培养、战斗各种精灵。通过训练提升精灵等级，学习新技能，挑战野生精灵和其他训练师！
+                    </div>
+                    <div class="commands-section">
+                        <div class="commands-title">游戏命令</div>
+                        <ul class="command-list">
+                            <li class="command-item"><code>精灵状态</code> - 查看个人精灵信息</li>
+                            <li class="command-item"><code>捕获精灵</code> - 捕获野生精灵</li>
+                            <li class="command-item"><code>训练精灵 [精灵名]</code> - 训练指定精灵</li>
+                            <li class="command-item"><code>精灵进化 [精灵名]</code> - 进化精灵</li>
+                            <li class="command-item"><code>野外战斗</code> - 挑战野生精灵</li>
+                            <li class="command-item"><code>精灵盒子</code> - 查看所有精灵</li>
+                            <li class="command-item"><code>精灵技能 [精灵名]</code> - 查看精灵技能</li>
+                            <li class="command-item"><code>学习技能 [精灵名] [技能名]</code> - 学习新技能</li>
+                            <li class="command-item"><code>精灵排行</code> - 查看训练师排行榜</li>
+                            <li class="command-item"><code>精灵帮助</code> - 查看详细帮助</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 电子宠物 -->
+                <div class="game-card virtual-pet">
+                    <div class="game-title">[养成] 电子宠物</div>
+                    <div class="game-description">
+                        怀旧的电子宠物养成游戏！照顾你的虚拟宠物，喂食、清洁、娱乐，看着它健康成长。不同的照顾方式会影响宠物的成长路径！
+                    </div>
+                    <div class="commands-section">
+                        <div class="commands-title">游戏命令</div>
+                        <ul class="command-list">
+                            <li class="command-item"><code>宠物状态</code> - 查看宠物当前状态</li>
+                            <li class="command-item"><code>喂食</code> - 给宠物喂食</li>
+                            <li class="command-item"><code>清洁</code> - 清洁宠物</li>
+                            <li class="command-item"><code>娱乐</code> - 和宠物玩耍</li>
+                            <li class="command-item"><code>治疗</code> - 治疗生病的宠物</li>
+                            <li class="command-item"><code>训练</code> - 训练宠物技能</li>
+                            <li class="command-item"><code>宠物商店</code> - 购买宠物用品</li>
+                            <li class="command-item"><code>宠物排行</code> - 查看宠物排行榜</li>
+                            <li class="command-item"><code>宠物帮助</code> - 查看详细帮助</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 修仙游戏 -->
+                <div class="game-card cultivation">
+                    <div class="game-title">[修炼] 修仙之路</div>
+                    <div class="game-description">
+                        踏上修仙之路！从凡人开始修炼，突破境界，学习功法，炼制丹药，最终成就仙道。体验完整的修仙世界！
+                    </div>
+                    <div class="commands-section">
+                        <div class="commands-title">游戏命令</div>
+                        <ul class="command-list">
+                            <li class="command-item"><code>修仙状态</code> - 查看修炼信息</li>
+                            <li class="command-item"><code>修炼</code> - 进行修炼</li>
+                            <li class="command-item"><code>突破</code> - 尝试境界突破</li>
+                            <li class="command-item"><code>炼丹</code> - 炼制丹药</li>
+                            <li class="command-item"><code>历练</code> - 外出历练</li>
+                            <li class="command-item"><code>宗门</code> - 查看宗门信息</li>
+                            <li class="command-item"><code>功法</code> - 查看修炼功法</li>
+                            <li class="command-item"><code>仙界排行</code> - 查看修仙排行榜</li>
+                            <li class="command-item"><code>修仙帮助</code> - 查看详细帮助</li>
                         </ul>
                     </div>
                 </div>

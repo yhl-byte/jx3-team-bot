@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:32:40
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-26 08:46:52
+LastEditTime: 2025-06-27 09:29:50
 FilePath: /team-bot/jx3-team-bot/src/plugins/database.py
 '''
 # src/plugins/chat_plugin/database.py
@@ -230,6 +230,202 @@ class NianZaiDB:
                 session_name TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
+            # 签到记录表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS checkin_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                checkin_date TEXT NOT NULL,
+                exp_gained INTEGER DEFAULT 0,
+                score_gained INTEGER DEFAULT 0,
+                consecutive_days INTEGER DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, group_id, checkin_date)
+            )
+            ''')
+            
+            # 用户经验等级表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_levels (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                total_exp INTEGER DEFAULT 0,
+                current_level INTEGER DEFAULT 1,
+                makeup_cards INTEGER DEFAULT 0,
+                last_checkin_date TEXT,
+                consecutive_days INTEGER DEFAULT 0,
+                total_checkin_days INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, group_id)
+            )
+            ''')
+            # 创建宠物表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS virtual_pets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                pet_name TEXT NOT NULL,
+                pet_type TEXT NOT NULL,
+                level INTEGER DEFAULT 1,
+                exp INTEGER DEFAULT 0,
+                hunger INTEGER DEFAULT 50,
+                happiness INTEGER DEFAULT 50,
+                cleanliness INTEGER DEFAULT 50,
+                total_interactions INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_interaction TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, group_id)
+            )
+            ''')
+            
+            # 创建宠物互动记录表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS pet_interactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                interaction_type TEXT NOT NULL,
+                result TEXT,
+                score_gained INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
+            # 创建修仙者表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS cultivators (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                realm_level INTEGER DEFAULT 1,
+                exp INTEGER DEFAULT 0,
+                hp INTEGER DEFAULT 100,
+                max_hp INTEGER DEFAULT 100,
+                mp INTEGER DEFAULT 50,
+                max_mp INTEGER DEFAULT 50,
+                attack INTEGER DEFAULT 10,
+                defense INTEGER DEFAULT 5,
+                equipped_weapon TEXT DEFAULT NULL,
+                equipped_accessory TEXT DEFAULT NULL,
+                last_cultivation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                total_battles INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, group_id)
+            )
+            ''')
+            
+            # 创建背包表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS cultivation_inventory (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                item_name TEXT NOT NULL,
+                quantity INTEGER DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
+            
+            # 创建技能表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS cultivation_skills (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                skill_name TEXT NOT NULL,
+                skill_level INTEGER DEFAULT 1,
+                last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, group_id, skill_name)
+            )
+            ''')
+            
+            # 创建战斗记录表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS cultivation_battles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                dungeon_name TEXT NOT NULL,
+                monster_name TEXT NOT NULL,
+                result TEXT NOT NULL,
+                exp_gained INTEGER DEFAULT 0,
+                score_gained INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
+            # 创建训练师表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS pokemon_trainers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                trainer_name TEXT NOT NULL,
+                level INTEGER DEFAULT 1,
+                exp INTEGER DEFAULT 0,
+                pokeballs INTEGER DEFAULT 10,
+                wins INTEGER DEFAULT 0,
+                losses INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, group_id)
+            )
+            ''')
+            
+            # 创建精灵表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS pokemon_collection (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                pokemon_name TEXT NOT NULL,
+                nickname TEXT,
+                level INTEGER DEFAULT 1,
+                exp INTEGER DEFAULT 0,
+                hp INTEGER NOT NULL,
+                max_hp INTEGER NOT NULL,
+                attack INTEGER NOT NULL,
+                defense INTEGER NOT NULL,
+                speed INTEGER NOT NULL,
+                is_in_team BOOLEAN DEFAULT FALSE,
+                team_position INTEGER DEFAULT NULL,
+                friendship INTEGER DEFAULT 50,
+                nature TEXT DEFAULT '勤奋',
+                caught_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_trained TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
+            
+            # 创建精灵技能表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS pokemon_skills (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                pokemon_id INTEGER NOT NULL,
+                skill_name TEXT NOT NULL,
+                current_pp INTEGER NOT NULL,
+                max_pp INTEGER NOT NULL,
+                learned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (pokemon_id) REFERENCES pokemon_collection(id),
+                UNIQUE(pokemon_id, skill_name)
+            )
+            ''')
+            
+            # 创建战斗记录表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS pokemon_battles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                trainer1_id TEXT NOT NULL,
+                trainer2_id TEXT,
+                group_id TEXT NOT NULL,
+                battle_type TEXT NOT NULL,
+                winner_id TEXT,
+                exp_gained INTEGER DEFAULT 0,
+                score_gained INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             ''')
             conn.commit()  
