@@ -2,7 +2,7 @@
 @Author: AI Assistant
 @Date: 2025-01-XX XX:XX:XX
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-27 09:18:57
+LastEditTime: 2025-06-27 11:30:47
 FilePath: /team-bot/jx3-team-bot/src/plugins/cultivation_game.py
 '''
 from .database import NianZaiDB
@@ -688,9 +688,7 @@ async def handle_cultivation_ranking(bot: Bot, event: GroupMessageEvent):
     # 获取群内修仙者排行（按境界和经验排序）
     cultivators = db.fetch_all(
         'cultivators', 
-        f"group_id = '{group_id}'", 
-        order_by="realm_level DESC, exp DESC", 
-        limit=10
+        f"group_id = '{group_id}' ORDER BY realm_level DESC, exp DESC", 
     )
     
     if not cultivators:

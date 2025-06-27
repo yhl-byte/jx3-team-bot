@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:32:40
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-27 09:29:50
+LastEditTime: 2025-06-27 13:35:37
 FilePath: /team-bot/jx3-team-bot/src/plugins/database.py
 '''
 # src/plugins/chat_plugin/database.py
@@ -371,6 +371,8 @@ class NianZaiDB:
                 pokeballs INTEGER DEFAULT 10,
                 wins INTEGER DEFAULT 0,
                 losses INTEGER DEFAULT 0,
+                last_heal_time INTEGER DEFAULT 0,
+                last_recovery_time INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(user_id, group_id)
             )
@@ -435,25 +437,36 @@ class NianZaiDB:
 
     def upgrade_group_config_table(self):
         """
-        升级 group_config 表，添加 enable_daily_broadcast 字段
+        升级 pokemon_trainers 表，添加 last_heal_time 和 last_recovery_time 字段
         """
         with self._get_connection() as conn:
             cursor = conn.cursor()
             try:
                 # 检查字段是否已存在
-                cursor.execute("PRAGMA table_info(group_config)")
+                cursor.execute("PRAGMA table_info(pokemon_trainers)")
                 columns = [column[1] for column in cursor.fetchall()]
                 
-                if 'enable_daily_broadcast' not in columns:
-                    # 添加新字段
+                # 检查并添加 last_heal_time 字段
+                if 'last_heal_time' not in columns:
                     cursor.execute("""
-                        ALTER TABLE group_config 
-                        ADD COLUMN enable_daily_broadcast INTEGER DEFAULT 1
+                        ALTER TABLE pokemon_trainers 
+                        ADD COLUMN last_heal_time INTEGER DEFAULT 1
                     """)
                     conn.commit()
-                    print("✅ 成功添加 enable_daily_broadcast 字段")
+                    print("✅ 成功添加 last_heal_time 字段")
                 else:
-                    print("ℹ️ enable_daily_broadcast 字段已存在")
+                    print("ℹ️ last_heal_time 字段已存在")
+                
+                # 检查并添加 last_recovery_time 字段
+                if 'last_recovery_time' not in columns:
+                    cursor.execute("""
+                        ALTER TABLE pokemon_trainers 
+                        ADD COLUMN last_recovery_time INTEGER DEFAULT 1
+                    """)
+                    conn.commit()
+                    print("✅ 成功添加 last_recovery_time 字段")
+                else:
+                    print("ℹ️ last_recovery_time 字段已存在")
                     
             except Exception as e:
                 print(f"❌ 升级数据库表失败: {e}")
