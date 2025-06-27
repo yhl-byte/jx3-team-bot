@@ -708,6 +708,12 @@ async def handle_werewolf_kill(bot: Bot, event: PrivateMessageEvent, state: T_St
     if not user_game:
         await WerewolfKill.finish(message="当前不是夜晚阶段或你不是存活的狼人")
         return
+
+    # 检查是否已经选择过杀人目标（新增）
+    if 'werewolf_kill' in user_game.night_actions:
+        current_target = user_game.players[user_game.night_actions['werewolf_kill']]
+        await WerewolfKill.finish(message=f"狼人今晚已经选择杀害 {current_target['code']}号 {current_target['nickname']}，不能重复选择！")
+        return
     
     # 查找目标玩家
     target_id = None
@@ -760,6 +766,11 @@ async def handle_seer_check(bot: Bot, event: PrivateMessageEvent, state: T_State
     
     if not user_game:
         await SeerCheck.finish(message="当前不是夜晚阶段或你不是存活的预言家")
+        return
+
+    # 检查是否已经查验过（新增）
+    if 'seer_check' in user_game.night_actions:
+        await SeerCheck.finish(message="你今晚已经查验过了，每晚只能查验一次！")
         return
     
     # 查找目标玩家
