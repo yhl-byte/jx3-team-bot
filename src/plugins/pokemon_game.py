@@ -2,7 +2,7 @@
 @Author: AI Assistant
 @Date: 2025-01-XX XX:XX:XX
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-27 16:24:36
+LastEditTime: 2025-06-27 16:33:32
 FilePath: /team-bot/jx3-team-bot/src/plugins/pokemon_game.py
 '''
 from .database import NianZaiDB
@@ -726,8 +726,7 @@ async def handle_train_pokemon(bot: Bot, event: GroupMessageEvent):
     # 查找所有匹配的精灵（支持昵称）
     all_pokemon = db.fetch_all(
         'pokemon_collection',
-        f"user_id = ? AND group_id = ? AND (pokemon_name = ? OR nickname = ?) ORDER BY id ASC",
-        (user_id, group_id, pokemon_name, pokemon_name)
+        f"user_id = '{user_id}' AND group_id = '{group_id}' AND (pokemon_name = '{pokemon_name}' OR nickname = '{pokemon_name}') ORDER BY id ASC",
     )
     
     if not all_pokemon:
@@ -869,8 +868,7 @@ async def handle_evolve_pokemon(bot: Bot, event: GroupMessageEvent):
     # 查找所有匹配的精灵
     all_pokemon = db.fetch_all(
         'pokemon_collection',
-        f"user_id = ? AND group_id = ? AND (pokemon_name = ? OR nickname = ?) ORDER BY id ASC",
-        (user_id, group_id, pokemon_name, pokemon_name)
+        f"user_id = '{user_id}' AND group_id = '{group_id}' AND (pokemon_name = '{pokemon_name}' OR nickname = '{pokemon_name}') ORDER BY id ASC",
     )
     
     if not all_pokemon:
@@ -2778,8 +2776,7 @@ async def handle_rename_pokemon(bot: Bot, event: GroupMessageEvent):
     # 查找所有匹配的精灵
     all_pokemon = db.fetch_all(
         'pokemon_collection',
-        f"user_id = ? AND group_id = ? AND (pokemon_name = ? OR nickname = ?) ORDER BY id ASC",
-        (user_id, group_id, pokemon_name, pokemon_name)
+        f"user_id = '{user_id}' AND group_id = '{group_id}' AND (pokemon_name = '{pokemon_name}' OR nickname = '{pokemon_name}') ORDER BY id ASC",
     )
     
     if not all_pokemon:
@@ -2865,14 +2862,12 @@ async def handle_pokemon_detail_list(bot: Bot, event: GroupMessageEvent, state: 
     if filter_name:
         pokemon_list = db.fetch_all(
             'pokemon_collection',
-            f"user_id = ? AND group_id = ? AND (pokemon_name LIKE ? OR nickname LIKE ?) ORDER BY pokemon_name, id ASC",
-            (user_id, group_id, f"%{filter_name}%", f"%{filter_name}%")
+            f"user_id = '{user_id}' AND group_id = '{group_id}' AND (pokemon_name LIKE '{filter_name}' OR nickname LIKE '{filter_name}') ORDER BY pokemon_name, id ASC",
         )
     else:
         pokemon_list = db.fetch_all(
             'pokemon_collection',
-            f"user_id = ? AND group_id = ? ORDER BY pokemon_name, id ASC",
-            (user_id, group_id)
+            f"user_id = '{user_id}' AND group_id = '{group_id}' ORDER BY pokemon_name, id ASC",
         )
     
     if not pokemon_list:
