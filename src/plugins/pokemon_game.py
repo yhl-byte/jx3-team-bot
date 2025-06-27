@@ -2,11 +2,11 @@
 @Author: AI Assistant
 @Date: 2025-01-XX XX:XX:XX
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-27 15:53:38
+LastEditTime: 2025-06-27 16:24:36
 FilePath: /team-bot/jx3-team-bot/src/plugins/pokemon_game.py
 '''
 from .database import NianZaiDB
-from .game_score import update_player_score
+from .game_score import update_player_score,get_player_score
 from nonebot.typing import T_State
 from nonebot import on_command, on_regex,require
 from nonebot.adapters.onebot.v11 import MessageEvent, GroupMessageEvent, Bot, Message, MessageSegment
@@ -360,8 +360,8 @@ start_pokemon = on_regex(pattern=r"^开始精灵之旅$", priority=5)
 catch_pokemon = on_regex(pattern=r"^捕捉精灵$", priority=5)
 check_pokemon_team = on_regex(pattern=r"^精灵队伍$", priority=5)
 check_pokemon_box = on_regex(pattern=r"^精灵盒子$", priority=5)
-evolve_pokemon = on_regex(pattern=r"^进化\s+(.+)$", priority=5)
-train_pokemon = on_regex(pattern=r"^训练\s+(.+)$", priority=5)
+evolve_pokemon = on_regex(pattern=r"^进化\s+(.+?)(?:\s+(\d+))?$", priority=5)
+train_pokemon = on_regex(pattern=r"^训练\s+(.+?)(?:\s+(\d+))?$", priority=5)
 learn_skill = on_regex(pattern=r"^学习技能\s+(.+)\s+(.+)$", priority=5)
 battle_wild = on_regex(pattern=r"^野外战斗$", priority=5)
 battle_player = on_regex(pattern=r"^挑战\s+.*$", priority=3)
@@ -383,7 +383,10 @@ buy_pokeballs = on_regex(pattern=r"^购买精灵球\s+(\d+)$", priority=5)
 migrate_pokemon_data = on_regex(pattern=r"^精灵数据迁移\s+(\d+)\s+(\d+)$", priority=5)
 # 管理员命令 - 群积分奖励
 group_score_reward = on_regex(pattern=r"^发放积分\s+(\d+)(?:\s+(\d+))?$", priority=5)
-
+# 修改改名命令的正则表达式，支持可选的序号
+rename_pokemon = on_regex(pattern=r"^命名\s+(.+?)(?:\s+(\d+))?\s+(.+)$", priority=5)
+# 添加精灵详细列表命令
+pokemon_detail_list = on_regex(pattern=r"^精灵列表\s*(.*)$", priority=5)
 # 全局变量存储战斗状态
 battle_requests = {}  # 存储战斗请求
 active_battles = {}   # 存储进行中的战斗
@@ -709,26 +712,67 @@ async def handle_train_pokemon(bot: Bot, event: GroupMessageEvent):
         await train_pokemon.send("你还不是精灵训练师！使用'开始精灵之旅'成为训练师")
         return
     
-    # 解析精灵名
+    # 解析精灵名和序号
     message_text = str(event.message).strip()
     import re
-    match = re.match(r"^训练\s+(.+)$", message_text)
+    match = re.match(r"^训练\s+(.+?)(?:\s+(\d+))?$", message_text)
     if not match:
-        await train_pokemon.send("请输入正确的格式：训练 精灵名")
+        await train_pokemon.send("请输入正确的格式：训练 精灵名 [序号]")
         return
     
     pokemon_name = match.group(1).strip()
+    selected_index = match.group(2)
     
-    # 查找精灵（支持昵称）
-    pokemon = db.fetch_one(
+    # 查找所有匹配的精灵（支持昵称）
+    all_pokemon = db.fetch_all(
         'pokemon_collection',
-        f"user_id = ? AND group_id = ? AND (pokemon_name = ? OR nickname = ?)",
+        f"user_id = ? AND group_id = ? AND (pokemon_name = ? OR nickname = ?) ORDER BY id ASC",
         (user_id, group_id, pokemon_name, pokemon_name)
     )
     
-    if not pokemon:
+    if not all_pokemon:
         await train_pokemon.send(f"找不到精灵'{pokemon_name}'！")
         return
+    
+    # 如果有多个同名精灵但没有指定序号
+    if len(all_pokemon) > 1 and selected_index is None:
+        message = f"找到{len(all_pokemon)}只名为'{pokemon_name}'的精灵：\n\n"
+        for i, poke in enumerate(all_pokemon, 1):
+            display_name = poke['nickname'] if poke['nickname'] else poke['pokemon_name']
+            pokemon_data = POKEMON_DATA[poke['pokemon_name']]
+            type_emoji = TYPES[pokemon_data['type']]['emoji']
+            rarity_emoji = RARITY_CONFIG[pokemon_data['rarity']]['emoji']
+            
+            # 检查训练冷却
+            last_trained = datetime.fromisoformat(poke['last_trained'])
+            now = datetime.now()
+            cooldown = timedelta(hours=1)
+            can_train = now - last_trained >= cooldown
+            status = "✅可训练" if can_train else "⏰冷却中"
+            
+            message += f"{i}. {rarity_emoji}{type_emoji} {display_name} (Lv.{poke['level']}) {status}\n"
+            message += f"   HP: {poke['hp']}/{poke['max_hp']} | 亲密度: {poke['friendship']}\n\n"
+        
+        message += f"请使用：训练 {pokemon_name} [序号]\n"
+        message += f"例如：训练 {pokemon_name} 1"
+        
+        await train_pokemon.send(message)
+        return
+    
+    # 选择要训练的精灵
+    if selected_index is not None:
+        try:
+            index = int(selected_index) - 1
+            if index < 0 or index >= len(all_pokemon):
+                await train_pokemon.send(f"序号无效！请选择1-{len(all_pokemon)}之间的序号")
+                return
+            pokemon = all_pokemon[index]
+        except ValueError:
+            await train_pokemon.send("序号必须是数字！")
+            return
+    else:
+        # 只有一只精灵的情况
+        pokemon = all_pokemon[0]
     
     # 检查训练冷却
     last_trained = datetime.fromisoformat(pokemon['last_trained'])
@@ -738,7 +782,8 @@ async def handle_train_pokemon(bot: Bot, event: GroupMessageEvent):
     if now - last_trained < cooldown:
         remaining = cooldown - (now - last_trained)
         minutes = int(remaining.total_seconds() / 60)
-        await train_pokemon.send(f"{pokemon_name}还在休息中，请{minutes}分钟后再训练")
+        display_name = pokemon['nickname'] if pokemon['nickname'] else pokemon['pokemon_name']
+        await train_pokemon.send(f"{display_name}还在休息中，请{minutes}分钟后再训练")
         return
     
     # 训练效果
@@ -810,45 +855,96 @@ async def handle_evolve_pokemon(bot: Bot, event: GroupMessageEvent):
         await evolve_pokemon.send("你还不是精灵训练师！使用'开始精灵之旅'成为训练师")
         return
     
-    # 解析精灵名
+    # 解析精灵名和序号
     message_text = str(event.message).strip()
     import re
-    match = re.match(r"^进化\s+(.+)$", message_text)
+    match = re.match(r"^进化\s+(.+?)(?:\s+(\d+))?$", message_text)
     if not match:
-        await evolve_pokemon.send("请输入正确的格式：进化 精灵名")
+        await evolve_pokemon.send("请输入正确的格式：进化 精灵名 [序号]")
         return
     
     pokemon_name = match.group(1).strip()
+    selected_index = match.group(2)
     
-    # 查找精灵
-    pokemon = db.fetch_one(
+    # 查找所有匹配的精灵
+    all_pokemon = db.fetch_all(
         'pokemon_collection',
-        f"user_id = ? AND group_id = ? AND (pokemon_name = ? OR nickname = ?)",
+        f"user_id = ? AND group_id = ? AND (pokemon_name = ? OR nickname = ?) ORDER BY id ASC",
         (user_id, group_id, pokemon_name, pokemon_name)
     )
     
-    if not pokemon:
+    if not all_pokemon:
         await evolve_pokemon.send(f"找不到精灵'{pokemon_name}'！")
         return
+    
+    # 如果有多个同名精灵但没有指定序号
+    if len(all_pokemon) > 1 and selected_index is None:
+        message = f"找到{len(all_pokemon)}只名为'{pokemon_name}'的精灵：\n\n"
+        for i, poke in enumerate(all_pokemon, 1):
+            display_name = poke['nickname'] if poke['nickname'] else poke['pokemon_name']
+            pokemon_data = POKEMON_DATA[poke['pokemon_name']]
+            type_emoji = TYPES[pokemon_data['type']]['emoji']
+            rarity_emoji = RARITY_CONFIG[pokemon_data['rarity']]['emoji']
+            
+            # 检查进化条件
+            can_evolve = True
+            evolve_status = "✅可进化"
+            
+            if not pokemon_data['evolution']:
+                can_evolve = False
+                evolve_status = "❌无法进化"
+            elif poke['level'] < pokemon_data['evolution_level']:
+                can_evolve = False
+                evolve_status = f"❌需Lv.{pokemon_data['evolution_level']}"
+            elif poke['friendship'] < 80:
+                can_evolve = False
+                evolve_status = "❌亲密度不足"
+            
+            message += f"{i}. {rarity_emoji}{type_emoji} {display_name} (Lv.{poke['level']}) {evolve_status}\n"
+            message += f"   HP: {poke['hp']}/{poke['max_hp']} | 亲密度: {poke['friendship']}\n\n"
+        
+        message += f"请使用：进化 {pokemon_name} [序号]\n"
+        message += f"例如：进化 {pokemon_name} 1"
+        
+        await evolve_pokemon.send(message)
+        return
+    
+    # 选择要进化的精灵
+    if selected_index is not None:
+        try:
+            index = int(selected_index) - 1
+            if index < 0 or index >= len(all_pokemon):
+                await evolve_pokemon.send(f"序号无效！请选择1-{len(all_pokemon)}之间的序号")
+                return
+            pokemon = all_pokemon[index]
+        except ValueError:
+            await evolve_pokemon.send("序号必须是数字！")
+            return
+    else:
+        # 只有一只精灵的情况
+        pokemon = all_pokemon[0]
     
     pokemon_data = POKEMON_DATA[pokemon['pokemon_name']]
     
     # 检查是否可以进化
     if not pokemon_data['evolution']:
-        await evolve_pokemon.send(f"{pokemon['pokemon_name']}无法进化！")
+        display_name = pokemon['nickname'] if pokemon['nickname'] else pokemon['pokemon_name']
+        await evolve_pokemon.send(f"{display_name}无法进化！")
         return
     
     if pokemon['level'] < pokemon_data['evolution_level']:
+        display_name = pokemon['nickname'] if pokemon['nickname'] else pokemon['pokemon_name']
         await evolve_pokemon.send(
-            f"{pokemon['pokemon_name']}需要达到Lv.{pokemon_data['evolution_level']}才能进化！\n"
+            f"{display_name}需要达到Lv.{pokemon_data['evolution_level']}才能进化！\n"
             f"当前等级：Lv.{pokemon['level']}"
         )
         return
     
     # 检查亲密度
     if pokemon['friendship'] < 80:
+        display_name = pokemon['nickname'] if pokemon['nickname'] else pokemon['pokemon_name']
         await evolve_pokemon.send(
-            f"{pokemon['pokemon_name']}的亲密度不够！需要80以上才能进化\n"
+            f"{display_name}的亲密度不够！需要80以上才能进化\n"
             f"当前亲密度：{pokemon['friendship']}/100"
         )
         return
@@ -1107,15 +1203,17 @@ async def handle_pokemon_help(bot: Bot, event: GroupMessageEvent):
         "🎯 捕获系统：\n"
         "• 捕捉精灵 - 随机遇到并捕获野生精灵\n\n"
         "🏃 培养系统：\n"
-        "• 训练 [精灵名] - 训练精灵提升经验和亲密度\n"
-        "• 进化 [精灵名] - 精灵进化（需要等级和亲密度）\n"
+        "• 训练 [精灵名] [序号] - 训练精灵提升经验和亲密度\n"
+        "• 进化 [精灵名] [序号] - 进化精灵到下一阶段\n"
+        "• 改名 [精灵名] [序号] [新昵称] - 给精灵改名，避免同名冲突\n"
+        "• 精灵列表 [精灵名] - 查看精灵详细信息，包含序号\n"
         "• 学习技能 [精灵名] [技能名] - 学习新技能\n"
         "• 精灵技能 [精灵名] - 查看精灵的技能列表\n\n"
         "👥 队伍管理：\n"
         "• 放入队伍 [精灵名] - 将精灵加入战斗队伍\n"
         "• 移出队伍 [精灵名] - 将精灵移出战斗队伍\n"
         "• 调整位置 [精灵名] [位置] - 调整精灵在队伍中的位置\n"
-        "• 放生 [精灵名] - 释放精灵（不可恢复）\n\n"
+        "• 放生 [精灵名] [序号] - 释放精灵（不可恢复）\n\n"
         "⚔️ 战斗系统：\n"
         "• 野外战斗 - 与野生精灵战斗\n"
         "• 继续战斗 - 在战斗中继续攻击\n"
@@ -1756,18 +1854,12 @@ async def handle_reject_battle(bot: Bot, event: GroupMessageEvent):
 
 # 放生精灵回调函数
 @release_pokemon.handle()
-async def handle_release_pokemon(bot: Bot, event: GroupMessageEvent):
+async def handle_release_pokemon(bot: Bot, event: GroupMessageEvent, state: T_State):
     user_id = str(event.user_id)
     group_id = str(event.group_id)
-    
-    # 从正则匹配中获取精灵名和可选的编号
-    match = release_pokemon.pattern.match(str(event.get_message()).strip())
-    if not match:
-        await release_pokemon.send("请输入：放生 [精灵名] 或 放生 [精灵名] [编号]")
-        return
-    
-    pokemon_name = match.group(1).strip()
-    selected_index = match.group(2)  # 可能为 None
+    matched = state['_matched']
+    pokemon_name = matched.group(1).strip()
+    selected_index = matched.group(2)  # 可能为 None
     
     # 检查是否是训练师
     trainer = db.fetch_one('pokemon_trainers', f"user_id = '{user_id}' AND group_id = '{group_id}'")
@@ -2145,8 +2237,8 @@ async def handle_heal_specific_pokemon(bot: Bot, event: GroupMessageEvent):
     heal_cost = 20  # 每次治疗20积分
     
     # 检查积分
-    player_score = db.fetch_one('game_scores', f"user_id = '{user_id}' AND group_id = '{group_id}'")
-    if not player_score or player_score['score'] < heal_cost:
+    player_score = await get_player_score(user_id, group_id)
+    if not player_score or player_score['total_score'] < heal_cost:
         await heal_specific_pokemon.send(f"积分不足！治疗需要 {heal_cost} 积分")
         return
     
@@ -2450,7 +2542,7 @@ async def handle_buy_pokeballs(bot: Bot, event: GroupMessageEvent):
     total_cost = quantity * cost_per_ball
     
     # 检查积分
-    from .game_score import get_player_score
+    
     score_info = await get_player_score(user_id, group_id)
     if not score_info:
         await buy_pokeballs.send("获取积分信息失败！")
@@ -2554,16 +2646,18 @@ async def handle_migrate_pokemon_data(bot: Bot, event: GroupMessageEvent):
                 # 如果已存在，跳过或合并数据（这里选择跳过）
                 continue
                 
-            # 更新训练师的群号
-            db.execute(
-                "UPDATE pokemon_trainers SET group_id = ? WHERE user_id = ? AND group_id = ?",
-                (target_group, trainer['user_id'], source_group)
+            # 更新训练师的群号 - 使用 update 方法
+            db.update(
+                'pokemon_trainers',
+                {'group_id': target_group},
+                f"user_id = '{trainer['user_id']}' AND group_id = '{source_group}'"
             )
             
-            # 迁移该用户的精灵数据
-            db.execute(
-                "UPDATE pokemon_collection SET group_id = ? WHERE user_id = ? AND group_id = ?",
-                (target_group, trainer['user_id'], source_group)
+            # 迁移该用户的精灵数据 - 使用 update 方法
+            db.update(
+                'pokemon_collection',
+                {'group_id': target_group},
+                f"user_id = '{trainer['user_id']}' AND group_id = '{source_group}'"
             )
             
             migrated_count += 1
@@ -2648,6 +2742,184 @@ async def handle_group_score_reward(bot: Bot, event: GroupMessageEvent):
         
     except Exception as e:
         await group_score_reward.send(f"❌ 积分奖励发放失败：{str(e)}")
+
+
+@rename_pokemon.handle()
+async def handle_rename_pokemon(bot: Bot, event: GroupMessageEvent):
+    user_id = str(event.user_id)
+    group_id = str(event.group_id)
+    
+    trainer = db.fetch_one('pokemon_trainers', f"user_id = ? AND group_id = ?", (user_id, group_id))
+    if not trainer:
+        await rename_pokemon.send("你还不是精灵训练师！使用'开始精灵之旅'成为训练师")
+        return
+    
+    # 解析精灵名、序号和新昵称
+    message_text = str(event.message).strip()
+    import re
+    match = re.match(r"^改名\s+(.+?)(?:\s+(\d+))?\s+(.+)$", message_text)
+    if not match:
+        await rename_pokemon.send("请输入正确的格式：改名 精灵名 [序号] 新昵称")
+        return
+    
+    pokemon_name = match.group(1).strip()
+    selected_index = match.group(2)
+    new_name = match.group(3).strip()
+    
+    # 验证新昵称长度
+    if len(new_name) > 10:
+        await rename_pokemon.send("昵称长度不能超过10个字符！")
+        return
+    
+    if len(new_name) < 1:
+        await rename_pokemon.send("昵称不能为空！")
+        return
+    
+    # 查找所有匹配的精灵
+    all_pokemon = db.fetch_all(
+        'pokemon_collection',
+        f"user_id = ? AND group_id = ? AND (pokemon_name = ? OR nickname = ?) ORDER BY id ASC",
+        (user_id, group_id, pokemon_name, pokemon_name)
+    )
+    
+    if not all_pokemon:
+        await rename_pokemon.send(f"找不到精灵'{pokemon_name}'！")
+        return
+    
+    # 如果有多个同名精灵但没有指定序号
+    if len(all_pokemon) > 1 and selected_index is None:
+        message = f"找到{len(all_pokemon)}只名为'{pokemon_name}'的精灵：\n\n"
+        for i, poke in enumerate(all_pokemon, 1):
+            display_name = poke['nickname'] if poke['nickname'] else poke['pokemon_name']
+            pokemon_data = POKEMON_DATA[poke['pokemon_name']]
+            type_emoji = TYPES[pokemon_data['type']]['emoji']
+            rarity_emoji = RARITY_CONFIG[pokemon_data['rarity']]['emoji']
+            
+            message += f"{i}. {rarity_emoji}{type_emoji} {display_name} (Lv.{poke['level']})\n"
+            message += f"   HP: {poke['hp']}/{poke['max_hp']} | 亲密度: {poke['friendship']}\n\n"
+        
+        message += f"请使用：改名 {pokemon_name} [序号] {new_name}\n"
+        message += f"例如：改名 {pokemon_name} 1 {new_name}"
+        
+        await rename_pokemon.send(message)
+        return
+    
+    # 选择要改名的精灵
+    if selected_index is not None:
+        try:
+            index = int(selected_index) - 1
+            if index < 0 or index >= len(all_pokemon):
+                await rename_pokemon.send(f"序号无效！请选择1-{len(all_pokemon)}之间的序号")
+                return
+            pokemon = all_pokemon[index]
+        except ValueError:
+            await rename_pokemon.send("序号必须是数字！")
+            return
+    else:
+        # 只有一只精灵的情况
+        pokemon = all_pokemon[0]
+    
+    # 检查新昵称是否与现有精灵重复
+    existing_pokemon = db.fetch_one(
+        'pokemon_collection',
+        f"user_id = ? AND group_id = ? AND (pokemon_name = ? OR nickname = ?) AND id != ?",
+        (user_id, group_id, new_name, new_name, pokemon['id'])
+    )
+    
+    if existing_pokemon:
+        await rename_pokemon.send(f"昵称'{new_name}'已被其他精灵使用，请选择其他名字！")
+        return
+    
+    # 更新昵称
+    db.update('pokemon_collection', {
+        'nickname': new_name
+    }, f"id = {pokemon['id']}")
+    
+    pokemon_data = POKEMON_DATA[pokemon['pokemon_name']]
+    type_emoji = TYPES[pokemon_data['type']]['emoji']
+    rarity_emoji = RARITY_CONFIG[pokemon_data['rarity']]['emoji']
+    old_display_name = pokemon['nickname'] if pokemon['nickname'] else pokemon['pokemon_name']
+    
+    await rename_pokemon.send(
+        f"✅ 改名成功！\n"
+        f"{rarity_emoji}{type_emoji} {old_display_name} → {new_name}\n"
+        f"Lv.{pokemon['level']} | HP: {pokemon['hp']}/{pokemon['max_hp']}\n"
+        f"现在可以使用'{new_name}'来操作这只精灵了！"
+    )
+
+@pokemon_detail_list.handle()
+async def handle_pokemon_detail_list(bot: Bot, event: GroupMessageEvent, state: T_State):
+    user_id = str(event.user_id)
+    group_id = str(event.group_id)
+    matched = state['_matched']
+    
+    filter_name = matched.group(1).strip() if matched.group(1) else None
+    
+    # 检查是否是训练师
+    trainer = db.fetch_one('pokemon_trainers', f"user_id = ? AND group_id = ?", (user_id, group_id))
+    if not trainer:
+        await pokemon_detail_list.send("你还不是精灵训练师！使用'开始精灵之旅'成为训练师")
+        return
+    
+    # 获取精灵列表
+    if filter_name:
+        pokemon_list = db.fetch_all(
+            'pokemon_collection',
+            f"user_id = ? AND group_id = ? AND (pokemon_name LIKE ? OR nickname LIKE ?) ORDER BY pokemon_name, id ASC",
+            (user_id, group_id, f"%{filter_name}%", f"%{filter_name}%")
+        )
+    else:
+        pokemon_list = db.fetch_all(
+            'pokemon_collection',
+            f"user_id = ? AND group_id = ? ORDER BY pokemon_name, id ASC",
+            (user_id, group_id)
+        )
+    
+    if not pokemon_list:
+        message = "你还没有精灵！" if not filter_name else f"没有找到包含'{filter_name}'的精灵！"
+        await pokemon_detail_list.send(message)
+        return
+    
+    # 按精灵名分组
+    grouped_pokemon = {}
+    for pokemon in pokemon_list:
+        key = pokemon['pokemon_name']
+        if key not in grouped_pokemon:
+            grouped_pokemon[key] = []
+        grouped_pokemon[key].append(pokemon)
+    
+    message = f"📋 精灵详细列表 (共{len(pokemon_list)}只)\n\n"
+    
+    for pokemon_name, pokemon_group in grouped_pokemon.items():
+        pokemon_data = POKEMON_DATA[pokemon_name]
+        type_emoji = TYPES[pokemon_data['type']]['emoji']
+        rarity_emoji = RARITY_CONFIG[pokemon_data['rarity']]['emoji']
+        
+        if len(pokemon_group) == 1:
+            # 只有一只，正常显示
+            poke = pokemon_group[0]
+            display_name = poke['nickname'] if poke['nickname'] else poke['pokemon_name']
+            team_status = "🔥" if poke['is_in_team'] else "📦"
+            
+            message += f"{team_status} {rarity_emoji}{type_emoji} {display_name} (Lv.{poke['level']})\n"
+            message += f"   HP: {poke['hp']}/{poke['max_hp']} | 亲密度: {poke['friendship']}\n\n"
+        else:
+            # 多只同名精灵，显示序号
+            message += f"{rarity_emoji}{type_emoji} {pokemon_name} (共{len(pokemon_group)}只):\n"
+            for i, poke in enumerate(pokemon_group, 1):
+                display_name = poke['nickname'] if poke['nickname'] else f"{poke['pokemon_name']}#{i}"
+                team_status = "🔥" if poke['is_in_team'] else "📦"
+                
+                message += f"  {i}. {team_status} {display_name} (Lv.{poke['level']})\n"
+                message += f"     HP: {poke['hp']}/{poke['max_hp']} | 亲密度: {poke['friendship']}\n"
+            message += "\n"
+    
+    message += "\n💡 提示：\n"
+    message += "• 🔥 = 队伍中，📦 = 仓库中\n"
+    message += "• 改名格式：改名 精灵名 [序号] 新昵称\n"
+    message += "• 查看指定精灵：精灵列表 精灵名"
+    
+    await pokemon_detail_list.send(message)
 
 # 在文件末尾添加定时任务
 @scheduler.scheduled_job("interval", hours=1, id="pokemon_hp_recovery")
