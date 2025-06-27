@@ -2608,7 +2608,7 @@ async def send_daily_sandbox_summary():
 # ... existing code ...
 
 # 定时播报日常 - 每天早上7点
-@scheduler.scheduled_job("cron", hour=7, minute=0, id="daily_broadcast")
+@scheduler.scheduled_job("cron", hour=8, minute=0, id="daily_broadcast")
 async def daily_broadcast():
     """定时播报日常信息"""
     # 获取所有bot实例
