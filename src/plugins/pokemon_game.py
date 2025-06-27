@@ -2,7 +2,7 @@
 @Author: AI Assistant
 @Date: 2025-01-XX XX:XX:XX
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-27 14:36:44
+LastEditTime: 2025-06-27 15:29:41
 FilePath: /team-bot/jx3-team-bot/src/plugins/pokemon_game.py
 '''
 from .database import NianZaiDB
@@ -369,7 +369,7 @@ accept_battle = on_regex(pattern=r"^接受挑战$", priority=5)
 reject_battle = on_regex(pattern=r"^拒绝挑战$", priority=5)
 pokemon_ranking = on_regex(pattern=r"^精灵排行$", priority=5)
 pokemon_help = on_regex(pattern=r"^精灵帮助$", priority=5)
-release_pokemon = on_regex(pattern=r"^放生\s+(.+)$", priority=5)
+release_pokemon = on_regex(pattern=r"^放生\s+(.+?)(?:\s+(\d+))?$", priority=5)
 pokemon_skills = on_regex(pattern=r"^精灵技能\s+(.+)$", priority=5)
 put_pokemon_team = on_regex(pattern=r"^放入队伍\s+(.+)$", priority=5)
 remove_pokemon_team = on_regex(pattern=r"^移出队伍\s+(.+)$", priority=5)
@@ -1756,13 +1756,14 @@ async def handle_release_pokemon(bot: Bot, event: GroupMessageEvent):
     user_id = str(event.user_id)
     group_id = str(event.group_id)
     
-    # 从正则匹配中获取精灵名
+    # 从正则匹配中获取精灵名和可选的编号
     match = release_pokemon.pattern.match(str(event.get_message()).strip())
     if not match:
-        await release_pokemon.send("请输入：放生 [精灵名]")
+        await release_pokemon.send("请输入：放生 [精灵名] 或 放生 [精灵名] [编号]")
         return
     
     pokemon_name = match.group(1).strip()
+    selected_index = match.group(2)  # 可能为 None
     
     # 检查是否是训练师
     trainer = db.fetch_one('pokemon_trainers', f"user_id = '{user_id}' AND group_id = '{group_id}'")
@@ -1770,19 +1771,14 @@ async def handle_release_pokemon(bot: Bot, event: GroupMessageEvent):
         await release_pokemon.send("你还不是精灵训练师！请先发送'开始精灵之旅'")
         return
     
-    # 查找精灵（支持昵称和原名）
-    pokemon = db.fetch_one(
+    # 查找所有匹配的精灵（排除队伍中的）
+    pokemons = db.fetch_all(
         'pokemon_collection',
-        f"user_id = '{user_id}' AND group_id = '{group_id}' AND (pokemon_name = '{pokemon_name}' OR nickname = '{pokemon_name}')"
+        f"user_id = '{user_id}' AND group_id = '{group_id}' AND (pokemon_name = '{pokemon_name}' OR nickname = '{pokemon_name}') AND is_in_team = FALSE ORDER BY level ASC, friendship ASC"
     )
     
-    if not pokemon:
-        await release_pokemon.send(f"找不到精灵：{pokemon_name}")
-        return
-    
-    # 检查是否是队伍中的精灵
-    if pokemon['is_in_team']:
-        await release_pokemon.send("不能放生队伍中的精灵！请先将其移出队伍。")
+    if not pokemons:
+        await release_pokemon.send(f"找不到可放生的精灵：{pokemon_name}")
         return
     
     # 检查是否是最后一只精灵
@@ -1795,6 +1791,35 @@ async def handle_release_pokemon(bot: Bot, event: GroupMessageEvent):
         await release_pokemon.send("不能放生最后一只精灵！")
         return
     
+    # 如果指定了编号
+    if selected_index:
+        index = int(selected_index) - 1  # 转换为0基索引
+        if index < 0 or index >= len(pokemons):
+            await release_pokemon.send(f"编号无效！请选择 1-{len(pokemons)} 之间的编号")
+            return
+        pokemon = pokemons[index]
+    # 如果只有一个匹配的精灵，直接放生
+    elif len(pokemons) == 1:
+        pokemon = pokemons[0]
+    # 如果有多个匹配的精灵，显示列表让用户选择
+    else:
+        message = f"找到多个 {pokemon_name}，请选择要放生的精灵：\n\n"
+        for i, poke in enumerate(pokemons, 1):
+            pokemon_data = POKEMON_DATA[poke['pokemon_name']]
+            display_name = poke['nickname'] if poke['nickname'] else poke['pokemon_name']
+            type_emoji = TYPES[pokemon_data['type']]['emoji']
+            rarity_emoji = RARITY_CONFIG[pokemon_data['rarity']]['emoji']
+            
+            message += (
+                f"{i}. {rarity_emoji}{type_emoji} {display_name} "
+                f"(Lv.{poke['level']}, 💖{poke['friendship']})\n"
+            )
+        
+        message += f"\n请发送：放生 {pokemon_name} [编号] 来选择要放生的精灵"
+        await release_pokemon.send(message)
+        return
+    
+    # 执行放生逻辑
     pokemon_data = POKEMON_DATA[pokemon['pokemon_name']]
     display_name = pokemon['nickname'] if pokemon['nickname'] else pokemon['pokemon_name']
     type_emoji = TYPES[pokemon_data['type']]['emoji']
@@ -1824,6 +1849,8 @@ async def handle_release_pokemon(bot: Bot, event: GroupMessageEvent):
     )
     
     await release_pokemon.send(message)
+    
+    
 
 @continue_battle.handle()
 async def handle_continue_battle(bot: Bot, event: GroupMessageEvent):
@@ -1911,9 +1938,8 @@ async def handle_continue_battle(bot: Bot, event: GroupMessageEvent):
     
     if new_wild_hp <= 0:
         # 野生精灵被击败，战斗胜利
-        del wild_battle_states[battle_key]
-        # 野生精灵被击败，战斗胜利
-        del wild_battle_states[battle_key]
+        if battle_key in wild_battle_states:  # 添加安全检查
+            del wild_battle_states[battle_key]
         
         # 胜利奖励逻辑
         exp_gain = wild_level * 10 + random.randint(5, 15)
@@ -1954,6 +1980,11 @@ async def handle_continue_battle(bot: Bot, event: GroupMessageEvent):
         battle_log.append(f"✨ 获得经验：{exp_gain}")
         battle_log.append(f"💰 获得积分：{score_gain}")
         battle_log.append(level_up_message)
+        
+        # 发送战斗胜利消息
+        result_message = "\n".join(battle_log)
+        await continue_battle.send(result_message)
+        return
         
     else:
         # 野生精灵反击
@@ -2180,21 +2211,22 @@ async def handle_put_pokemon_team(event: GroupMessageEvent, state: T_State):
         await put_pokemon_team.send("你还不是精灵训练师！请先发送'开始精灵之旅'")
         return
     
-    # 查找指定精灵
-    pokemon = db.fetch_one(
+    # 查找所有匹配的精灵（不在队伍中的）
+    matching_pokemon = db.fetch_all(
         'pokemon_collection',
-        f"user_id = '{user_id}' AND group_id = '{group_id}' AND (pokemon_name = '{pokemon_name}' OR nickname = '{pokemon_name}')"
+        f"user_id = '{user_id}' AND group_id = '{group_id}' AND (pokemon_name = '{pokemon_name}' OR nickname = '{pokemon_name}') AND is_in_team = 0"
     )
-    
-    if not pokemon:
-        await put_pokemon_team.send(f"找不到精灵：{pokemon_name}")
+
+    if not matching_pokemon:
+        await put_pokemon_team.send(f"找不到可放入队伍的精灵：{pokemon_name}")
         return
-    
-    # 检查精灵是否已在队伍中
-    if pokemon['is_in_team']:
+
+    # 如果有多个匹配的精灵，选择第一个
+    pokemon = matching_pokemon[0]
+
+    if len(matching_pokemon) > 1:
         display_name = pokemon['nickname'] if pokemon['nickname'] else pokemon['pokemon_name']
-        await put_pokemon_team.send(f"{display_name} 已经在队伍中了！")
-        return
+        await put_pokemon_team.send(f"找到多个 {pokemon_name}，已选择第一个：{display_name}")
     
     # 检查队伍是否已满
     team_pokemon = db.fetch_all(
@@ -2210,20 +2242,24 @@ async def handle_put_pokemon_team(event: GroupMessageEvent, state: T_State):
     new_position = len(team_pokemon) + 1
     
     # 更新精灵状态
-    db.update('pokemon_collection', {
-        'is_in_team': True,
-        'team_position': new_position
-    }, f"id = {pokemon['id']}")
-    
-    display_name = pokemon['nickname'] if pokemon['nickname'] else pokemon['pokemon_name']
-    pokemon_data = POKEMON_DATA[pokemon['pokemon_name']]
-    type_emoji = TYPES[pokemon_data['type']]['emoji']
-    rarity_emoji = RARITY_CONFIG[pokemon_data['rarity']]['emoji']
-    
-    await put_pokemon_team.send(
-        f"✅ {rarity_emoji}{type_emoji} {display_name} 已加入队伍！\n"
-        f"📍 队伍位置：{new_position}"
-    )
+    try:
+        db.update('pokemon_collection', {
+            'is_in_team': True,
+            'team_position': new_position
+        }, f"id = {pokemon['id']}")
+        
+        display_name = pokemon['nickname'] if pokemon['nickname'] else pokemon['pokemon_name']
+        pokemon_data = POKEMON_DATA[pokemon['pokemon_name']]
+        type_emoji = TYPES[pokemon_data['type']]['emoji']
+        rarity_emoji = RARITY_CONFIG[pokemon_data['rarity']]['emoji']
+        
+        await put_pokemon_team.send(
+            f"✅ {rarity_emoji}{type_emoji} {display_name} 已加入队伍！\n"
+            f"📍 队伍位置：{new_position}"
+        )
+    except Exception as e:
+        await put_pokemon_team.send(f"放入队伍失败：{str(e)}")
+        return
 
 @remove_pokemon_team.handle()
 async def handle_remove_pokemon_team(event: GroupMessageEvent, state: T_State):
