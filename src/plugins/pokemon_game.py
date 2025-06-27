@@ -2,7 +2,7 @@
 @Author: AI Assistant
 @Date: 2025-01-XX XX:XX:XX
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-27 15:29:41
+LastEditTime: 2025-06-27 15:35:33
 FilePath: /team-bot/jx3-team-bot/src/plugins/pokemon_game.py
 '''
 from .database import NianZaiDB
@@ -1125,7 +1125,7 @@ async def handle_pokemon_help(bot: Bot, event: GroupMessageEvent):
         "• 精灵每小时自动恢复10%HP（不包括濒死精灵）\n\n"
         "🛒 商店系统：\n"
         "• 购买精灵球 [数量] - 用积分购买精灵球\n"
-        "  - 1个精灵球 = 10积分\n"
+        "  - 1个精灵球 = 20积分\n"
         "  - 购买5-9个：20%概率获得1个额外精灵球\n"
         "  - 购买10-19个：30%概率获得2-3个额外精灵球\n"
         "  - 购买20个以上：50%概率获得5-8个额外精灵球\n\n"
