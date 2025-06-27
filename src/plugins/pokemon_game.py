@@ -2,7 +2,7 @@
 @Author: AI Assistant
 @Date: 2025-01-XX XX:XX:XX
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-27 16:33:32
+LastEditTime: 2025-06-27 16:39:59
 FilePath: /team-bot/jx3-team-bot/src/plugins/pokemon_game.py
 '''
 from .database import NianZaiDB
@@ -1203,7 +1203,7 @@ async def handle_pokemon_help(bot: Bot, event: GroupMessageEvent):
         "🏃 培养系统：\n"
         "• 训练 [精灵名] [序号] - 训练精灵提升经验和亲密度\n"
         "• 进化 [精灵名] [序号] - 进化精灵到下一阶段\n"
-        "• 改名 [精灵名] [序号] [新昵称] - 给精灵改名，避免同名冲突\n"
+        "• 命名 [精灵名] [序号] [新昵称] - 给精灵改名，避免同名冲突\n"
         "• 精灵列表 [精灵名] - 查看精灵详细信息，包含序号\n"
         "• 学习技能 [精灵名] [技能名] - 学习新技能\n"
         "• 精灵技能 [精灵名] - 查看精灵的技能列表\n\n"
