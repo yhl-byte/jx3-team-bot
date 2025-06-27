@@ -2,7 +2,7 @@
 @Author: AI Assistant
 @Date: 2025-01-XX XX:XX:XX
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-27 15:35:33
+LastEditTime: 2025-06-27 15:53:38
 FilePath: /team-bot/jx3-team-bot/src/plugins/pokemon_game.py
 '''
 from .database import NianZaiDB
@@ -379,6 +379,10 @@ flee_battle = on_regex(pattern=r"^逃离战斗$", priority=5)
 heal_pokemon = on_regex(pattern=r"^治疗精灵$", priority=5)
 heal_specific_pokemon = on_regex(pattern=r"^治疗\s+(.+)$", priority=5)
 buy_pokeballs = on_regex(pattern=r"^购买精灵球\s+(\d+)$", priority=5)
+# 管理员命令 - 精灵数据迁移
+migrate_pokemon_data = on_regex(pattern=r"^精灵数据迁移\s+(\d+)\s+(\d+)$", priority=5)
+# 管理员命令 - 群积分奖励
+group_score_reward = on_regex(pattern=r"^发放积分\s+(\d+)(?:\s+(\d+))?$", priority=5)
 
 # 全局变量存储战斗状态
 battle_requests = {}  # 存储战斗请求
@@ -2504,6 +2508,147 @@ async def handle_buy_pokeballs(bot: Bot, event: GroupMessageEvent):
     message += bonus_message
     
     await buy_pokeballs.send(message)
+
+# 管理员用户ID列表（请根据实际情况修改）
+ADMIN_USERS = ["939225853"]  # 请替换为实际的管理员QQ号
+
+@migrate_pokemon_data.handle()
+async def handle_migrate_pokemon_data(bot: Bot, event: GroupMessageEvent):
+    """迁移精灵数据从源群到目标群"""
+    user_id = str(event.user_id)
+    
+    # 检查管理员权限
+    if user_id not in ADMIN_USERS:
+        await migrate_pokemon_data.send("❌ 权限不足，只有管理员可以使用此命令")
+        return
+    
+    try:
+        # 解析命令参数
+        match = re.match(r"^精灵数据迁移\s+(\d+)\s+(\d+)$", event.get_plaintext())
+        if not match:
+            await migrate_pokemon_data.send("❌ 命令格式错误\n正确格式：精灵数据迁移 源群号 目标群号")
+            return
+            
+        source_group = match.group(1)
+        target_group = match.group(2)
+        
+        if source_group == target_group:
+            await migrate_pokemon_data.send("❌ 源群和目标群不能相同")
+            return
+        
+        # 检查源群是否有数据
+        source_trainers = db.fetch_all('pokemon_trainers', f"group_id = '{source_group}'")
+        if not source_trainers:
+            await migrate_pokemon_data.send(f"❌ 源群 {source_group} 没有精灵训练师数据")
+            return
+        
+        # 开始迁移数据
+        migrated_count = 0
+        
+        # 迁移训练师数据
+        for trainer in source_trainers:
+            # 检查目标群是否已存在该用户
+            existing = db.fetch_one('pokemon_trainers', 
+                                  f"user_id = '{trainer['user_id']}' AND group_id = '{target_group}'")
+            if existing:
+                # 如果已存在，跳过或合并数据（这里选择跳过）
+                continue
+                
+            # 更新训练师的群号
+            db.execute(
+                "UPDATE pokemon_trainers SET group_id = ? WHERE user_id = ? AND group_id = ?",
+                (target_group, trainer['user_id'], source_group)
+            )
+            
+            # 迁移该用户的精灵数据
+            db.execute(
+                "UPDATE pokemon_collection SET group_id = ? WHERE user_id = ? AND group_id = ?",
+                (target_group, trainer['user_id'], source_group)
+            )
+            
+            migrated_count += 1
+        
+        await migrate_pokemon_data.send(
+            f"✅ 精灵数据迁移完成！\n"
+            f"📊 从群 {source_group} 迁移到群 {target_group}\n"
+            f"👥 成功迁移 {migrated_count} 位训练师的数据"
+        )
+        
+    except Exception as e:
+        await migrate_pokemon_data.send(f"❌ 迁移失败：{str(e)}")
+
+@group_score_reward.handle()
+async def handle_group_score_reward(bot: Bot, event: GroupMessageEvent):
+    """给指定群或当前群的所有用户增加积分"""
+    user_id = str(event.user_id)
+    
+    # 检查管理员权限
+    if user_id not in ADMIN_USERS:
+        await group_score_reward.send("❌ 权限不足，只有管理员可以使用此命令")
+        return
+    
+    try:
+        # 解析命令参数
+        match = re.match(r"^发放积分\s+(\d+)(?:\s+(\d+))?$", event.get_plaintext())
+        if not match:
+            await group_score_reward.send(
+                "❌ 命令格式错误\n"
+                "正确格式：\n"
+                "发放积分 积分数量 (给当前群发放)\n"
+                "发放积分 积分数量 群号 (给指定群发放)"
+            )
+            return
+            
+        reward_amount = int(match.group(1))
+        target_group = match.group(2) if match.group(2) else str(event.group_id)
+        current_group = str(event.group_id)
+        
+        if reward_amount <= 0:
+            await group_score_reward.send("❌ 积分数量必须大于0")
+            return
+        
+        if reward_amount > 10000:
+            await group_score_reward.send("❌ 单次奖励积分不能超过10000")
+            return
+        
+        # 获取目标群内所有精灵训练师
+        trainers = db.fetch_all('pokemon_trainers', f"group_id = '{target_group}'")
+        
+        if not trainers:
+            group_info = f"群 {target_group}" if target_group != current_group else "本群"
+            await group_score_reward.send(f"❌ {group_info}暂无精灵训练师")
+            return
+        
+        # 给所有训练师增加积分
+        rewarded_count = 0
+        for trainer in trainers:
+            try:
+                await update_player_score(
+                    trainer['user_id'], 
+                    target_group, 
+                    reward_amount, 
+                    "群积分奖励", 
+                    "管理员", 
+                    "群体奖励"
+                )
+                rewarded_count += 1
+            except Exception as e:
+                print(f"给用户 {trainer['user_id']} 增加积分失败: {e}")
+                continue
+        
+        # 构建回复消息
+        group_info = f"群 {target_group}" if target_group != current_group else "本群"
+        await group_score_reward.send(
+            f"🎉 积分发放完成！\n"
+            f"🎯 目标群组：{group_info}\n"
+            f"💰 每人获得：{reward_amount} 积分\n"
+            f"👥 成功发放：{rewarded_count} 位训练师\n"
+            f"📝 奖励原因：管理员群体奖励"
+        )
+        
+    except Exception as e:
+        await group_score_reward.send(f"❌ 积分奖励发放失败：{str(e)}")
+
 # 在文件末尾添加定时任务
 @scheduler.scheduled_job("interval", hours=1, id="pokemon_hp_recovery")
 async def scheduled_hp_recovery():
