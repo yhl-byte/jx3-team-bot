@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:34:16
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-27 10:07:48
+LastEditTime: 2025-06-27 14:46:10
 FilePath: /team-bot/jx3-team-bot/src/plugins/handler.py
 '''
 # src/plugins/chat_plugin/handler.py
@@ -13,6 +13,9 @@ from src.utils.html_generator import render_game_help,render_bot_help
 from src.utils.render_context import render_and_cleanup
 from ..utils.index import path_to_base64
 from src.config import STATIC_PATH
+from src.plugins.game_score import update_player_score
+import random
+from datetime import datetime
 from .database import NianZaiDB  # 添加数据库导入
 import os
 
@@ -201,3 +204,93 @@ async def handle_bot_help(bot: Bot, event: GroupMessageEvent, state: T_State):
         print(f"发送加速图片失败: {e}")
         await NianZaiHelp.finish(message="❌ 发送年崽帮助图片失败")
 
+# 抽奖命令
+Lottery = on_regex(pattern=r'^抽奖$', priority=5)
+@Lottery.handle()
+async def handle_lottery(bot: Bot, event: GroupMessageEvent, state: T_State):
+    """抽奖功能 - 每日最多3次"""
+    user_id = str(event.user_id)
+    group_id = str(event.group_id)
+    today = datetime.now().strftime('%Y-%m-%d')
+    
+    # 检查今日抽奖次数
+    lottery_record = db.fetch_one(
+        'lottery_records', 
+        'user_id = ? AND group_id = ? AND date = ?', 
+        (user_id, group_id, today)
+    )
+    
+    current_count = lottery_record['count'] if lottery_record else 0
+    
+    if current_count >= 3:
+        await Lottery.finish("🎰 今日抽奖次数已用完！每日最多可抽奖3次，明天再来吧~")
+    
+    # 抽奖逻辑
+    prizes = [
+        {"type": "积分", "amount": 5, "weight": 30, "emoji": "💰"},
+        {"type": "积分", "amount": 10, "weight": 20, "emoji": "💰"},
+        {"type": "积分", "amount": 20, "weight": 10, "emoji": "💰"},
+        {"type": "积分", "amount": 50, "weight": 5, "emoji": "💰"},
+        {"type": "精灵球", "amount": 1, "weight": 15, "emoji": "⚾"},
+        {"type": "精灵球", "amount": 3, "weight": 8, "emoji": "⚾"},
+        {"type": "精灵球", "amount": 5, "weight": 3, "emoji": "⚾"},
+        {"type": "精灵球", "amount": 10, "weight": 1, "emoji": "⚾"},
+        {"type": "谢谢参与", "amount": 0, "weight": 8, "emoji": "😅"}
+    ]
+    
+    # 权重随机选择
+    total_weight = sum(prize["weight"] for prize in prizes)
+    rand_num = random.randint(1, total_weight)
+    
+    current_weight = 0
+    selected_prize = None
+    for prize in prizes:
+        current_weight += prize["weight"]
+        if rand_num <= current_weight:
+            selected_prize = prize
+            break
+    
+    # 更新抽奖记录
+    if lottery_record:
+        db.update(
+            'lottery_records',
+            {'count': current_count + 1},
+            f"user_id = '{user_id}' AND group_id = '{group_id}' AND date = '{today}'"
+        )
+    else:
+        db.insert('lottery_records', {
+            'user_id': user_id,
+            'group_id': group_id,
+            'date': today,
+            'count': 1
+        })
+    
+    # 发放奖励
+    message = f"🎰 抽奖结果：{selected_prize['emoji']} "
+    
+    if selected_prize["type"] == "积分":
+        await update_player_score(user_id, group_id, selected_prize["amount"], "抽奖", "参与者", "获得积分")
+        message += f"获得 {selected_prize['amount']} 积分！"
+    elif selected_prize["type"] == "精灵球":
+        # 检查是否是精灵训练师
+        trainer = db.fetch_one('pokemon_trainers', 'user_id = ? AND group_id = ?', (user_id, group_id))
+        if trainer:
+            new_pokeballs = trainer['pokeballs'] + selected_prize["amount"]
+            db.update(
+                'pokemon_trainers',
+                {'pokeballs': new_pokeballs},
+                f"user_id = '{user_id}' AND group_id = '{group_id}'"
+            )
+            message += f"获得 {selected_prize['amount']} 个精灵球！\n⚾ 当前精灵球：{new_pokeballs}个"
+        else:
+            # 如果不是训练师，转换为积分奖励
+            bonus_score = selected_prize["amount"] * 20  # 1个精灵球=20积分
+            await update_player_score(user_id, group_id, bonus_score, "抽奖", "参与者", "精灵球转积分")
+            message += f"获得 {selected_prize['amount']} 个精灵球！\n💡 由于你不是精灵训练师，已转换为 {bonus_score} 积分"
+    else:
+        message += "谢谢参与！再接再厉~"
+    
+    remaining_count = 3 - (current_count + 1)
+    message += f"\n\n🎯 今日剩余抽奖次数：{remaining_count}次"
+    
+    await Lottery.finish(message)

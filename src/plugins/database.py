@@ -1,7 +1,7 @@
 '''
 Date: 2025-02-18 13:32:40
 LastEditors: yhl yuhailong@thalys-tech.onaliyun.com
-LastEditTime: 2025-06-27 13:35:37
+LastEditTime: 2025-06-27 14:45:21
 FilePath: /team-bot/jx3-team-bot/src/plugins/database.py
 '''
 # src/plugins/chat_plugin/database.py
@@ -428,6 +428,18 @@ class NianZaiDB:
                 exp_gained INTEGER DEFAULT 0,
                 score_gained INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
+            # 抽奖
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS lottery_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                group_id TEXT NOT NULL,
+                date TEXT NOT NULL,
+                count INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, group_id, date)
             )
             ''')
             conn.commit()  
